@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
-// Upload a product image from the admin form to public/uploads —
-// stored locally during the trial phase, and the same pattern will work when hosted later
-// (the same mechanism with a different storage folder or uploading to Cloudinary).
+// Upload a product image from the admin form — stored directly in the database
+// (UploadedImage) instead of the runtime filesystem, because serverless
+// deployments (Vercel) do not persist anything written to disk.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,13 +15,6 @@ const ALLOWED_TYPES = new Set([
   "image/webp",
   "image/gif",
 ]);
-
-const ALLOWED_EXTENSIONS: Record<string, string> = {
-  "image/jpeg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp",
-  "image/gif": ".gif",
-};
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -47,19 +38,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "BAD_SIZE" }, { status: 400 });
   }
 
-  const ext = ALLOWED_EXTENSIONS[file.type];
-  const filename = `${randomUUID()}${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads");
-
   try {
-    await mkdir(dir, { recursive: true });
-    const bytes = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(dir, filename), bytes);
+    const saved = await prisma.uploadedImage.create({
+      data: {
+        mimeType: file.type,
+        data: Buffer.from(await file.arrayBuffer()),
+      },
+    });
+    return NextResponse.json({
+      url: `/api/uploads/${saved.id}`,
+    });
   } catch {
     return NextResponse.json({ error: "WRITE_FAILED" }, { status: 500 });
   }
-
-  return NextResponse.json({
-    url: `/uploads/${filename}`,
-  });
 }

@@ -181,6 +181,13 @@ function toCreateData(
   };
 }
 
+// Returns the UploadedImage id for a DB-backed image URL, or null for static assets.
+const storedImageId = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  const m = url.match(/^\/api\/uploads\/([^/?#]+)$/);
+  return m ? m[1] : null;
+};
+
 export async function createProduct(
   _prev: AdminActionState | undefined,
   fd: FormData,
@@ -197,7 +204,11 @@ export async function createProduct(
   const { parsed, variants } = extras;
 
   // image from the form — saved as the main image
-  const imageUrl = extras.image.startsWith("/uploads/") ? extras.image : "";
+  const imageUrl = extras.image.startsWith("/uploads/")
+    ? extras.image
+    : extras.image.startsWith("/api/uploads/")
+      ? extras.image
+      : "";
 
   try {
     const slugExists = await prisma.product.findUnique({
@@ -250,9 +261,19 @@ export async function updateProduct(
     });
     if (slugExists) return { error: "SLUG_EXISTS" };
 
-    if (imageUrl && !imageUrl.startsWith("/uploads/")) {
+    if (
+      !imageUrl.startsWith("/uploads/") &&
+      !imageUrl.startsWith("/api/uploads/")
+    ) {
       imageUrl = "";
     }
+
+    const currentImages = await prisma.productImage.findMany({
+      where: { productId: id },
+    });
+    const oldStoredIds = currentImages
+      .map((img) => storedImageId(img.url))
+      .filter((v): v is string => Boolean(v) && v !== storedImageId(imageUrl));
 
     await prisma.$transaction([
       prisma.productVariant.deleteMany({ where: { productId: id } }),
@@ -276,6 +297,13 @@ export async function updateProduct(
       ...variants.map((v) =>
         prisma.productVariant.create({ data: { ...v, productId: id } }),
       ),
+      ...(oldStoredIds.length > 0
+        ? [
+            prisma.uploadedImage.deleteMany({
+              where: { id: { in: oldStoredIds } },
+            }),
+          ]
+        : []),
     ]);
   } catch {
     return { error: "GENERIC" };
@@ -291,7 +319,18 @@ export async function deleteProduct(id: string) {
     where: { productId: id },
   });
   if (orderedCount > 0) return { error: "HAS_ORDERS" };
-  await prisma.product.delete({ where: { id } });
+  const images = await prisma.productImage.findMany({
+    where: { productId: id },
+  });
+  const storedIds = images
+    .map((img) => storedImageId(img.url))
+    .filter((v): v is string => Boolean(v));
+  await prisma.$transaction([
+    prisma.product.delete({ where: { id } }),
+    ...(storedIds.length > 0
+      ? [prisma.uploadedImage.deleteMany({ where: { id: { in: storedIds } } })]
+      : []),
+  ]);
   revalidatePath("/", "layout");
 }
 

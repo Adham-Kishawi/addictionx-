@@ -178,6 +178,18 @@ model ProductImage {
   @@map("product_images")
 }
 
+// Uploaded binary images (admin dashboard) — stored in the DB itself so they
+// survive serverless deployments (the runtime filesystem is read-only/ephemeral).
+// The public URL is /api/uploads/<id>; a route handler streams these bytes back.
+model UploadedImage {
+  id        String   @id @default(cuid())
+  data      Bytes
+  mimeType  String
+  createdAt DateTime @default(now())
+
+  @@map("uploaded_images")
+}
+
 model ProductVariant {
   id        String   @id @default(cuid())
   productId String
