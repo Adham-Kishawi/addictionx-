@@ -63,6 +63,7 @@ export const products: Product[] = [
     isNew: true,
     isBestseller: true,
     art: { from: "#7f1d1d", to: "#450a0a", glow: "#ef4444" },
+    image: "/uploads/prodact.png",
   },
   {
     id: "p2",
@@ -86,6 +87,7 @@ export const products: Product[] = [
     isNew: false,
     isBestseller: true,
     art: { from: "#1e1b4b", to: "#020617", glow: "#6366f1" },
+    image: "/uploads/prodact.png",
   },
   {
     id: "p3",
@@ -109,6 +111,7 @@ export const products: Product[] = [
     isNew: false,
     isBestseller: true,
     art: { from: "#78350f", to: "#451a03", glow: "#f59e0b" },
+    image: "/uploads/prodact.png",
   },
   {
     id: "p4",
@@ -132,6 +135,7 @@ export const products: Product[] = [
     isNew: true,
     isBestseller: false,
     art: { from: "#881337", to: "#4c0519", glow: "#fb7185" },
+    image: "/uploads/prodact.png",
   },
   {
     id: "p5",
@@ -156,6 +160,7 @@ export const products: Product[] = [
     isNew: false,
     isBestseller: true,
     art: { from: "#27272a", to: "#09090b", glow: "#a1a1aa" },
+    image: "/uploads/prodact.png",
   },
   {
     id: "p6",
@@ -179,6 +184,7 @@ export const products: Product[] = [
     isNew: true,
     isBestseller: false,
     art: { from: "#155e75", to: "#083344", glow: "#22d3ee" },
+    image: "/uploads/prodact.png",
   },
   {
     id: "p7",
@@ -202,6 +208,7 @@ export const products: Product[] = [
     isNew: false,
     isBestseller: false,
     art: { from: "#3f2d20", to: "#1c120a", glow: "#d97706" },
+    image: "/uploads/prodact.png",
   },
   {
     id: "p8",
@@ -225,6 +232,7 @@ export const products: Product[] = [
     isNew: true,
     isBestseller: false,
     art: { from: "#4c1d95", to: "#1e0a3c", glow: "#c084fc" },
+    image: "/uploads/prodact.png",
   },
 ];
 

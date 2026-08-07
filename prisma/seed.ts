@@ -69,6 +69,19 @@ async function main() {
         sku: `${p.slug}-100`,
       },
     });
+
+    // Real product image — the same transparent bottle PNG for every product
+    // (delete existing ones first so re-seeding stays idempotent)
+    await prisma.productImage.deleteMany({ where: { productId: product.id } });
+    await prisma.productImage.create({
+      data: {
+        productId: product.id,
+        url: "/uploads/prodact.png",
+        alt: p.nameAr,
+        position: 0,
+        isPrimary: true,
+      },
+    });
   }
   console.log(`✅ Seeded ${products.length} products`);
 
