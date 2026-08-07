@@ -3,7 +3,9 @@ import type { Product } from "@/features/catalog/data/products";
 
 const defaultArt = { from: "#1e1b4b", to: "#020617", glow: "#6366f1" } as const;
 
-type DbProductRow = Prisma.ProductGetPayload<{ include: { variants: true } }>;
+type DbProductRow = Prisma.ProductGetPayload<{
+  include: { variants: true; images: true };
+}>;
 
 // Converts a product row from the database into the storefront shape (display fields only)
 export function toStorefrontProduct(p: DbProductRow): Product {
@@ -14,6 +16,7 @@ export function toStorefrontProduct(p: DbProductRow): Product {
     nameEn: p.nameEn ?? p.name,
     descriptionAr: p.description ?? "",
     descriptionEn: p.descriptionEn ?? p.description ?? "",
+    image: p.images?.[0]?.url ?? undefined,
     price: p.basePrice,
     gender: (p.gender as string).toLowerCase() as Product["gender"],
     collection: p.collection ?? "rush",

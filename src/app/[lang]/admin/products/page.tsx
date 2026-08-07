@@ -35,7 +35,7 @@ export default async function AdminProductsPage({
         : {}),
       ...(saleOnly ? { NOT: { compareAtPrice: null } } : {}),
     },
-    include: { variants: true },
+    include: { variants: true, images: true },
     orderBy: { createdAt: "desc" },
   });
 
