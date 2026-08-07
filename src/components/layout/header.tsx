@@ -6,6 +6,7 @@ import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { CartButton } from "@/features/cart/components/cart-button";
 import { HeaderScroll } from "@/components/layout/header-scroll";
+import { SearchBox } from "@/features/catalog/components/search-box";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 
 export function Header({
@@ -60,7 +61,7 @@ export function Header({
               {dict.nav.shop}
             </Link>
             <Link
-              href={`/${locale}/catalog`}
+              href={`/${locale}/collections`}
               className="transition-colors hover:text-foreground"
             >
               {dict.nav.collection}
@@ -76,7 +77,13 @@ export function Header({
           </nav>
 
           {/* Icons */}
-          <div className="flex items-center gap-1 text-muted-foreground">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="hidden md:block">
+              <SearchBox
+                locale={locale}
+                labels={{ placeholder: dict.catalog.searchPlaceholder }}
+              />
+            </div>
             <LanguageSwitcher currentLocale={locale} />
             <ThemeToggle />
             <Link

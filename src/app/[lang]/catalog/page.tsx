@@ -11,10 +11,13 @@ import {
 import { getWishlistIds } from "@/features/account/data";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
+import { Pagination } from "@/features/catalog/components/pagination";
 
 export const dynamic = "force-dynamic";
 
 type SortKey = "popular" | "newest" | "price-asc" | "price-desc" | "rating";
+
+const PER_PAGE = 10;
 
 const genderOptions: {
   value: Gender | "all";
@@ -34,10 +37,12 @@ export default async function CatalogPage({
     collection?: string;
     gender?: string;
     sort?: string;
+    q?: string;
+    page?: string;
   }>;
 }) {
   const { lang } = await params;
-  const { collection, gender, sort } = await searchParams;
+  const { collection, gender, sort, q, page } = await searchParams;
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
@@ -47,6 +52,7 @@ export default async function CatalogPage({
     if (collection && key !== "collection")
       params.set("collection", collection);
     if (gender && key !== "gender") params.set("gender", gender);
+    if (q && key !== "q") params.set("q", q);
     if (sort && key !== "sort") params.set("sort", sort);
     if (value) params.set(key, value);
     const qs = params.toString();
@@ -58,6 +64,7 @@ export default async function CatalogPage({
     gender === "male" || gender === "female" || gender === "unisex"
       ? gender
       : null;
+  const searchQ = q?.trim().toLowerCase() || null;
 
   const allProducts = await getProducts();
   const collections = await getCollections();
@@ -67,6 +74,12 @@ export default async function CatalogPage({
     filtered = filtered.filter((p) => p.collection === collection);
   if (selectedGender)
     filtered = filtered.filter((p) => p.gender === selectedGender);
+  if (searchQ)
+    filtered = filtered.filter(
+      (p) =>
+        p.nameAr.toLowerCase().includes(searchQ) ||
+        p.nameEn.toLowerCase().includes(searchQ),
+    );
 
   switch (sortKey) {
     case "popular":
@@ -90,7 +103,22 @@ export default async function CatalogPage({
       break;
   }
 
-  const hasFilters = Boolean(collection) || Boolean(selectedGender);
+  const hasFilters =
+    Boolean(collection) || Boolean(selectedGender) || Boolean(searchQ);
+
+  const pageNum = Math.max(1, Number(page) || 1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(pageNum, totalPages);
+  const pageProducts = filtered.slice(
+    (safePage - 1) * PER_PAGE,
+    safePage * PER_PAGE,
+  );
+  const queryString = new URLSearchParams();
+  if (collection) queryString.set("collection", collection);
+  if (gender) queryString.set("gender", gender);
+  if (sort) queryString.set("sort", sort);
+  if (q) queryString.set("q", q);
+  const queryStr = queryString.toString();
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
@@ -100,7 +128,13 @@ export default async function CatalogPage({
           <h1 className="font-display text-4xl font-bold">
             {dict.catalog.title}
           </h1>
-          <p className="text-muted-foreground">{dict.catalog.subtitle}</p>
+          {searchQ ? (
+            <p className="text-muted-foreground">
+              {dict.catalog.searchFor.replace("{q}", q?.trim() ?? "")}
+            </p>
+          ) : (
+            <p className="text-muted-foreground">{dict.catalog.subtitle}</p>
+          )}
         </header>
       </Reveal>
 
@@ -174,13 +208,13 @@ export default async function CatalogPage({
       )}
 
       {/* Results */}
-      {filtered.length > 0 ? (
+      {pageProducts.length > 0 ? (
         <>
           <p className="mb-6 text-sm text-muted-foreground">
             {filtered.length} {dict.catalog.results}
           </p>
           <RevealStagger className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
-            {filtered.map((product) => (
+            {pageProducts.map((product) => (
               <RevealItem key={product.id}>
                 <ProductCard
                   product={product}
@@ -190,6 +224,19 @@ export default async function CatalogPage({
               </RevealItem>
             ))}
           </RevealStagger>
+
+          <Pagination
+            baseHref={`/${locale}/catalog`}
+            query={queryStr}
+            page={safePage}
+            totalPages={totalPages}
+            labels={{
+              prev: dict.catalog.prev,
+              next: dict.catalog.next,
+              page: dict.catalog.pageOf,
+              of: dict.catalog.of,
+            }}
+          />
         </>
       ) : (
         <div className="flex flex-col items-center gap-4 py-24 text-center">
