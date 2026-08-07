@@ -267,6 +267,7 @@ walid's request: **the customer must be visually amazed** — every storefront s
 - `features/catalog/components/product-carousel.tsx` — driven from `page.tsx` with one product per collection (prefers `image`) and forces local `.image` from `/slider/{rush,noir,gold}.png` (author product fallback).
 - center/left/right roles (no back with 3 items) · **CSS transitions** (intentional exception to the Framer Motion rule for role performance — documented) · 650ms · blur on side roles · touch swipe (ignores vertical drag) · RTL-aware keyboard · IntersectionObserver pauses the animation off-screen.
 - **Image format:** 1024×1536 transparent PNG — `public/slider/rush.png` · `noir.png` · `gold.png` (renamed from `1 (N).png`).
+- **Product images:** every product renders the real transparent bottle PNG at `/uploads/prodact.png` (seeded into `ProductImage` — primary per product; `ProductArt` shows it on all product cards). The carousel keeps its own `/slider/*.png` visuals (walid's decision — slider left untouched).
 - Dictionary keys: `dict.home.carousel*` (title/subtitle/explore/prev/next/item/of).
 
 ### 18d. Sprite (filmstrip) generation — tools and regeneration
@@ -354,11 +355,10 @@ src/
 
 ### Urgent priority (before any other work)
 
-1. **Upload the project to GitHub** (walid's decision: «I want to upload the project to GitHub first»).
-   - Current state: local repo only, single commit `0d3c554 Initial commit from Create Next App` — all the real code is uncommitted (`src/` · `prisma/` · `public/` · `components.json` · `.husky/` · etc.).
-   - Must create a new repo on GitHub then push (note: `.env` is excluded by `.gitignore` — never uploaded).
+1. **Upload the project to GitHub** — **[x] done** (repo `Adham-Kishawi/addictionx-`, branch `main`).
+   - `.env` is excluded by `.gitignore` — never uploaded.
 2. **Complete the admin dashboard fully** (walid's decision: «the admin dashboard must be complete and working»):
-   - Add **real product images** from the admin dashboard (upload/replace per product — currently `ProductArt` is generated and the slider images are static `/slider/*.png`).
+   - **Real product images — partially done:** every product now renders the real upload `/uploads/prodact.png` (seeded in `ProductImage`). Still pending: uploading/replacing a **per-product** image from the admin dashboard (the shared image is temporary until each product has its own).
    - Add **fully editable product descriptions** (currently the ar/en fields exist in the form — review and improve the display).
    - **Edit the slider** from the admin dashboard (currently `page.tsx` forces static `/slider/{rush,noir,gold}.png` — must become manageable).
    - Overall usability improvement of the dashboard (user experience).
@@ -411,6 +411,9 @@ src/
 - [x] **Email notifications (Resend):** `src/lib/email.ts` (works without keys) + integration in createOrder (customer/admin) + updateOrderStatus + updateShipment + cancelOrder — verified: clean tsc + eslint + build.
 - [x] **Google sign-in:** provider + button in auth-form + dictionary keys — verified: clean tsc + eslint + build. **Pending:** `AUTH_GOOGLE_ID/SECRET` keys from walid.
 - [x] **Manual order from admin + low-stock notification:** `createManualOrder` (guest details in `Order.notes`) + `orders/new` page/form + button in orders header + `notifyLowStock` (admin email when stock ≤5) called after any order — verified: tsc + eslint + build + live 200.
+- [x] **Real product images:** all 8 products use the real transparent bottle PNG (`/uploads/prodact.png`) — seeded into `ProductImage` (primary per product) + added to the static `products.ts` data; the upload route stores files in `public/uploads/`. Slider visuals kept original (`/slider/*.png`). Verified: 8/8 products have the image in the DB + clean tsc + eslint + build.
+- [x] **Complete comment translation:** every Arabic code comment converted to English (`src/` + `prisma/schema.prisma` + `prisma/seed.ts`) — scan confirms zero Arabic comments remain in code (docs `README.md`/`REPORT` left as-is).
+- [x] **Neon (Postgres cloud) wired:** `DATABASE_URL` now points to the Neon pooler URL — schema pushed + seeded on the cloud DB (admin + 8 products + 3 collections + 8 variants). `package.json` added `postinstall: prisma generate` (required for the Vercel build).
 - [ ] Set `RESEND_API_KEY` in `.env` — **needed from walid**
 - [ ] Google OAuth keys (`AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET`) — **needed from walid**
 - [ ] Wire Cloudinary images instead of `ProductArt` — **needs walid's account data** (cloud name + API key/secret) + uploading the images to Cloudinary (CLAUDE.md workflow #4)
