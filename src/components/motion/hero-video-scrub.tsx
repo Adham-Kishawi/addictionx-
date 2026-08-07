@@ -5,33 +5,32 @@ import { useReducedMotion } from "framer-motion";
 import gsap from "gsap";
 
 // ============================================================
-// Interactive bottle scene — sprite filmstrip (no video seeking).
+// Interactive bottle scene — sprite filmstrip drawn on <canvas>.
 //
-// The problem with `video.currentTime = x` is that seeking is asynchronous:
-// the browser requests the frame later, which looks like a delay and "unnatural slowness".
-// The professional solution (the smoothest on global perfume stores): extract every
-// video frame once into a grid image (filmstrip) — here 60 frames
-// (10 columns × 6 rows) per side — and motion becomes just `background-position`
-// (instant display, zero lag, zero frame requests) with GSAP easing for visual smoothness.
-//
-// The mapping: the whole screen width is a rotation zone — right of the center scales the
-// right-sprite, left of the center scales the left-sprite. **No deadZone**
-// (previously the center of the screen didn't respond = felt slow). Reverse works:
-// moving the mouse back to the center returns to the first frame smoothly.
+// WHY canvas instead of background-position:
+//   `backgroundSize: 1000% 600%` forces the browser to rasterize the sprite
+//   at screenWidth×10 by screenHeight×6 (e.g. 1920×1080 → 19200×6480 ≈ 500MB
+//   per plate, ~1GB for both, desktop AND mobile pays this with no benefit).
+//   Canvas decodes the sprite ONCE at its native 6400×2160 size and crops a
+//   single frame per draw with manual cover-fit → not more than ~55MB decoded
+//   sprite + one screen-sized canvas, regardless of viewport.
 //
 // Interaction is detected automatically — no hint, no nudges, no click.
-// Mobile: stays on the alternating auto-rotation video (right/left).
-// The automatic bob on idle still works via gsap with frame numbers.
+// Desktop-only (lg:block); mobile keeps the alternating auto-play video
+// (lg:hidden) — the canvas never exists on mobile.
+// The idle bob is driven by gsap over frame numbers (single killable target).
 // ============================================================
 
 const LEFT_SRC = "/sprites/left.jpg";
 const RIGHT_SRC = "/sprites/right.jpg";
 
 const COLS = 10;
-const ROWS = 6;
-// The two videos actually have only 59 frames (0..58) — the last cell in the grid (59) is empty.
-// Clamping to FRAMES prevents reaching the last wrapped (black) cell.
-const FRAMES = 59;
+const FRAME_W = 640;
+const FRAME_H = 360;
+// The two source videos differ in frame count (measured with ffprobe):
+// left.mp4 = 60 frames, right.mp4 = 59 frames. Clamp per side so the cursor
+// never reaches the last (empty/black) cell of right.jpg's grid.
+const FRAMES = { left: 60, right: 59 } as const;
 const BOB_MS = 1200;
 const IDLE_BOB_MS = 2200;
 const MOBILE_BREAKPOINT = 1024;
@@ -42,64 +41,86 @@ function clamp01(v: number) {
   return Math.min(1, Math.max(0, v));
 }
 
-// Frame position (index 0..59) in a 10×6 grid → background-position
-function cssPos(idx: number): string {
-  const col = idx % COLS;
-  const row = Math.floor(idx / COLS);
-  const x = (col / (COLS - 1)) * 100;
-  const y = (row / (ROWS - 1)) * 100;
-  return `${x.toFixed(2)}% ${y.toFixed(2)}%`;
-}
-
 export function HeroVideoScrub() {
   const reduce = useReducedMotion();
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const leftPlateRef = useRef<HTMLDivElement>(null);
-  const rightPlateRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoLeftRef = useRef<HTMLVideoElement>(null);
   const videoRightRef = useRef<HTMLVideoElement>(null);
 
+  const spritesRef = useRef<{
+    left?: HTMLImageElement;
+    right?: HTMLImageElement;
+  }>({});
   const mouseXRef = useRef(0);
   const lastMoveRef = useRef(0);
   const activeSideRef = useRef<Side>("right");
   const rafRef = useRef(0);
   const startedRef = useRef(false);
   const bobActiveRef = useRef(false);
+  const bobTargetRef = useRef<{ frame: number } | null>(null);
   const startTimerRef = useRef(0);
 
   const [ready, setReady] = useState(false);
 
-  const getPlates = useCallback(
-    () => ({ left: leftPlateRef.current, right: rightPlateRef.current }),
-    [],
-  );
+  // Fit the canvas backing store to its CSS box (capped DPR keeps memory sane).
+  const sizeCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.round(rect.width * dpr);
+    const h = Math.round(rect.height * dpr);
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+  }, []);
 
-  const renderFrame = useCallback(
+  // Draw one sprite frame scaled to cover the canvas (no distortion on 16:10 / 3:2 / 21:9).
+  const drawFrame = useCallback(
     (side: Side, idx01: number) => {
-      const plates = getPlates();
-      const node = side === "left" ? plates.left : plates.right;
-      if (!node) return;
-      node.style.backgroundPosition = cssPos(
-        Math.round(clamp01(idx01) * (FRAMES - 1)),
+      const canvas = canvasRef.current;
+      const sprite = spritesRef.current[side];
+      if (!canvas || !sprite) return;
+      const frames = FRAMES[side];
+      const idx = Math.round(clamp01(idx01) * (frames - 1));
+      const col = idx % COLS;
+      const row = Math.floor(idx / COLS);
+      sizeCanvas();
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const cw = canvas.width;
+      const ch = canvas.height;
+      const scale = Math.max(cw / FRAME_W, ch / FRAME_H);
+      const dw = Math.round(FRAME_W * scale);
+      const dh = Math.round(FRAME_H * scale);
+      const dx = Math.round((cw - dw) / 2);
+      const dy = Math.round((ch - dh) / 2);
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.drawImage(
+        sprite,
+        col * FRAME_W,
+        row * FRAME_H,
+        FRAME_W,
+        FRAME_H,
+        dx,
+        dy,
+        dw,
+        dh,
       );
     },
-    [getPlates],
-  );
-
-  const setSide = useCallback(
-    (side: Side) => {
-      const { left, right } = getPlates();
-      if (!left || !right) return;
-      left.style.display = side === "left" ? "block" : "none";
-      right.style.display = side === "right" ? "block" : "none";
-    },
-    [getPlates],
+    [sizeCanvas],
   );
 
   const cancelBob = useCallback(() => {
     bobActiveRef.current = false;
-    gsap.killTweensOf(mouseXRef); // any generic gsap tween is killed here
+    if (bobTargetRef.current) {
+      gsap.killTweensOf(bobTargetRef.current);
+      bobTargetRef.current = null;
+    }
   }, []);
 
   // ============ Auto-rotation (bob) — after idle with no click ============
@@ -109,28 +130,35 @@ export function HeroVideoScrub() {
 
     const active = activeSideRef.current;
     const target = { frame: 0 };
+    bobTargetRef.current = target;
     gsap.killTweensOf(target);
     gsap.to(target, {
-      frame: FRAMES - 1,
+      frame: FRAMES[active] - 1,
       duration: BOB_MS / 1000,
       ease: "power1.inOut",
-      onUpdate: () => renderFrame(active, target.frame / (FRAMES - 1)),
+      onUpdate: () =>
+        drawFrame(active, clamp01(target.frame / (FRAMES[active] - 1))),
       onComplete: () => {
-        if (!bobActiveRef.current) return;
-        activeSideRef.current = active === "left" ? "right" : "left";
-        gsap.to(target, {
+        if (!bobActiveRef.current || !bobTargetRef.current) return;
+        const next = activeSideRef.current === "left" ? "right" : "left";
+        activeSideRef.current = next;
+        gsap.to(bobTargetRef.current, {
           frame: 0,
           duration: BOB_MS / 1000,
           ease: "power1.inOut",
           onUpdate: () =>
-            renderFrame(activeSideRef.current, target.frame / (FRAMES - 1)),
+            drawFrame(
+              next,
+              clamp01(bobTargetRef.current!.frame / (FRAMES[next] - 1)),
+            ),
           onComplete: () => {
             bobActiveRef.current = false;
+            bobTargetRef.current = null;
           },
         });
       },
     });
-  }, [renderFrame]);
+  }, [drawFrame]);
 
   const bobLoop = useCallback(() => {
     if (reduce) return;
@@ -164,7 +192,7 @@ export function HeroVideoScrub() {
       window.innerWidth < MOBILE_BREAKPOINT;
 
     if (isMobile) {
-      // Automatic mobile video (right/left alternating)
+      // Automatic mobile video (right/left alternating) — no sprites are ever loaded here.
       const l = videoLeftRef.current;
       const r = videoRightRef.current;
       if (!l || !r) return;
@@ -172,6 +200,7 @@ export function HeroVideoScrub() {
       r.style.display = "block";
       const t = window.setTimeout(() => {
         void r.play().catch(() => {});
+        setReady(true);
       }, 800);
       l.addEventListener("ended", playNext);
       r.addEventListener("ended", playNext);
@@ -184,14 +213,12 @@ export function HeroVideoScrub() {
       };
     }
 
-    // ---- Desktop: sprite scrubbing ----
-    const { left, right } = getPlates();
-    if (!left || !right) return;
+    // ---- Desktop: canvas sprite scrubbing ----
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    setSide("right");
     activeSideRef.current = "right";
-    renderFrame("right", 0);
-    renderFrame("left", 0);
+    drawFrame("right", 0);
 
     const frame = () => {
       rafRef.current = requestAnimationFrame(frame);
@@ -206,12 +233,8 @@ export function HeroVideoScrub() {
           ? (x - vw / 2) / (vw - vw / 2)
           : (vw / 2 - x) / (vw / 2),
       );
-
-      if (side !== activeSideRef.current) {
-        activeSideRef.current = side;
-        setSide(side);
-      }
-      renderFrame(side, progress);
+      activeSideRef.current = side;
+      drawFrame(side, progress);
     };
 
     const begin = () => {
@@ -224,14 +247,8 @@ export function HeroVideoScrub() {
     const onPointerMove = (e: PointerEvent) => {
       mouseXRef.current = e.clientX;
       lastMoveRef.current = Date.now();
+      if (bobActiveRef.current) cancelBob();
       begin();
-      if (bobActiveRef.current) {
-        cancelBob();
-        setSide(activeSideRef.current);
-        if (startedRef.current && rafRef.current === 0) {
-          rafRef.current = requestAnimationFrame(frame);
-        }
-      }
     };
     window.addEventListener("pointermove", onPointerMove, { passive: true });
 
@@ -265,9 +282,16 @@ export function HeroVideoScrub() {
         rafRef.current = requestAnimationFrame(frame);
       }
     };
+    const onResize = () => {
+      if (spritesRef.current.left || spritesRef.current.right) {
+        sizeCanvas();
+        drawFrame(activeSideRef.current, 0);
+      }
+    };
 
     window.addEventListener("scroll", onScroll, { passive: true });
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("resize", onResize);
 
     startTimerRef.current = window.setTimeout(begin, 300);
     const idle = bobLoop();
@@ -278,29 +302,30 @@ export function HeroVideoScrub() {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("scroll", onScroll);
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("resize", onResize);
       cancelAnimationFrame(rafRef.current);
       cancelBob();
       rafRef.current = 0;
       startedRef.current = false;
+      spritesRef.current = {};
     };
-  }, [reduce, getPlates, setSide, cancelBob, bobLoop, renderFrame, playNext]);
+  }, [reduce, cancelBob, bobLoop, drawFrame, playNext, sizeCanvas]);
 
-  // When the images are ready (after loading both grids) reveal the scene softly
+  // Desktop only: load the two sprites once, then reveal the scene softly.
   useEffect(() => {
-    const imgs = [LEFT_SRC, RIGHT_SRC].map((src) => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    });
-    Promise.all(
-      imgs.map((img) =>
-        img.decode().then(
-          () => null,
-          () => null,
-        ),
-      ),
-    ).then(() => setReady(true));
-  }, []);
+    if (reduce) return;
+    const imgs = { left: new Image(), right: new Image() };
+    imgs.left.src = LEFT_SRC;
+    imgs.right.src = RIGHT_SRC;
+    Promise.all([imgs.left.decode(), imgs.right.decode()])
+      .then(() => {
+        spritesRef.current = imgs;
+        sizeCanvas();
+        drawFrame("right", 0);
+        setReady(true);
+      })
+      .catch(() => setReady(true));
+  }, [reduce, drawFrame, sizeCanvas]);
 
   return (
     <div
@@ -313,34 +338,10 @@ export function HeroVideoScrub() {
         transition: "opacity 0.8s ease 0.15s",
       }}
     >
-      {/* The sprite plates (desktop) — the video below has no meaning here */}
-      {/* The right plate is shifted 5px to the left (the full video) to adjust the small difference between the two plates */}
-      <div
-        ref={rightPlateRef}
-        style={{
-          position: "absolute",
-          inset: 0,
-          transform: "translateX(-5px)",
-          backgroundImage: `url(${RIGHT_SRC})`,
-          backgroundSize: `${COLS * 100}% ${ROWS * 100}%`,
-          backgroundPosition: "0% 0%",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
-      <div
-        ref={leftPlateRef}
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: `url(${LEFT_SRC})`,
-          backgroundSize: `${COLS * 100}% ${ROWS * 100}%`,
-          backgroundPosition: "0% 0%",
-          backgroundRepeat: "no-repeat",
-          display: "none",
-        }}
-      />
+      {/* Desktop canvas — the single screen-sized raster (hidden on mobile) */}
+      <canvas ref={canvasRef} className="hidden h-full w-full lg:block" />
 
-      {/* Mobile videos (alternating auto-rotation) */}
+      {/* Mobile videos (alternating auto-rotation) — no canvas on small screens */}
       <div className="absolute inset-0 lg:hidden">
         <video
           ref={videoRightRef}
@@ -348,7 +349,7 @@ export function HeroVideoScrub() {
           muted
           playsInline
           preload="auto"
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 hidden h-full w-full object-cover"
         />
         <video
           ref={videoLeftRef}
