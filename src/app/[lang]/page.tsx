@@ -233,7 +233,7 @@ export default async function Home({
             return (
               <RevealItem key={collection.slug}>
                 <Link
-                  href={`/${locale}/catalog?collection=${collection.slug}`}
+                  href={`/${locale}/collections/${collection.slug}`}
                   className="group relative block aspect-[3/4] overflow-hidden rounded-2xl border border-border transition-shadow duration-500 hover:border-primary/40 hover:shadow-[0_0_45px_-14px_oklch(0.6_0.22_22/0.6)]"
                 >
                   <ProductArt

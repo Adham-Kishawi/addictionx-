@@ -82,7 +82,7 @@ export async function Footer({ locale }: { locale: Locale }) {
             {collections.map((collection) => (
               <li key={collection.slug}>
                 <Link
-                  href={`/${locale}/catalog?collection=${collection.slug}`}
+                  href={`/${locale}/collections/${collection.slug}`}
                   className="transition-colors hover:text-foreground"
                 >
                   {locale === "ar" ? collection.nameAr : collection.nameEn}
