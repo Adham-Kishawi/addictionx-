@@ -448,4 +448,4 @@ src/
 - **المجموعات (قرار ثابت):** بلا FK — `Product.collection` slug نصي يبقى كما هو؛ `Collection` model يُدار من الداشبورد (add/delete — الحذف يرفض ما دام بها منتجات).
 - **السوشيال (قرار ثابت):** Instagram + TikTok فقط — **لا فيسبوك** (حسب طلب walid).
 
-**البيئة:** Node v24 · npm 11 (مصدر npmmirror + PRISMA_ENGINES_MIRROR للتثبيت) · git v2.34 · PostgreSQL محلي (منفذ 5432) · dev server يعمل على المنفذ 3100.
+**البيئة:** Node v24 · npm 11 (مصدر npmmirror + PRISMA_ENGINES_MIRROR للتثبيت) · git v2.34 · PostgreSQL محلي (منفذ 5432) · dev server يعمل على المنفذ 3100
