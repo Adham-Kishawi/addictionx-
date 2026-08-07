@@ -1,0 +1,440 @@
+// Prisma Schema — Luxury Perfume E-commerce (Egypt, EGP)
+// القاعدة الحاكمة: كل المبالغ Int بوحدة القرش (100 قرش = 1 جنيه). لا Float أبدًا.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// Auth.js (Prisma Adapter)
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?   @unique
+  role          Role      @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  addresses         Address[]
+  orders            Order[]
+  reviews           Review[]
+  wishlistItems     WishlistItem[]
+  newsletterEntries NewsletterEntry[]
+  passwordHash      String?
+
+  @@map("users")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @id
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now())
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================
+// الكتالوج
+// ============================================================
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  nameEn      String?
+  slug        String   @unique
+  description String?
+  image       String?
+  parentId    String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  products Product[]
+
+  @@index([parentId])
+  @@index([slug])
+  @@map("categories")
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logo      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  products Product[]
+
+  @@map("brands")
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  nameEn        String?
+  slug          String   @unique
+  description   String?
+  descriptionEn String?
+  shortDesc     String?
+  brandId       String?
+  categoryId    String?
+  gender        Gender   @default(UNISEX)
+  // المجموعة (rush / noir / gold)
+  collection    String?
+  // المكونات { top, heart, base } — مصفوفات نصوص
+  notes         Json?
+  // التدرج اللوني الفني { from, to, glow }
+  art           Json?
+  rating        Float    @default(0)
+  reviewsCount  Int      @default(0)
+  // السعر الأساسي بالقرش — لكل size يخصم منه السعر الفعلي
+  basePrice     Int
+  // السعر قبل الخصم (للـ sale badge) — null يعني مفيش خصم
+  compareAtPrice Int?
+  isActive      Boolean  @default(true)
+  isFeatured    Boolean  @default(false)
+  isBestSeller  Boolean  @default(false)
+  isNew         Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  brand        Brand?           @relation(fields: [brandId], references: [id])
+  category     Category?        @relation(fields: [categoryId], references: [id])
+  images       ProductImage[]
+  variants     ProductVariant[]
+  reviews      Review[]
+  wishlistItems WishlistItem[]
+  orderItems   OrderItem[]
+
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([isActive, isFeatured])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  // Cloudinary public_id + secure URL
+  url       String
+  alt       String?
+  position  Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  // الحجم بالمل — مثل 50ml / 100ml
+  sizeMl    Int
+  // سعر فعلي بالقرش
+  price     Int
+  stock     Int      @default(0)
+  sku       String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@unique([productId, sizeMl])
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int // 1..5
+  title     String?
+  content   String?
+  isApproved Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([productId, isApproved])
+  @@map("reviews")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+// ============================================================
+// الطلبات
+// ============================================================
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  CARD
+  WALLET
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  userId        String?
+  status        OrderStatus @default(PENDING)
+  paymentMethod PaymentMethod
+  subtotal      Int // بالقرش
+  shippingFee   Int
+  discount      Int         @default(0)
+  total         Int // بالقرش
+  couponCode    String?
+  notes         String?
+  addressId     String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  user        User?       @relation(fields: [userId], references: [id])
+  address     Address?    @relation(fields: [addressId], references: [id])
+  items       OrderItem[]
+  shipment    Shipment?
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  variantId String?
+  // snapshot وقت الطلب — السعر/الاسم لا يتأثران بتعديل الكتالوج لاحقًا
+  productName String
+  sizeMl      Int?
+  unitPrice   Int // بالقرش
+  quantity    Int
+  lineTotal   Int // بالقرش
+
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product        @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model Shipment {
+  id          String      @id @default(cuid())
+  orderId     String      @unique
+  carrier     String
+  trackingNumber String?
+  status      String      @default("CREATED")
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  createdAt   DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("shipments")
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  orderId   String
+  provider  String // paymob / fawry / vodafone cash
+  reference String?
+  amount    Int // بالقرش
+  status    String   @default("PENDING")
+  raw       Json?
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("transactions")
+}
+
+// ============================================================
+// إعدادات المتجر (شحن ...)
+// ============================================================
+
+model StoreSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("store_settings")
+}
+
+// ============================================================
+// العناوين والكوبونات
+// ============================================================
+
+model Address {
+  id          String   @id @default(cuid())
+  userId      String
+  fullName    String
+  phone       String
+  governorate String
+  city        String
+  district    String?
+  street      String
+  building    String?
+  apartment   String?
+  landmark    String?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+model Coupon {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  discountType  DiscountType
+  discountValue Int // نسبة مئوية أو مبلغ بالقرش حسب النوع
+  minOrderAmount Int?     @default(0)
+  maxDiscount   Int?
+  maxUses       Int?
+  usedCount     Int       @default(0)
+  startsAt      DateTime?
+  expiresAt     DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+
+  @@map("coupons")
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+// ============================================================
+// المجموعات (Collections) — تُدار من الداشبورد
+// Product.collection عبارة عن slug نصي يشير إلى هذه الجداول
+// (بدون FK تدخّلي — حتى لا تنكسر الأماكن التي تقرأ الـ slug مباشرة)
+// ============================================================
+
+model Collection {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  nameAr    String
+  nameEn    String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("collections")
+}
+
+// ============================================================
+// النشرة البريدية
+// ============================================================
+
+model NewsletterEntry {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  userId    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("newsletter_entries")
+}
+
+// ============================================================
+// الأنواع (enums)
+// ============================================================
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  UNISEX
+}

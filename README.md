@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LUXE — متجر عطور فاخر
 
-## Getting Started
+متجر إلكتروني للعطور الفاخرة للسوق المصري (EGP) — تجربة تسوق سينمائية بمعايير عالمية.
 
-First, run the development server:
+## الستاك
+
+| الطبقة    | الأداة                                |
+| --------- | ------------------------------------- |
+| Framework | Next.js 16 App Router (Turbopack)     |
+| Language  | TypeScript (strict)                   |
+| Styling   | Tailwind CSS v4 + shadcn/ui           |
+| Animation | Framer Motion + GSAP (dynamic import) |
+| Forms     | React Hook Form + Zod                 |
+| Auth      | Auth.js (next-auth v5)                |
+| DB        | PostgreSQL + Prisma                   |
+| State     | Zustand                               |
+| Email     | Resend                                |
+
+## التشغيل محليًا
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+افتح [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## إعدادات البيئة
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+انسخ `.env.example` إلى `.env` واملأ القيم (PostgreSQL إلزامي).
 
-## Learn More
+## البنية
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├─ app/           # التوجيه فقط
+├─ features/      # كود الأعمال (components/actions/services/repositories/schemas/types)
+├─ components/    # ui · motion · layout
+├─ lib/           # prisma · utils
+├─ hooks/
+├─ stores/        # Zustand
+└─ config/        # site config
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## أوامر
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| أمر                  | الوصف          |
+| -------------------- | -------------- |
+| `npm run dev`        | خادم التطوير   |
+| `npm run build`      | بناء الإنتاج   |
+| `npm run lint`       | فحص ESLint     |
+| `npm run type-check` | فحص TypeScript |
+| `npm run format`     | تنسيق Prettier |
