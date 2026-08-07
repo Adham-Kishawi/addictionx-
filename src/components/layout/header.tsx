@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { CartButton } from "@/features/cart/components/cart-button";
 import { HeaderScroll } from "@/components/layout/header-scroll";
 import { SearchBox } from "@/features/catalog/components/search-box";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 
 export function Header({
@@ -78,12 +79,31 @@ export function Header({
 
           {/* Icons */}
           <div className="flex items-center gap-2 text-muted-foreground">
-            <div className="hidden md:block">
-              <SearchBox
-                locale={locale}
-                labels={{ placeholder: dict.catalog.searchPlaceholder }}
-              />
-            </div>
+            <MobileNav
+              locale={locale}
+              isAdmin={isAdmin}
+              labels={{
+                openMenu: dict.header.openMenu,
+                closeMenu: dict.header.closeMenu,
+                home: dict.nav.home,
+                shop: dict.nav.shop,
+                collection: dict.nav.collection,
+                account: dict.header.account,
+                admin: dict.header.admin,
+              }}
+              items={[
+                { href: `/${locale}`, label: dict.nav.home },
+                { href: `/${locale}/catalog`, label: dict.nav.shop },
+                {
+                  href: `/${locale}/collections`,
+                  label: dict.nav.collection,
+                },
+              ]}
+            />
+            <SearchBox
+              locale={locale}
+              labels={{ placeholder: dict.catalog.searchPlaceholder }}
+            />
             <LanguageSwitcher currentLocale={locale} />
             <ThemeToggle />
             <Link

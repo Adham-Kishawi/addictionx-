@@ -21,11 +21,21 @@ export function ProductActions({
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const run = async (fn: () => Promise<void>) => {
+  const run = async (fn: () => Promise<{ error?: string } | void>) => {
     setPending(true);
-    await fn();
-    router.refresh();
+    setError(null);
+    const res = await fn();
+    if (res && "error" in res) {
+      setError(
+        res.error === "HAS_ORDERS"
+          ? dict.admin.productHasOrders
+          : dict.admin.productDeleteError,
+      );
+    } else {
+      router.refresh();
+    }
     setPending(false);
   };
 
@@ -62,6 +72,12 @@ export function ProductActions({
       >
         <Trash2 className="size-4" />
       </Button>
+
+      {error && (
+        <span className="ms-1 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

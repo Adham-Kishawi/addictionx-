@@ -287,6 +287,10 @@ export async function updateProduct(
 
 export async function deleteProduct(id: string) {
   await requireAdmin();
+  const orderedCount = await prisma.orderItem.count({
+    where: { productId: id },
+  });
+  if (orderedCount > 0) return { error: "HAS_ORDERS" };
   await prisma.product.delete({ where: { id } });
   revalidatePath("/", "layout");
 }

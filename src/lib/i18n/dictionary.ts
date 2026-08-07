@@ -340,6 +340,9 @@ export const dictionary = {
       cannotDeleteSelf: "لا يمكنك حذف حسابك",
       userDeleteError: "فشل حذف المستخدم",
       deleteConfirm: "هل أنت متأكد من الحذف؟",
+      productHasOrders:
+        "لا يمكن حذف هذا المنتج — له طلبات مسجلة. استخدم زر الإخفاء بدلًا من ذلك.",
+      productDeleteError: "فشل حذف المنتج",
       shipment: "الشحنة",
       shipmentEmpty: "لا توجد شحنة لهذا الطلب",
       createShipment: "إنشاء شحنة",
@@ -806,6 +809,9 @@ export const dictionary = {
       cannotDeleteSelf: "You cannot delete your own account",
       userDeleteError: "Failed to delete user",
       deleteConfirm: "Are you sure you want to delete?",
+      productHasOrders:
+        "Cannot delete this product — it has orders on record. Use the hide toggle instead.",
+      productDeleteError: "Failed to delete product",
       shipment: "Shipment",
       shipmentEmpty: "No shipment for this order",
       createShipment: "Create Shipment",
