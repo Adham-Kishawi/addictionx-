@@ -1,4 +1,4 @@
-// إعدادات الشحن المشتركة — تُستخدم من الـ client (السلة) والـ server (إنشاء الطلب)
-// حتى لا يختلف السعر المحسوب في الواجهة عن السعر المؤكَّد في الخادم.
-export const FREE_SHIPPING_THRESHOLD = 150000; // 1500 ج.م بالقروش
-export const SHIPPING_FEE = 5000; // 50 ج.م بالقروش
+// Shared shipping settings — used from the client (cart) and the server (order creation)
+// so the price computed in the UI never differs from the price confirmed on the server.
+export const FREE_SHIPPING_THRESHOLD = 150000; // 1500 EGP in piasters
+export const SHIPPING_FEE = 5000; // 50 EGP in piasters

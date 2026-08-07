@@ -1,342 +1,338 @@
-# CLAUDE.md — مرجع السياق المشترك
+# CLAUDE.md — Shared Context Reference
 
-> هذا الملف يُقرأ تلقائيًا في بداية كل جلسة. أي قرار جديد يجب أن يُسجَّل هنا فورًا،
-> وإلا ستعمل الجلسة التالية بسياق قديم.
-
----
-
-## المشروع
-
-متجر عطور فاخر باسم **ADDICTIONX** — «Feel the Rush» — للسوق المصري، Front + Back في مشروع واحد.
-الجمهور المستهدف: **شباب** — لذلك الإبهار البصري هو الأولوية القصوى، لا الـ minimal الهادئ.
-
-الهدف: تجربة **سينمائية مبهرة** تُشعِر المستخدم أنه يتعامل مع علامة عطور فاخرة شبابية، لا marketplace.
-المستوى المطلوب: **production-ready startup**، لا demo ولا حلول مؤقتة.
-
-- المسار: `D:\E-Commrece`
-- السوق: مصر · العملة: EGP
-- الهوية: أسود عميق + نيون أحمر + فضي معدني (metallic) + خط القلب (Heartbeat) كتوقيع بصري
-- التصميم: Cinematic · Neon · Premium · غني بالحركة
+> This file is read automatically at the start of every session. Any new decision must be recorded here immediately,
+> otherwise the next session will work with stale context.
 
 ---
 
-## أسلوب العمل مع walid
+## Project
 
-- الشرح **بالعربية الفصحى المبسطة**، مع الإبقاء على المصطلحات التقنية بالإنجليزية.
-- **خطوة بخطوة. ملف واحد في كل مرة.** انتظر تأكيده قبل الانتقال للملف التالي.
-- **لا تُعطِ الحل مباشرة إلا إذا طلب.** اشرح سبب كل سطر.
-- عند وجود أكثر من طريقة: ابدأ بالأسهل، ثم اذكر البدائل.
-- عند وجود خطأ: حدّد مكانه → اشرح سببه → اكتب التصحيح موضحًا الفرق.
-- تعامل معه كمُتدرِّب يريد فهم البرمجة بعمق، لا نسخ الحلول.
+A luxury perfume store named **ADDICTIONX** — «Feel the Rush» — for the Egyptian market, Front + Back in one project.
+Target audience: **young people** — therefore visual wow is the top priority, not quiet minimalism.
 
-**السبب:** يريد أن يفهم المشروع بعمق يكفي لإعادة هيكلته بنفسه، لا مجرد تشغيله.
+Goal: a **cinematic, breathtaking experience** that makes the user feel they are dealing with a premium youth perfume brand, not a marketplace.
+Required level: **production-ready startup**, not a demo or temporary solution.
 
----
-
-## الستاك المُثبَّت
-
-| الطبقة          | الأداة                                                      |
-| --------------- | ----------------------------------------------------------- |
-| Framework       | Next.js 16 App Router (Turbopack default)                   |
-| Language        | TypeScript (strict)                                         |
-| Styling         | Tailwind CSS v4 + shadcn/ui (Base UI)                       |
-| Animation       | Framer Motion (framer-motion) + GSAP (dynamic import فقط)   |
-| Icons           | Lucide React                                                |
-| Forms           | React Hook Form + Zod                                       |
-| Auth            | Auth.js v5 (beta) — Credentials + PrismaAdapter + جلسات JWT |
-| DB              | PostgreSQL (local `luxury_perfume`) + Prisma                |
-| Password        | bcryptjs (CJS)                                              |
-| State           | Zustand                                                     |
-| Images          | Cloudinary                                                  |
-| Email           | Resend                                                      |
-| Package Manager | npm (registry: npmmirror)                                   |
-| Quality         | ESLint (flat config) · Prettier · Husky                     |
-| Deploy          | Vercel                                                      |
+- Path: `D:\E-Commrece`
+- Market: Egypt · Currency: EGP
+- Identity: deep black + neon red + metallic silver + Heartbeat line as the visual signature
+- Design: Cinematic · Neon · Premium · animation-rich
 
 ---
 
-## القرارات المعمارية وأسبابها
+## Working style with walid
 
-### 1. Next.js fullstack بطبقات صريحة — لا Express منفصل
+- Explain in **simple formal Arabic**, keeping technical terms in English.
+- **Step by step. One file at a time.** Wait for his confirmation before moving to the next file.
+- **Never give the solution directly unless asked.** Explain the reason for each line.
+- When there is more than one way: start with the easiest, then mention the alternatives.
+- When there is an error: locate it → explain its cause → write the fix explaining the difference.
+- Treat him as a trainee who wants to understand programming deeply, not copy solutions.
 
-كانت الخطة السابقة API منفصل بـ Express. **أُلغيت**، والسبب تقني لا تفضيلي:
+**Reason:** he wants to understand the project deeply enough to restructure it himself, not just run it.
 
-- الـ Server Actions تتحول إلى مجرد **proxy** يُنادي HTTP — طبقة زائدة بلا مقابل.
-- الـ Server Components تفقد أقوى ميزة فيها: القراءة من الـ DB مباشرة بدون round-trip.
-- Auth.js مُصمَّم ليعيش داخل Next — مع API منفصل تدير الـ session في مكانين أو تكتب JWT handoff يدويًا.
-- Vercel وحدها لا تكفي — تحتاج host ثانيًا للـ API: تكلفة أكبر، ops أكثر، ونقطة فشل زائدة.
+---
 
-**الهدف التعليمي الأصلي من Express** (فهم فصل الطبقات بيديك) تحقَّق بالطبقات الصريحة داخل Next:
+## Installed Stack
+
+| Layer           | Tool                                                           |
+| --------------- | -------------------------------------------------------------- |
+| Framework       | Next.js 16 App Router (Turbopack default)                      |
+| Language        | TypeScript (strict)                                            |
+| Styling         | Tailwind CSS v4 + shadcn/ui (Base UI)                          |
+| Animation       | Framer Motion (framer-motion) + GSAP (dynamic import only)     |
+| Icons           | Lucide React                                                   |
+| Forms           | React Hook Form + Zod                                          |
+| Auth            | Auth.js v5 (beta) — Credentials + PrismaAdapter + JWT sessions |
+| DB              | PostgreSQL (local `luxury_perfume`) + Prisma                   |
+| Password        | bcryptjs (CJS)                                                 |
+| State           | Zustand                                                        |
+| Images          | Cloudinary                                                     |
+| Email           | Resend                                                         |
+| Package Manager | npm (registry: npmmirror)                                      |
+| Quality         | ESLint (flat config) · Prettier · Husky                        |
+| Deploy          | Vercel                                                         |
+
+---
+
+## Architectural decisions and their reasons
+
+### 1. Next.js fullstack with explicit layers — no separate Express
+
+The old plan was a separate Express API. **Canceled**, and the reason is technical, not a preference:
+
+- Server Actions would become a mere **proxy** calling HTTP — a redundant layer with no benefit.
+- Server Components would lose their strongest feature: reading from the DB directly without a round-trip.
+- Auth.js is designed to live inside Next — with a separate API you manage the session in two places or write a manual JWT handoff.
+- Vercel alone is not enough — you need a second host for the API: more cost, more ops, and an extra point of failure.
+
+**The original educational goal of Express** (understanding layer separation by hand) is achieved with the explicit layers inside Next:
 
 ```
 Server Action  →  Service  →  Repository  →  Prisma
 ```
 
-**القاعدة الحاكمة:** الـ Server Action **لا تلمس Prisma أبدًا**. تُنادي service،
-والـ service تُنادي repository، والـ repository وحده يعرف Prisma.
+**Governing rule:** the Server Action **never touches Prisma**. It calls a service,
+the service calls a repository, and only the repository knows Prisma.
 
-> استثناء مستقبلي: عند الحاجة لـ background jobs أو payment webhooks، تُناقَش خدمة منفصلة وقتها.
+> Future exception: when background jobs or payment webhooks are needed, a separate service will be discussed at that time.
 
-### 2. Framer Motion أساسًا · GSAP بـ dynamic import فقط
+### 2. Framer Motion as the base · GSAP only via dynamic import
 
-البريف طلب Motion أساسًا وGSAP "فقط إن لزم"، لكن مشاهد الـ hero والـ gallery
-scroll-driven وتحتاج ScrollTrigger. تحميل المكتبتين في الـ initial bundle **يضرب هدف 90+ Lighthouse**.
+The brief asked for Motion as the base and GSAP "only if needed", but the hero and gallery scenes are scroll-driven and need ScrollTrigger. Loading both libraries in the initial bundle **kills the 90+ Lighthouse goal**.
 
-- Framer Motion (`framer-motion` package) → كل شيء: page transitions · hover · stagger · layout.
-  مكوّنات الحركة دائمًا Client Components (`"use client"`) تُستدعى من صفحات Server Components.
-- GSAP ScrollTrigger → داخل مشاهد الـ scroll السينمائية فقط، عبر `dynamic()` مع `ssr: false`.
-- **احترم `prefers-reduced-motion` دائمًا.** الأداء أولًا.
+- Framer Motion (`framer-motion` package) → everything: page transitions · hover · stagger · layout.
+  Motion components are always Client Components (`"use client"`) called from Server Component pages.
+- GSAP ScrollTrigger → only inside the cinematic scroll scenes, via `dynamic()` with `ssr: false`.
+- **Always respect `prefers-reduced-motion`.** Performance first.
 
-### 3. الأموال تُخزَّن كأعداد صحيحة (قروش)
+### 3. Money stored as integers (piasters/qirsh)
 
-لا `Float` ولا `Double` للأسعار أبدًا — الـ floating point يُنتج أخطاء تقريب في الحسابات المالية.
-كل المبالغ `Int` بوحدة **القرش** (100 قرش = 1 جنيه)، والتحويل للعرض في طبقة الـ UI فقط.
+Never `Float` or `Double` for prices — floating point produces rounding errors in financial calculations.
+All amounts are `Int` in **piasters** (100 piasters = 1 EGP), and conversion for display happens only in the UI layer.
 
-### 4. سير عمل الصور
+### 4. Image workflow
 
-لا توجد أداة توليد صور في هذه الجلسة. التقسيم: **أنا أكتب الـ prompts وأعالج الصور،
-وwalid يُولِّدها في GPT**، ثم تُرفع على Cloudinary.
+There is no image generation tool in this session. Division of labor: **I write the prompts and process the images, and walid generates them in GPT**, then they are uploaded to Cloudinary.
 
-### 5. قاعدة الأصالة
+### 5. Originality rule
 
-المراجع (`21st.dev` · `motionsites.ai` · أي design reference) **إلهام فقط**:
-تُدرَس أنماط التفاعل ولغة الحركة وتجربة المستخدم. **لا نسخ** لتصميم أو كود أو branding.
+References (`21st.dev` · `motionsites.ai` · any design reference) are **inspiration only**:
+study the interaction patterns, the language of motion, and the user experience. **No copying** of design, code, or branding.
 
-### 6. الترجمه (i18n) — AR/EN عبر `[lang]` segment
+### 6. i18n — AR/EN via `[lang]` segment
 
-- المسار يأخذ الشكل `/ar/...` و `/en/...` (dynamic segment `[lang]`) — صديق لـ SEO.
-- ملف `proxy.ts` (بديل middleware في Next 16) يحوّل `/` → اللغة الافتراضية (`ar`).
-- القواميس في `src/lib/i18n/dictionary.ts` (نوع `Dictionary` مشتق من `as const`).
-- `dir` و `lang` يُحدَّدان من الـ segment في الـ layout — `ar` = rtl، `en` = ltr.
-- اللغة الافتراضية: العربية.
+- Paths look like `/ar/...` and `/en/...` (dynamic segment `[lang]`) — SEO friendly.
+- `proxy.ts` (middleware replacement in Next 16) redirects `/` → the default language (`ar`).
+- Dictionaries live in `src/lib/i18n/dictionary.ts` (`Dictionary` type derived from `as const`).
+- `dir` and `lang` are determined from the segment in the layout — `ar` = rtl, `en` = ltr.
+- Default language: Arabic.
 
-### 7. الثيم — دارك افتراضي مع تبديل
+### 7. Theme — dark by default with toggle
 
-- دارك هو الافتراضي (class `dark` على `<html>`)، مع زر تبديل ليل/نهار.
-- `ThemeProvider` في `src/components/theme/theme-provider.tsx` يخزّن التفضيل في `localStorage`.
-- الألوان كلها متغيرات CSS (`--background`, `--primary`, ...) — دارك في `:root,.dark` و فاتح في `:root[data-theme="light"]`.
+- Dark is the default (class `dark` on `<html>`), with a light/dark toggle button.
+- `ThemeProvider` in `src/components/theme/theme-provider.tsx` stores the preference in `localStorage`.
+- All colors are CSS variables (`--background`, `--primary`, ...) — dark in `:root,.dark` and light in `:root[data-theme="light"]`.
 
-### 8. الإبهار البصري — أولوية قصوى (Hero)
+### 8. Visual wow — top priority (Hero)
 
-الجمهور شباب، فالمشاهد الافتتاحية غنية بالحركة، بمكونات في `src/components/motion/`:
+The audience is young, so the opening scenes are animation-rich, with components in `src/components/motion/`:
 
-- `AnimatedTitle` — حروف بتدخل واحد ورا التاني بـ `blur + rotateX + y`، وعنوان `text-metallic-shine` بيلمع بشكل متحرك.
-- `AuroraBackground` — أورورا متحركة (توهج أحمر + كرات أرجوانية/حمراء بتتحرك + ضباب سفلي).
-- `ParticleField` — جسيمات متوهجة بتطير للأعلى بنبض.
-- `HeartbeatLine` — خط القلب كتوقيع بصري بيتكرر.
-- دائمًا `prefers-reduced-motion` محترم وكل شيء بأداء عالي (transform/opacity فقط).
+- `AnimatedTitle` — letters enter one after another with `blur + rotateX + y`, and a `text-metallic-shine` title that shimmers.
+- `AuroraBackground` — animated aurora (red glow + purple/red drifting orbs + bottom mist).
+- `ParticleField` — glowing particles flying upward with a pulse.
+- `HeartbeatLine` — the heartbeat line as a repeating visual signature.
+- Always `prefers-reduced-motion` is respected and everything is high performance (transform/opacity only).
 
-### 9. Auth.js v5 فعلية مع DB
+### 9. Real Auth.js v5 with DB
 
-- `next-auth@^5.0.0-beta.29` + `@auth/prisma-adapter` + Credentials provider + **جلسات JWT** (لا database sessions).
-- التركيب: `src/lib/auth.ts` (authOptions) · route handler `/api/auth/[...nextauth]/route.ts` · `src/types/next-auth.d.ts` (يثري `Session.user.id` و `role`).
-- كلمة المرور: **`bcryptjs`** (يعمل CJS بنجاح مع `next build` — خلافًا لـ `bcrypt` الأصلي الذي كسر البناء).
-- التسجيل عبر **Server Action** (`registerAction` في `src/features/auth/actions.ts`) — لا REST endpoint. واجهات login/register تكلم `signIn("credentials")` مع تمرير `callbackUrl`.
-- `AUTH_SECRET` + `AUTH_TRUST_HOST=true` في `.env` (ضروري لبيئة dev المحلية).
+- `next-auth@^5.0.0-beta.29` + `@auth/prisma-adapter` + Credentials provider + **JWT sessions** (no database sessions).
+- Setup: `src/lib/auth.ts` (authOptions) · route handler `/api/auth/[...nextauth]/route.ts` · `src/types/next-auth.d.ts` (enriches `Session.user.id` and `role`).
+- Password: **`bcryptjs`** (works CJS successfully with `next build` — unlike the original `bcrypt` which broke the build).
+- Registration via **Server Action** (`registerAction` in `src/features/auth/actions.ts`) — no REST endpoint. The login/register forms call `signIn("credentials")` passing `callbackUrl`.
+- `AUTH_SECRET` + `AUTH_TRUST_HOST=true` in `.env` (required for local dev).
 
-### 10. الأدوار (Roles) والحماية
+### 10. Roles and protection
 
-- `User.role`: `CUSTOMER` | `ADMIN`. تسلسل الوصول:
-  - غير مسجّل → `redirect` إلى `/{lang}/login?callbackUrl=...`
-  - عميل → `redirect` إلى `/{lang}/account` (لا يرى admin)
-  - أدمن → يفتح اللوحة كاملة.
-- **حماية مزدوجة:** `<admin>/layout.tsx` (redirect قبل أي render) + `requireAdmin()` داخل كل Server Action (لا يُعتمد على الـ UI وحده).
+- `User.role`: `CUSTOMER` | `ADMIN`. Access chain:
+  - Not logged in → `redirect` to `/{lang}/login?callbackUrl=...`
+  - Customer → `redirect` to `/{lang}/account` (cannot see admin)
+  - Admin → full dashboard.
+- **Double protection:** `<admin>/layout.tsx` (redirect before any render) + `requireAdmin()` inside every Server Action (UI alone is never trusted).
 
-### 11. لوحة التحكم (admin)
+### 11. Admin dashboard
 
-- المسارات: `/{lang}/admin` (نظرة عامة: إحصائيات + أحدث الطلبات + مخزون منخفض) · `products` + `products/new` + `products/[id]` (CRUD) · `orders` + `orders/[id]` (فلاتر حالة + تفاصيل + تغيير حالة + إدارة الشحنة) · `users` (إضافة/حذف مستخدم + تغيير دور) · `coupons` (إنشاء/تفعيل/حذف كوبونات) · `settings` (إعدادات الشحن).
-- كل منطق الـ admin في `src/features/admin/` (actions · status · mappers) و `src/components/admin/` (product-form · product-actions · order-status-select · user-role-select · admin-nav · add-user-form · delete-user-button · shipment-form · coupon-form · coupon-actions · shipping-settings-form).
-- نموذج المنتج (create/edit) نموذج واحد موحّد يحوي حقولًا ثنائية اللغة (ar/en) + notes + ألوان art + variants ديناميكية + **نسبة خصم** (`discountPercent` 0–90) تُحسب منها `compareAtPrice` تلقائيًا (`round(base / (1 - pct/100))` حيث base = أقل سعر variant). الـ **Sale** = وجود `compareAtPrice` — فلتر "على العرض" في قائمة المنتجات + شارة في بطاقات الستورفرنت + صفحة المنتج.
-- `user-role-select` يمنع المستخدم من تغيير دوره هو.
-- إضافة مستخدم: `createUser` (الاسم/البريد/كلمة المرور/الدور — البريد يُطبَّع lowercase عبر zod). حذف مستخدم: `deleteUser` (لا يحذف نفسه · طلباته تُفصل `userId→null` في معاملة مع الحذف).
-- الشحن: `updateOrderStatus` عند SHIPPED يُنشئ/يحدّث `Shipment` (carrier افتراضي Bosta + shippedAt)، وعند DELIVERED يُحدّث deliveredAt، وعند CANCELLED/REFUNDED يحذف الشحنة. `updateShipment` لتعديل carrier/tracking يدويًا. الـ `shipment-form` في تفاصيل الطلب.
-- **الكوبونات:** `Coupon` model (`code` فريد · `discountType` PERCENT|FIXED · `discountValue` — النسبة % تُخزَّن كما هي والمبلغ الثابت بالقروش ×100 · `minOrderAmount`/`maxDiscount` بالقروش (nullable مع `@default(0)`) · `maxUses`/`expiresAt`/`startsAt` nullable · `usedCount`). `createCoupon` (يرفض تكرار الكود) · `toggleCoupon` · `deleteCoupon`. التحقق الفعلي في `createOrder` (الخادم مصدر الحقيقة) + `validateCoupon` للتحقق الفوري في الواجهة. **خطر TypeScript:** `minOrderAmount` في الـ schema `Int?` — أي مقارنة معه تحتاج `?? 0`.
-- **إعدادات الشحن:** `StoreSetting` model (key/value — `shipping_fee_qirsh` · `free_shipping_threshold_qirsh` · `default_carrier`). `updateShippingSettings` (upsert + `clearConfigCache` + revalidate). `getShippingConfig()` في `src/lib/store-config.ts` (قراءة DB بذاكرة 5 ثوانٍ + fallback للافتراضيات 5000/150000/Bosta) + route عام `GET /api/shipping-config` (no-store) يقرؤه الـ checkout-form و cart-drawer. الشحن مجاني إذا `subtotal - discount >= threshold`. الثوابت في `src/lib/checkout-config.ts` أصبحت fallback فقط — لا تعديل عليها.
+- Routes: `/{lang}/admin` (overview: stats + latest orders + low stock) · `products` + `products/new` + `products/[id]` (CRUD) · `orders` + `orders/[id]` (status filters + details + status change + shipment management) · `users` (add/delete user + change role) · `coupons` (create/activate/delete coupons) · `settings` (shipping settings).
+- All admin logic lives in `src/features/admin/` (actions · status · mappers) and `src/components/admin/` (product-form · product-actions · order-status-select · user-role-select · admin-nav · add-user-form · delete-user-button · shipment-form · coupon-form · coupon-actions · shipping-settings-form).
+- Product form (create/edit) is a single unified form with bilingual (ar/en) fields + notes + art colors + dynamic variants + **discount percentage** (`discountPercent` 0–90) from which `compareAtPrice` is computed automatically (`round(base / (1 - pct/100))` where base = cheapest variant price). **Sale** = presence of `compareAtPrice` — "on sale" filter in the product list + badge on storefront cards + product page.
+- `user-role-select` prevents a user from changing their own role.
+- Add user: `createUser` (name/email/password/role — email lowercased via zod). Delete user: `deleteUser` (cannot delete self · their orders are detached `userId→null` in a transaction with the deletion).
+- Shipping: `updateOrderStatus` on SHIPPED creates/updates `Shipment` (default carrier Bosta + shippedAt), on DELIVERED updates deliveredAt, on CANCELLED/REFUNDED deletes the shipment. `updateShipment` for manual carrier/tracking edits. The `shipment-form` is in the order details.
+- **Coupons:** `Coupon` model (`code` unique · `discountType` PERCENT|FIXED · `discountValue` — percentage stored as-is and fixed amount in piasters ×100 · `minOrderAmount`/`maxDiscount` in piasters (nullable with `@default(0)`) · `maxUses`/`expiresAt`/`startsAt` nullable · `usedCount`). `createCoupon` (rejects duplicate code) · `toggleCoupon` · `deleteCoupon`. Actual validation in `createOrder` (server is source of truth) + `validateCoupon` for instant UI validation. **TypeScript pitfall:** `minOrderAmount` in the schema is `Int?` — any comparison needs `?? 0`.
+- **Shipping settings:** `StoreSetting` model (key/value — `shipping_fee_qirsh` · `free_shipping_threshold_qirsh` · `default_carrier`). `updateShippingSettings` (upsert + `clearConfigCache` + revalidate). `getShippingConfig()` in `src/lib/store-config.ts` (reads DB with 5-second cache + fallback to defaults 5000/150000/Bosta) + public route `GET /api/shipping-config` (no-store) read by the checkout-form and cart-drawer. Free shipping when `subtotal - discount >= threshold`. The constants in `src/lib/checkout-config.ts` are now fallback only — do not edit them.
 
-### 11b. داشبورد العميل (account)
+### 11b. Customer dashboard (account)
 
-- صفحة `/{lang}/account` تبويبات: **نظرة عامة / طلباتي / عناويني / مفضلتي** (مكوّن client `account-tabs` يستقبل بيانات serializable).
-- تفاصيل طلب العميل: `/{lang}/account/orders/[id]` للقراءة فقط — عناصر الطلب + عنوان التوصيل + **تتبع الشحنة** (carrier/tracking/status من `Shipment`).
-- المفضلة: `WishlistItem` model (فعل) + `toggleWishlist` (server action، upsert/delete حسب الحالة) + زر `WishlistButton` في بطاقة المنتج وصفحة المنتج + `getWishlistIds` (React cache) لجلب ids المستخدم في الستورفرنت. غير المسجّل لا يرى الأزرار.
-- **خطأ Node لا Browser:** `toLocaleDateString` لا يقبل `timeStyle` (الباوزرات تتسامح، Node يرمي `Invalid option: timeStyle`) — استخدم `toLocaleString` للتاريخ+الوقت.
+- Page `/{lang}/account` with tabs: **Overview / My Orders / My Addresses / My Wishlist** (client component `account-tabs` receiving serializable data).
+- Customer order details: `/{lang}/account/orders/[id]` read-only — order items + delivery address + **shipment tracking** (carrier/tracking/status from `Shipment`).
+- Wishlist: `WishlistItem` model (real) + `toggleWishlist` (server action, upsert/delete by state) + `WishlistButton` on product cards and the product page + `getWishlistIds` (React cache) to fetch ids for the storefront. Unregistered users don't see the buttons.
+- **Node not Browser error:** `toLocaleDateString` doesn't accept `timeStyle` (browsers tolerate it, Node throws `Invalid option: timeStyle`) — use `toLocaleString` for date+time.
 
-### 8b. الإبهار البصري — الموجة الثانية (ميلستون الأنيميشن)
+### 8b. Visual wow — second wave (animation milestone)
 
-طلَب walid: **العميل يجب أن يَنبهر بصريًا** — كل شاشة ستورفرنت عليها توقيع حركي. **المنفَّذ (wave 1):**
+walid's request: **the customer must be visually amazed** — every storefront screen has a motion signature. **Implemented (wave 1):**
 
-- `src/components/motion/reveal.tsx` — نظام الظهور عند التمرير: `Reveal` (عنصر واحد) + `RevealStagger`/`RevealItem` (شبكات متتالية)، `whileInView` مرة واحدة + احترام `prefers-reduced-motion`. استُخدم في الرئيسية (بست سيلرز/المجموعات/المزايا) و catalog (بطاقات/فلتر) وصفحة المنتج.
-- `src/components/motion/marquee.tsx` — شريط كلمات متحرك (3 نسخ + `@keyframes marquee-x` translateX(–33.33%)، يتوقف عند الـ hover) يُركَّب مباشرة بعد الـ hero في الرئيسية (كلمات من `dict.home.ticker`).
-- `src/components/motion/fly-to-cart.tsx` — **طيران المنتج للسلة:** `flyToCart(rect)` يطلق `CustomEvent("addictionx:fly-to-cart")`، و`<CartFlyProvider/>` (مثبّت في `[lang]/layout.tsx`) يطيّر جرعة ضوء من الزر إلى `[data-cart-target]` (أيقونة السلة في `cart-button`) ويبعث `addictionx:cart-bump` لنبضة الأيقونة. `AddToCartButton` يطلقه من `getBoundingClientRect` + `whileTap` + نبضة نجاح.
-- بطاقة المنتج: hover سينمائي — توهج نيون (`mix-blend-screen`) + شريط ضوء ماسح (`skew + translateX` 700ms) + حلقة مضيئة (`shadow red`) — كلها transform/opacity على CSS.
-- `SectionHeading` الآن `Reveal` + عنوان `text-metallic-shine` + خط heartbeat تحته (توقيع العلامة).
-- الأزرار الرئيسية: CTA الختامي بنبض `heartbeat-pulse`؛ زر الـ hero الأساسي بـ shadow نيون.
-- **منجز (wave 2):** `PageTransition` (يلف `{children}` في اللayout — دخول ناعم مع كل تنقّل عبر الـ pathname كـ key) · `CursorGlow` (توهج نيون بذاكرة spring يتبع المؤشر — Desktop + `pointer:fine` فقط، يُفعَّل من أول حركة ماوس لتجنّب setState متزامن في effect) · `CountUp` + `StatsBand` (عدّادات أرقام حقيقية من DB — عدد المنتجات/إجمالي التقييمات/أعلى تقييم — تعدّ عند الظهور) · نبضة wishlist (انفجار قلب + دوران عند التفعيل).
+- `src/components/motion/reveal.tsx` — scroll-reveal system: `Reveal` (single element) + `RevealStagger`/`RevealItem` (staggered grids), `whileInView` once + respects `prefers-reduced-motion`. Used on the home page (bestsellers/collections/perks), catalog (cards/filter), and product page.
+- `src/components/motion/marquee.tsx` — scrolling word strip (3 copies + `@keyframes marquee-x` translateX(–33.33%), pauses on hover) mounted right after the hero on the home page (words from `dict.home.ticker`).
+- `src/components/motion/fly-to-cart.tsx` — **product flying to the cart:** `flyToCart(rect)` dispatches `CustomEvent("addictionx:fly-to-cart")`, and `<CartFlyProvider/>` (mounted in `[lang]/layout.tsx`) flies a light streak from the button to `[data-cart-target]` (cart icon in `cart-button`) and emits `addictionx:cart-bump` for the icon pulse. `AddToCartButton` triggers it from `getBoundingClientRect` + `whileTap` + success pulse.
+- Product card: cinematic hover — neon glow (`mix-blend-screen`) + scanning light bar (`skew + translateX` 700ms) + glowing ring (`shadow red`) — all transform/opacity on CSS.
+- `SectionHeading` is now `Reveal` + `text-metallic-shine` title + heartbeat line under it (brand signature).
+- Main buttons: closing CTA pulses `heartbeat-pulse`; hero primary button has neon shadow.
+- **Done (wave 2):** `PageTransition` (wraps `{children}` in the layout — smooth entry on every navigation using pathname as key) · `CursorGlow` (neon glow with spring memory following the cursor — Desktop + `pointer:fine` only, activated from the first mouse move to avoid synchronous setState in an effect) · `CountUp` + `StatsBand` (real DB number counters — product count/total reviews/highest rating — counting on appear) · wishlist pulse (heart explosion + rotation on activation).
 
-**القاعدة الحاكمة (ثابتة):** Framer Motion فقط (client components) · transform/opacity فقط للأداء · `prefers-reduced-motion` إجباري · كل حركة ≤ ~800ms · لا حركة بلا غرض (كل حركة تحكي "فخامة/حماس/دفعة"). لا touch لواجهات الأدمن إلا ما يفيد.
+**Governing rule (fixed):** Framer Motion only (client components) · transform/opacity only for performance · `prefers-reduced-motion` mandatory · every animation ≤ ~800ms · no animation without purpose (each one tells "luxury/excitement/push"). Don't touch admin interfaces except where useful.
 
-- **ملاحظة حركية:** `dict.*` من النوع `as const` — أي مكوّن يقبل مصفوفة من القاموس اجعل البروب `readonly string[]`.
+- **Motion note:** `dict.*` is of type `as const` — any component accepting an array from the dictionary should type the prop as `readonly string[]`.
 
-### 12. قاعدة Next 16 / حدود Server↔Client (أخطاء حقيقية وقعت)
+### 12. Next 16 rules / Server↔Client limits (real errors that occurred)
 
-- `params` و `searchParams` **async** إجباريًا (يجب `await params`).
-- `proxy.ts` بديل الـ middleware (Next 16).
-- مكوّن Server يستورد `motion` يخرّب الـ SSR — الحل `"use client"` أو CSS hover بدله.
-- **`Functions cannot be passed directly to Client Components`** — لا يجوز تمرير دوال/كلاسات (مثل icons lucide) من Server Component إلى Client Component. وقعت فعلًا في `admin/layout.tsx` (مصفوفة nav تحوي icons). **الحل:** تُعرَّف الأيقونات/البنية داخل الـ client component نفسه، ويُمرَّر بيانات سيرياليزابل فقط (نصوص/مسارات).
-- Base UI Button للـ polymorphism يستخدم `render={<Link/>}` — لا `asChild`.
+- `params` and `searchParams` are **async** (must `await params`).
+- `proxy.ts` replaces middleware (Next 16).
+- A Server component importing `motion` breaks SSR — solution `"use client"` or CSS hover instead.
+- **`Functions cannot be passed directly to Client Components`** — you cannot pass functions/classes (such as lucide icons) from a Server Component to a Client Component. It actually happened in `admin/layout.tsx` (nav array containing icons). **Solution:** define the icons/structure inside the client component itself, pass only serializable data (text/paths).
+- Base UI Button for polymorphism uses `render={<Link/>}` — not `asChild`.
 
-### 13. القراءة من DB والبذور
+### 13. Reading from DB and seeding
 
-- الستورفرنت يقرأ من DB عبر `src/features/catalog/data/products-db.ts` (بنفس واجهة `Product` الـ mock — الـ mock يبقى مرجع الشكل فقط). الصفحات القارئة `force-dynamic`.
-- البذور: `prisma/seed.ts` + `npm run db:seed` (عبر `tsx` devDep) → أدمن + 8 منتجات + 3 مجموعات + variant 100ml لكل منتج.
-- الأسعار في DB `Int` بالقروش — التحويل من جنيه: `egpToQirsh` (×100) في `admin/actions.ts`، والعرض عبر `formatPrice()` في `products.ts`.
-- `gender` في DB: `MALE/FEMALE/UNISEX` — الستورفرنت يحوّلها lowercase.
+- Storefront reads from DB via `src/features/catalog/data/products-db.ts` (same interface as the `Product` mock — the mock stays only as a shape reference). Reading pages are `force-dynamic`.
+- Seeds: `prisma/seed.ts` + `npm run db:seed` (via `tsx` devDep) → admin + 8 products + 3 collections + 100ml variant per product.
+- Prices in DB are `Int` in piasters — conversion from EGP: `egpToQirsh` (×100) in `admin/actions.ts`, display via `formatPrice()` in `products.ts`.
+- `gender` in DB: `MALE/FEMALE/UNISEX` — storefront lowercases it.
 
-### 14. تقييمات المنتجات (Customer Reviews)
+### 14. Product reviews (Customer Reviews)
 
-- **السياسة:** تقييم واحد لكل منتج/مستخدم — `Review` upsert على المفتاح المركّب `productId_userId`. التقييم يُنشر (isApproved) فقط بعد موافقة الأدمن، وتعديل العميل لِتقييمه المعتمد يُعيده pending.
-- **المنطق:** `src/features/reviews/actions.ts` — `createReview` (upsert + zod؛ العنوان اختياري ≤80، المحتوى 3–1000) · `moderateReview` (موافقة/رفض) · `deleteReview`. كل تغيير معتمد يستدعي `recomputeProductStats` (يُعاد حساب `rating` = round(avg×10)/10 و `reviewsCount` من التقييمات المعتمدة **الفعلية** — البذور كانت أرقامًا تسويقية وهمية فتنهار عند أول موافقة، وهذا مقصود).
-- **الواجهات:** `star-input.tsx` (StarInput تفاعلي + StarDisplay للعرض) · `review-form.tsx` (نموذج العميل — كتابة/تعديل + حالة نجاح/خطأ) · `review-actions.tsx` (أزرار أدمن: موافقة/رفض/حذف).
-- **التضمين:** صفحة المنتج `product/[slug]` — قائمة المعتمدين (مع user.name) + `rating.toFixed(1)` + نموذج العميل إن كان مسجّلًا (مع `existing` لتعديل تقييمه) أو رابط تسجيل دخول مع callbackUrl · لوحة `admin/reviews` (كل التقييمات مع منتج/مستخدم/شارة pending + ReviewActions).
-- **مفاتيح القاموس:** `dict.reviews.*` (title/summary/noReviews/loginPrompt/writeTitle/editTitle/titlePlaceholder/contentPlaceholder/submit/update/success/reviewError/by/pendingBadge/reviewOn) + `dict.admin.reviews/approve/reject`.
+- **Policy:** one review per product/user — `Review` upsert on the composite key `productId_userId`. The review is published (isApproved) only after admin approval, and a customer editing an approved review returns it to pending.
+- **Logic:** `src/features/reviews/actions.ts` — `createReview` (upsert + zod; title optional ≤80, content 3–1000) · `moderateReview` (approve/reject) · `deleteReview`. Every approved change calls `recomputeProductStats` (recomputes `rating` = round(avg×10)/10 and `reviewsCount` from the **actual** approved reviews — the seed numbers were fake marketing numbers and collapse at the first approval, which is intentional).
+- **UIs:** `star-input.tsx` (interactive StarInput + StarDisplay for display) · `review-form.tsx` (customer form — write/edit + success/error state) · `review-actions.tsx` (admin buttons: approve/reject/delete).
+- **Integration:** product page `product/[slug]` — list of approved (with user.name) + `rating.toFixed(1)` + customer form if logged in (with `existing` to edit their review) or login link with callbackUrl · `admin/reviews` board (all reviews with product/user/pending badge + ReviewActions).
+- **Dictionary keys:** `dict.reviews.*` (title/summary/noReviews/loginPrompt/writeTitle/editTitle/titlePlaceholder/contentPlaceholder/submit/update/success/reviewError/by/pendingBadge/reviewOn) + `dict.admin.reviews/approve/reject`.
 
-### 15. إدارة المجموعات (Collections) من الداشبورد
+### 15. Collections management from the dashboard
 
-- **النموذج:** `Collection` model جديد (migration `collections`): `slug` فريد + `nameAr/nameEn` + `sortOrder` + `isActive`. **لا FK بينها وبين Product** — `Product.collection` يبقى slug نصيًا (قرار تعمّدي حتى لا تنكسر كل الأماكن التي تقرأ الـ slug).
-- **إصلاح البذرة:** كانت تستخدم `prisma.category` لِلمجموعات — **حُوّلت إلى `prisma.collection`**.
-- **القراءة:** `getCollections()` في `products-db.ts` (DB، fallback إلى المصفوفة الثابتة `collections` في `products.ts` إذا كانت القاعدة فارغة — يجب `map` لأن الثابت `readonly`). المستخدمون: footer · home · catalog (فلاتر) · نموذج المنتج (select يعرض `slug — name`).
-- **الإدارة:** `src/features/admin/collections-actions.ts` — `createCollection` (رفض تكرار slug عبر zod regex) · `deleteCollection` (يمنع الحذف إن كان بها منتجات — `NOT_EMPTY`). الصفحة `admin/collections` تعرض كل مجموعة مع **عدد عطورها وأسمائها** (تُجمع بالـ slug عبر Map). نموذج `collection-form.tsx` (slug يُشتق تلقائيًا من الاسم الإنجليزي) + زر `collection-delete.tsx`.
-- **مفاتيح القاموس:** `dict.admin.collections/addCollection/collectionNameAr/collectionNameEn/collectionSlug/collectionCreated/collectionCreateError/collectionDeleteError/collectionEmpty/collectionProducts/noCollections`.
+- **Model:** new `Collection` model (migration `collections`): `slug` unique + `nameAr/nameEn` + `sortOrder` + `isActive`. **No FK between it and Product** — `Product.collection` stays a text slug (deliberate decision so nothing that reads the slug breaks).
+- **Seed fix:** it used `prisma.category` for collections — **switched to `prisma.collection`**.
+- **Reading:** `getCollections()` in `products-db.ts` (DB, falls back to the static `collections` array in `products.ts` if the DB is empty — must `map` because the constant is `readonly`). Consumers: footer · home · catalog (filters) · product form (select shows `slug — name`).
+- **Management:** `src/features/admin/collections-actions.ts` — `createCollection` (rejects duplicate slug via zod regex) · `deleteCollection` (blocks deletion if it has products — `NOT_EMPTY`). The `admin/collections` page shows every collection with **its perfumes' count and names** (aggregated by slug via Map). Form `collection-form.tsx` (slug derived automatically from the English name) + button `collection-delete.tsx`.
+- **Dictionary keys:** `dict.admin.collections/addCollection/collectionNameAr/collectionNameEn/collectionSlug/collectionCreated/collectionCreateError/collectionDeleteError/collectionEmpty/collectionProducts/noCollections`.
 
-### 15b. السوشيال — الروابط الحقيقية (بلا فيسبوك)
+### 15b. Social — real links (no Facebook)
 
-- `siteConfig.social` في `src/config/site.ts`: **Instagram `https://www.instagram.com/addictionn_x`** و **TikTok `https://www.tiktok.com/@addiction_x8`** — **حُذف facebook نهائيًا**. الفوتر يعرض Instagram + TikTok فقط.
+- `siteConfig.social` in `src/config/site.ts`: **Instagram `https://www.instagram.com/addictionn_x`** and **TikTok `https://www.tiktok.com/@addiction_x8`** — **facebook removed permanently**. The footer shows Instagram + TikTok only.
 
-### 16. هرم النوتات في صفحة المنتج
+### 16. Notes pyramid on the product page
 
-- قسم المكونات في `product/[slug]` أصبح **شكل هرم**: القاعدة (الأوسع) أسفل، فالقلب، فالمقدمة (الأضيق) أعلى — بطل ضوئي بدل الأعمدة المتساوية. اسم المجموعة يُقرأ من `getCollections()` ديناميكيًا (لا hardcode rush/noir/gold).
+- The notes section in `product/[slug]` became **a pyramid shape**: base (widest) at the bottom, then heart, then top notes (narrowest) at the top — a light pyramid instead of equal columns. The collection name is read from `getCollections()` dynamically (no hardcoded rush/noir/gold).
 
-### 17. العناوين — CRUD كامل من حساب العميل
+### 17. Addresses — full CRUD from the customer account
 
-- `Address` model موجود أصلًا؛ أُضيف `createAddress`/`updateAddress`/`deleteAddress` في `features/account/actions.ts` (zod + ملكية عبر `userId` — `updateMany/deleteMany` بشرط `userId` حتى لا تُعدِّل عناوين الغير، و`isDefault` يُقلَع من البقية في نفس المعاملة).
-- UI: `account/components/address-manager.tsx` (قائمة + إضافة/تعديل/حذف/شارة افتراضي) + `address-form.tsx` (نفس حقول الـ checkout + district/building/apartment/landmark الاختيارية، empty→`null`). يبدأ من تبويب "عناويني" في `account-tabs`.
-- مفاتيح `dict.account.*` (addAddress/addressSave/addressEdit/addressDelete/noAddresses/defaultAddress/setAsDefault/addressSaved/addressError/field*). تحقق حي: إنشاء → عرض → حذف.
+- `Address` model already existed; added `createAddress`/`updateAddress`/`deleteAddress` in `features/account/actions.ts` (zod + ownership via `userId` — `updateMany/deleteMany` with a `userId` condition so others' addresses can't be modified, and `isDefault` is stripped from the rest in the same transaction).
+- UI: `account/components/address-manager.tsx` (list + add/edit/delete/default badge) + `address-form.tsx` (same fields as checkout + optional district/building/apartment/landmark, empty→`null`). Starts from the "My Addresses" tab in `account-tabs`.
+- `dict.account.*` keys (addAddress/addressSave/addressEdit/addressDelete/noAddresses/defaultAddress/setAsDefault/addressSaved/addressError/field*). Live check: create → view → delete.
 
-### 17b. إلغاء الطلب (العميل)
+### 17b. Order cancellation (customer)
 
-- `cancelOrder` في `features/account/actions.ts`: **فقط لصاحب الطلب وفقط PENDING** — غير ذلك `NOT_CANCELLABLE`. معاملة تعكس `createOrder`: status→CANCELLED + حذف الشحنة + `stock: increment(quantity)` لكل `OrderItem.variantId`.
-- **لمسة في admin:** `updateOrderStatus` عند CANCELLED/REFUNDED **أعاد إرجاع المخزون** (كان مفقودًا — كان الأدمن يلغي طلبًا ويضيع المخزون).
-- زر `cancel-order-button.tsx` يظهر في تفاصيل الطلب (account/orders/[id]) عند PENDING فقط. مفاتيح: cancelOrder/cancelConfirm/orderCancelled/cancelError/cancelUnavailable. تحقق حي: طلب PENDING → إلغاء → CANCELLED + المخزون رجع (8→10).
+- `cancelOrder` in `features/account/actions.ts`: **only for the order owner and only while PENDING** — otherwise `NOT_CANCELLABLE`. A transaction that mirrors `createOrder`: status→CANCELLED + delete shipment + `stock: increment(quantity)` for every `OrderItem.variantId`.
+- **Admin touch:** `updateOrderStatus` on CANCELLED/REFUNDED **now restores stock** (it was missing — an admin canceling an order lost the stock).
+- Button `cancel-order-button.tsx` appears in order details (account/orders/[id]) only when PENDING. Keys: cancelOrder/cancelConfirm/orderCancelled/cancelError/cancelUnavailable. Live check: PENDING order → cancel → CANCELLED + stock returned (8→10).
 
-### 17c. النشرة البريدية (Newsletter)
+### 17c. Newsletter
 
-- `NewsletterEntry` model موجود؛ أُضيف `features/newsletter/actions.ts`: `subscribeNewsletter` (zod email + upsert lowercase — يُعاد تفعيله إن كان مغلقًا، بلا تسجيل دخول) + `toggleNewsletterEntry`/`deleteNewsletterEntry` (محمية بـ requireAdmin).
-- الستورفرنت: **سكشن مستقل فوق الفوتر** (`layout/newsletter-section.tsx` — مش داخل الفوتر، حتى لا يقطع أعمدة الفوتر) — عنوان + نموذج inline في `layout/newsletter-form.tsx` — `dict.newsletter.*` AR/EN.
-- الأدمن: `admin/newsletter` (جدول email/date/status + تفعيل/إيقاف/حذف) + إدخال nav. مفاتيح: `dict.admin.newsletter/newsletterEmpty/newsletterActive/newsletterInactive`.
+- `NewsletterEntry` model exists; added `features/newsletter/actions.ts`: `subscribeNewsletter` (zod email + lowercase upsert — reactivates if disabled, no login required) + `toggleNewsletterEntry`/`deleteNewsletterEntry` (protected by requireAdmin).
+- Storefront: **standalone section above the footer** (`layout/newsletter-section.tsx` — not inside the footer, so it doesn't break the footer columns) — title + inline form in `layout/newsletter-form.tsx` — `dict.newsletter.*` AR/EN.
+- Admin: `admin/newsletter` (email/date/status table + activate/deactivate/delete) + nav entry. Keys: `dict.admin.newsletter/newsletterEmpty/newsletterActive/newsletterInactive`.
 
-### 18. الـ hero السينمائي — فيديو تفاعلي يُسحَب بالماوس
+### 18. Cinematic hero — interactive video scrubbed by the mouse
 
-- **قرار مثبّت:** الـ hero يبقى **أسود دائمًا** (`bg-[#0a0a0a]`) مستقلًا عن الثيم — الفيديو void لا يمكنه التكيّف مع خلفية فاتحة، والتغيير للأسود بعدها مقصود ودرامي. باقي الصفحة تتبع الثيم.
-- **الأصول:** `public/left.mp4` (أمام→شمال) و `public/right.mp4` (أمام→يمين) — **يبدآن بنفس الإطار الأمامي حرفيًا، بلا أي مزامنة**.
-- **المبدأ:** الفيديو لا يُشغَّل على الديسكتوب — **تقنية الـ sprite filmstrip** (مثل مواقع العطور الفاخرة): استخرجنا كل كادرات الفيديو مرة واحدة إلى صورة شبكة `public/sprites/left.jpg` و `right.jpg` (6400×2160 = 10 أعمدة × 6 صفوف = 60 خلية × 640×360)، والحركة صارت لمجرد `background-position` على لوحين (`background-size: 1000% 600%`) داخل `raf` — **صفر seek وصف الاستجابة فورية** (كان `video.currentTime` seek غير متزامن فيُظهر "بطء غير طبيعي").
-- **ترجمة المؤشر:** كل عرض الشاشة مجال دوران — `x < vw/2` → left-sprite، `x > vw/2` → right-sprite، **بلا deadZone** (كانت المنطقة الوسطى لا تستجيب وتُشعر بالبطء). حركة تقدمية `clamp01` → إطار `round(clamp01 × (FRAMES-1))`. العكس يعمل تلقائيًا: رجوع المؤشر للوسط يعيد الإطار الأمامي.
-- **فجوة فارغة آخر الشريط:** الفيديوان فعليًا **59 إطارًا فقط (0..58)** — الخلية 59 في الشبكة فارغة (سوداء). لذلك `FRAMES = 59` وكل الـ clamp/البوب مقيدة به — عند آخر الفيديو تَقِف على آخر كادر حقيقي **بلا قلب للشاشة أسود**.
-- **الترابط عند تبديل الجانبين:** اللوح الأيمن `transform: translateX(-5px)` لضبط فرق بسيط بين كادرات left/right فيُطابقان بعضهما — عند التبديل لا يقفز المحتوى.
-- **الموبايل** (`pointer: coarse` أو < 1024px): تشغيل تلقائي متبادل left/right عبر `ended` (muted+playsInline إجباريان) — **بلا تلميح** (walid قرر: التفاعل يُكتشف تلقائيًا، لا تلميح ولا نفرة).
-- **اكتشاف تلقائي:** يستمع `window pointermove` — أول حركة تفعّل الـ scrubbing بعد 300ms، ويظل `ع ─ y / لليسار` rAF مستمر. **البوب التلقائي GSAP** بعد ~2.2s خمول: `frame 0 → FRAMES-1 → 0` تناوبًا بين الجانبين (`power1.inOut`، تحديث مستمر عبر onUpdate) — **أي حركة مؤشر تلغيه فورًا** وتُعيد الرسم اليدوي. gsap في `dependencies` (استيراد إنتاجي).
-- **خروج ناعم:** scroll fade من 25% إلى 90% من ارتفاع الشاشة — `opacity` + `visibility:hidden` نهائيًا فوق 90%.
-- **الموبايل:** فيديو الموبايل الذي يبدأ بـ اطارد مرئي — بالتناوب automatic. `prefers-reduced-motion`: حالة ثابتة بلا rAF بلا gsap — فقط الإطار الأمامي.
-- **هيكل المكوّن** (`src/components/motion/hero-video-scrub.tsx`): `"use client"` — refs للوحين/الفيديوهين + `raf` دايم + عدادات `lastMoveRef` للـ idle. الصور تُحمَّل وتُفك ترميزها (`img.decode()`) قبل الكشف بـ `ready` state (fade-in 0.8s حتى لا يومش إطار الخلفية). اللوحان `aria-hidden` + `pointer-events-none` دائرةً في المشهد الأصفر 26: عود السكرايب (bottom→top): 0 sprite لوحان · 5 تدرج أسود · 8 ParticleField · 20 نصوص · 30 الهيدر · 90 CursorGlow.
-- **الطبقات (bottom→top):** 0 حاوية الفيديو `fixed inset-0` (aria-hidden) · 5 تدرّج أسود للتباين بلا mix-blend · 8 `ParticleField` مخفّفة (count=10 + blend **screen** + opacityScale 0.3) · 20 النصوص/الأزرار · 30 الهيدر · 90 `CursorGlow`.
-- **لا mix-blend:** النصوص فوق الفيديو والهيدر تُنقَى عبر ظل بطبقتين `drop-shadow(0 1px 2px rgb(0 0 0/0.6)) drop-shadow(0 4px 24px rgb(0 0 0/0.45))` — **ممنوع `mix-blend-mode: exclusion`** لأنه يقلب الأحمر (oklch(0.6 0.22 22)) إلى سماوي فينكسر الهوية.
-- **`PageTransition` أصبح opacity-only** (لا y/transform/filter/will-change إلا opacity) — لأي transform على عنصر أب يُنشئ containing block يجعل `position:fixed` داخله يتكامل مع التمرير بدل الثبات. هو إصلاح عام يمس كل الصفحات — entropy low.
-- **الـ hero-video-scrub تسلسلي:** يستمع للماوس بعد ~1000ms (دخول العنوان) لتفادي تنافس `blur(14px)` للعنوان مع seek كل frame على الـ GPU. يتوقف تمامًا عند scrollY > viewport (visibility hidden) وعند `document.hidden`، ويعود بعدهما. `prefers-reduced-motion`: إطار ثابت بلا أي RAF.
-- **الموبايل** (`pointer: coarse` أو < 1024px): تشغيل تلقائي متبادل left/right عبر `ended` (muted+playsInline إجباريان) + تلميح "دوران تلقائي" بلا توهم التحكم.
-- **الهيدر:** شفاف فوق الـ hero بفئة `header-over-hero` يضيفها `HeaderScroll` (الصفحة الرئيسية فقط وأول 80% من الشاشة) — بلا border/blur، ونصوص بيضاء + drop-shadow. بعد التمرير أو على أي صفحة أخرى يواصل خلفيته الضبابية كالمعتاد.
-- **`CursorGlow`:** يخفت إلى 0.25 داخل الـ hero عبر `--cursor-glow-opacity` (ربطه `HeaderScroll` على `<html>`) حتى لا يتزاحم توهجان على نفس المؤشر.
-- **`proxy.ts`**: أُضيف `mp4|webm|gif` إلى regex الاستاتيك — قبلها `/left.mp4` كان يُعيد 307 إلى `/ar/left.mp4`.
-- **`gsap` نُقل إلى dependencies** (كان devDependencies) — أي استيراد له في الإنتاج سيفشل على Vercel لأن الـ devDeps لا تُثبَّت.
-- **مفاتيح القاموس:** `dict.hero.autoRotate` (دوران تلقائي) + `dict.hero.dragToRotate` (حرّك الماوس).
-- **الموجة النهائية (الـ hero المكتمل):**
-  - **عكس الدوران:** يعمل طبيعيًا عبر `background-position` — رجوع المؤشر نحو الوسط = إطار أمامي (لا مكتبة منفصلة).
-  - **خروج ناعم:** `fade visibility` عند 25%→90% من الشاشة أثناء التمرير.
-  - **بوب تلقائي (GSAP):** بعد ~2.2s خمول يدور الإطار إلى آخر المقطع ثم **يعكس** للإطار الأمامي (تناوب بين الجانبين) — أي حركة مؤشر تلغيه فورًا وترسم يدويًا. gsap في `dependencies` (استيراد إنتاجي).
-  - **لا pointer hint ولا تلميح** — التفاعل يُكتشف تلقائيًا من أول حركة ماوس (قرار walid النهائي).
+- **Fixed decision:** the hero stays **black permanently** (`bg-[#0a0a0a]`) independent of the theme — a void video cannot adapt to a light background, and the shift to black afterwards is intentional and dramatic. The rest of the page follows the theme.
+- **Assets:** `public/left.mp4` (front→left) and `public/right.mp4` (front→right) — **they start from literally the same front frame, no synchronization at all**.
+- **Principle:** the video is not played on desktop — **sprite filmstrip technique** (like luxury perfume sites): we extract all video frames once into a grid image `public/sprites/left.jpg` and `right.jpg` (6400×2160 = 10 columns × 6 rows = 60 cells × 640×360), and motion becomes just `background-position` on two plates (`background-size: 1000% 600%`) inside `raf` — **zero seek and instant response** (`video.currentTime` seek was asynchronous and showed "unnatural slowness").
+- **Cursor mapping:** the whole screen width is a rotation zone — `x < vw/2` → left-sprite, `x > vw/2` → right-sprite, **no deadZone** (the central region used to not respond and felt slow). Progressive movement `clamp01` → frame `round(clamp01 × (FRAMES-1))`. Reverse works automatically: moving the cursor back toward the center returns to the front frame.
+- **Empty gap at the end of the strip:** the videos actually have **only 59 frames (0..58)** — cell 59 in the grid is empty (black). Therefore `FRAMES = 59` and all clamp/bob is bounded by it — at the end of the video it stops on the last real frame **without flipping the screen to black**.
+- **Alignment when switching sides:** the right plate `transform: translateX(-5px)` adjusts a small difference between left/right frames so they match — no content jump when switching.
+- **Mobile** (`pointer: coarse` or < 1024px): alternating auto-play left/right via `ended` (muted+playsInline required) — **no hint** (walid decided: interaction is detected automatically, no hint and no nudges).
+- **Auto-detection:** listens to `window pointermove` — the first move activates scrubbing after 300ms, and the rAF keeps running. **Automatic GSAP bob** after ~2.2s idle: `frame 0 → FRAMES-1 → 0` alternating between sides (`power1.inOut`, continuous updates via onUpdate) — **any cursor movement cancels it immediately** and returns to manual drawing. gsap in `dependencies` (production import).
+- **Smooth exit:** scroll fade from 25% to 90% of the viewport height — `opacity` + `visibility:hidden` permanently above 90%.
+- **Mobile video:** the mobile video starts with a visible frame — alternating automatically. `prefers-reduced-motion`: static state, no rAF, no gsap — just the front frame.
+- **Component structure** (`src/components/motion/hero-video-scrub.tsx`): `"use client"` — refs for both plates/videos + always-on `raf` + `lastMoveRef` counters for idle. Images are loaded and decoded (`img.decode()`) before reveal via `ready` state (0.8s fade-in so the background frame doesn't flash). The plates are `aria-hidden` + `pointer-events-none`.
+- **Layers (bottom→top):** 0 video container `fixed inset-0` (aria-hidden) · 5 black gradient for contrast without mix-blend · 8 `ParticleField` reduced (count=10 + blend **screen** + opacityScale 0.3) · 20 text/buttons · 30 header · 90 `CursorGlow`.
+- **No mix-blend:** the text above the video and the header are kept readable with a two-layer shadow `drop-shadow(0 1px 2px rgb(0 0 0/0.6)) drop-shadow(0 4px 24px rgb(0 0 0/0.45))` — **`mix-blend-mode: exclusion` is forbidden** because it flips red (oklch(0.6 0.22 22)) to cyan and breaks the identity.
+- **`PageTransition` became opacity-only** (no y/transform/filter/will-change except opacity) — any transform on a parent element creates a containing block that makes `position:fixed` inside it scroll with the page instead of staying fixed. It's a general fix affecting all pages — low entropy.
+- **Header:** transparent over the hero with class `header-over-hero` added by `HeaderScroll` (home page only and the first 80% of the screen) — no border/blur, white text + drop-shadow. After scrolling or on any other page it resumes its normal blurred background.
+- **`CursorGlow`:** dims to 0.25 inside the hero via `--cursor-glow-opacity` (bound by `HeaderScroll` on `<html>`) so two glows don't compete on the same cursor.
+- **`proxy.ts`**: added `mp4|webm|gif` to the static regex — before that `/left.mp4` was returning 307 to `/ar/left.mp4`.
+- **`gsap` moved to dependencies** (was devDependencies) — any production import of it would fail on Vercel because devDeps are not installed.
+- **Dictionary keys:** `dict.hero.autoRotate` (auto rotate) + `dict.hero.dragToRotate` (move the mouse).
+- **Final wave (completed hero):**
+  - **Reverse rotation:** works naturally via `background-position` — moving the cursor back toward the center = front frame (no separate library).
+  - **Smooth exit:** `fade visibility` from 25%→90% of the screen while scrolling.
+  - **Automatic bob (GSAP):** after ~2.2s idle it rotates the frame to the end of the clip then **reverses** to the front frame (alternating sides) — any cursor move cancels it immediately and draws manually. gsap in `dependencies` (production import).
+  - **No pointer hint and no nudges** — interaction is detected automatically from the first mouse move (walid's final decision).
 
-### 18b. النشرة البريدية داخل الفوتر (قرار نهائي)
+### 18b. Newsletter inside the footer (final decision)
 
-- **داخل كتلة الفوتر فوق كل الأعمدة** (فوق Instagram/TikTok إلخ) — `footer.tsx` يحوي border-b + title/subtitle + `NewsletterForm` قبل grid الأعمدة الأربعة. **حُذف `layout/newsletter-section.tsx`** و`[lang]/layout.tsx` لم يعد يستورده. (كانت سكشن مستقل فوق الفوتر — قرار walid: جوه الكتلة.)
+- **Inside the footer block above all columns** (above Instagram/TikTok etc.) — `footer.tsx` contains border-b + title/subtitle + `NewsletterForm` before the four-column grid. **`layout/newsletter-section.tsx` deleted** and `[lang]/layout.tsx` no longer imports it. (It used to be a standalone section above the footer — walid's decision: inside the block.)
 
-### 18c2. كاروسيل المجموعات (product-carousel)
+### 18c2. Collections carousel (product-carousel)
 
-- `features/catalog/components/product-carousel.tsx` — مدفوع من `page.tsx` بمنتج واحد عن كل مجموعة (يفضّل `image`) ويُجبر `.image` محلية من `/slider/{rush,noir,gold}.png` (منتج المؤلف fallback).
-- أدوار center/left/right (لا back مع 3 عناصر) · **CSS transitions** (استثناء مقصود من قاعدة Framer Motion لأداء الأدوار — موثّق) · 650ms · blur للأدوار الجانبية · swipe باللمس (يتجاهل السحب الرأسي) · كيبورد RTL-aware · IntersectionObserver يوقف الأنيميشن خارج الشاشة.
-- **صيغة الصور:** 1024×1536 PNG شفافة — `public/slider/rush.png` · `noir.png` · `gold.png` (أُعيدت تسميتها من `1 (N).png`).
-- مفاتيح القاموس: `dict.home.carousel*` (title/subtitle/explore/prev/next/item/of).
+- `features/catalog/components/product-carousel.tsx` — driven from `page.tsx` with one product per collection (prefers `image`) and forces local `.image` from `/slider/{rush,noir,gold}.png` (author product fallback).
+- center/left/right roles (no back with 3 items) · **CSS transitions** (intentional exception to the Framer Motion rule for role performance — documented) · 650ms · blur on side roles · touch swipe (ignores vertical drag) · RTL-aware keyboard · IntersectionObserver pauses the animation off-screen.
+- **Image format:** 1024×1536 transparent PNG — `public/slider/rush.png` · `noir.png` · `gold.png` (renamed from `1 (N).png`).
+- Dictionary keys: `dict.home.carousel*` (title/subtitle/explore/prev/next/item/of).
 
-### 18d. توليد شرائح الـ sprite (filmstrip) — أدوات وإعادة التوليد
+### 18d. Sprite (filmstrip) generation — tools and regeneration
 
-- **الأدوات:** `ffmpeg-static` (devDependency) — الـ exe في `node_modules/ffmpeg-static/ffmpeg.exe`. لا حاجة لأي تثبيت نظام.
-- **الشرائط المولّدة:** `public/sprites/left.jpg` (0.38MB) و `right.jpg` (0.41MB) — 6400×2160، 10 أعمدة × 6 صفوف، كل خلية 640×360.
-- **الفيديوهان المصدر:** `public/left.mp4` / `right.mp4` — 1280×720 · 24fps · **59 إطارًا فعليًا (0..58)** — لا تسقط إلى خلية 59 (فارغة) أبدًا.
-- **أمر التوليد المرجعي (من الفيديو إلى الشبكة):**
+- **Tool:** `ffmpeg-static` (devDependency) — the exe is at `node_modules/ffmpeg-static/ffmpeg.exe`. No system install needed.
+- **Generated strips:** `public/sprites/left.jpg` (0.38MB) and `right.jpg` (0.41MB) — 6400×2160, 10 columns × 6 rows, each cell 640×360.
+- **Source videos:** `public/left.mp4` / `right.mp4` — 1280×720 · 24fps · **only 59 frames (0..58)** — never fall into cell 59 (empty).
+- **Reference generation command (video to grid):**
   `ffmpeg -i right.mp4 -vf "fps=24,scale=640:360,tile=10x6" sprites/right.jpg`
-  (عند إعادة توليد الفيديوهات أعد هذا الأمر للجانبين.)
+  (when regenerating the videos, rerun this command for both sides.)
 
-### 19. إشعارات الإيميل (Resend) — لكل تحديث
+### 19. Email notifications (Resend) — for every update
 
-- `src/lib/email.ts`: wrapper `sendEmail` (Resend) ← يعمل **بدون مفاتيح** (يسجّل فقط، لا يعطّل العملية). القوالب inline-styled: `orderConfirmationEmail` (لعميل) + `adminNewOrderEmail` (للأدمن `ADMIN_EMAIL`/`siteConfig.adminEmail`) + `orderStatusEmail` (تغيير الحالة) + `orderCancelledEmail` + `shippingInfoEmail`.
-- **نقاط الدمج:** `createOrder` (بعد نجاح المعاملة — بريد تأكيد للعميل + بريد جديد للأدمن) · `updateOrderStatus` (إشعار العميل بتغيير الحالة) · `updateShipment` (بيانات التتبع) · `cancelOrder` (إشعار الإلغاء للعميل).
-- **القاعدة:** الإرسال عبر `Promise.allSettled` — فشل البريد **لا يُفشل أبدًا** إنشاء/تحديث الطلب.
-- `.env` المطلوبة: `RESEND_API_KEY` (محتاج walid؛ بدونه تسجّل فقط ولا تُرسل) + اختياري `EMAIL_FROM`/`ADMIN_EMAIL`.
+- `src/lib/email.ts`: `sendEmail` wrapper (Resend) ← works **without keys** (just logs, never breaks the flow). Inline-styled templates: `orderConfirmationEmail` (customer) + `adminNewOrderEmail` (admin `ADMIN_EMAIL`/`siteConfig.adminEmail`) + `orderStatusEmail` (status change) + `orderCancelledEmail` + `shippingInfoEmail`.
+- **Integration points:** `createOrder` (after a successful transaction — confirmation email to customer + new-order email to admin) · `updateOrderStatus` (status-change notification to customer) · `updateShipment` (tracking data) · `cancelOrder` (cancellation notification to customer).
+- **Rule:** sending via `Promise.allSettled` — email failure **never fails** order creation/update.
+- `.env` needed: `RESEND_API_KEY` (needed from walid; without it it only logs and does not send) + optional `EMAIL_FROM`/`ADMIN_EMAIL`.
 
-### 20. تسجيل الدخول بحساب Google (OAuth)
+### 20. Google sign-in (OAuth)
 
-- `google` provider أُضيف في `src/lib/auth.ts` (بجانب Credentials) مع `allowDangerousEmailAccountLinking: true` (ضمان ربط حساب Google ببريد موجود في DB إن تطابق الإيميل). PrismaAdapter يخزّن الحساب/الجلسة.
-- UI: زر «متابعة بحساب Google» في `auth-form.tsx` تحت فاصل «أو» — `signIn("google", { callbackUrl })`. مفاتيح: `dict.account.continueWithGoogle/or/googleError` + أيقونة SVG رسمها يدويًا (لا مكتبة).
-- `.env`: `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` — **محتاج من walid** (Google Cloud Console → OAuth Client). بدونها الزر يظهر لكن الدخول يرفض.
+- `google` provider added in `src/lib/auth.ts` (next to Credentials) with `allowDangerousEmailAccountLinking: true` (ensures a Google account links to an existing email in DB when they match). PrismaAdapter stores the account/session.
+- UI: «Continue with Google» button in `auth-form.tsx` under the «or» divider — `signIn("google", { callbackUrl })`. Keys: `dict.account.continueWithGoogle/or/googleError` + hand-drawn SVG icon (no library).
+- `.env`: `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` — **needed from walid** (Google Cloud Console → OAuth Client). Without them the button shows but login is rejected.
 
-### 21. طلب يدوي من الأدمن + تنبيه المخزون المنخفض
+### 21. Manual order from admin + low-stock alert
 
-- **`createManualOrder`** في `src/features/admin/actions.ts`: للطلبات الهاتفية/الواتساب (COD) — الأسعار من الـ DB حصرًا (عزل createOrder) · خصم مخزون ذرّي داخل معاملة · شحن مجاني فوق الحد مثل الستورفرنت · **بلا Account للضيف**: `Address.userId` إجباري في Prisma فلا يُنشأ عنوان — يُخزَّن اسم/هاتف/محافظة/العنوان في `Order.notes` (تُعرض في تفاصيل الطلب admin+account) · إشعار أدمن بقالب الطلب الجديد.
-- صفحة `/[lang]/admin/orders/new` + فورم client `manual-order-form.tsx` (منتجات+variant+سعر+مخزون، بنود ديناميكية، إجمالي حي، توجيه للتفاصيل) + زر «طلب يدوي جديد» في رأس الطلبات.
-- **`notifyLowStock(variantIds, threshold=5)`** في `src/lib/email.ts` — dynamic import لـ prisma؛ يفحص أي variant وصل `stock<=5` ويرسل بريدًا للأدمن `lowStockEmail`. يُستدعى بعد `createOrder` وبعد `createManualOrder` ضمن `Promise.allSettled`.
-- مفاتيح القاموس: `dict.admin.newOrder/createOrder/selectProduct/selectSize/addLine/orderLines/orderCreated/orderCreateError/emptyLines/orderTotal` AR/EN.
+- **`createManualOrder`** in `src/features/admin/actions.ts`: for phone/WhatsApp orders (COD) — prices strictly from the DB (mirror of createOrder) · atomic stock decrement inside a transaction · free shipping above the threshold like the storefront · **no Account for guests**: `Address.userId` is required in Prisma so no address is created — name/phone/governorate/address are stored in `Order.notes` (shown in order details for admin+account) · admin notification with the new-order template.
+- Page `/[lang]/admin/orders/new` + client form `manual-order-form.tsx` (products+variant+price+stock, dynamic lines, live total, redirect to details) + «New manual order» button in the orders header.
+- **`notifyLowStock(variantIds, threshold=5)`** in `src/lib/email.ts` — dynamic import for prisma; checks whether any variant reached `stock<=5` and sends an admin email `lowStockEmail`. Called after `createOrder` and after `createManualOrder` within `Promise.allSettled`.
+- Dictionary keys: `dict.admin.newOrder/createOrder/selectProduct/selectSize/addLine/orderLines/orderCreated/orderCreateError/emptyLines/orderTotal` AR/EN.
 
 ---
 
-## هيكل المشروع (Feature-Based)
+## Project structure (Feature-Based)
 
 ```
 src/
-├─ app/                      # التوجيه فقط — لا business logic
-│  ├─ [lang]/                # dynamic segment للترجمة (/ar ، /en)
-│  │  ├─ layout.tsx          # الجذر الفعلي: fonts · ThemeProvider · dir/lang · meta
-│  │  ├─ page.tsx            # الرئيسية (Hero + أقسام)
-│  │  ├─ catalog/            # الكتالوج + فلترة
-│  │  ├─ product/[slug]/     # صفحة المنتج
-│  │  ├─ checkout/           # إتمام الطلب
-│  │  ├─ login/ · register/  # Auth واجهات
-│  │  ├─ account/            # داشبورد العميل: تبويبات (طلبات/عناوين/مفضلة) + account/orders/[id] (تفاصيل + تتبع)
-│  │  └─ admin/              # لوحة التحكم (layout محمي + dashboard + products/products/new/products/[id] + orders/orders/[id] + reviews + collections + coupons + users + settings)
-│  ├─ api/auth/[...nextauth]/ # route handler الخاص بـ Auth.js
+├─ app/                      # routing only — no business logic
+│  ├─ [lang]/                # dynamic segment for translation (/ar , /en)
+│  │  ├─ layout.tsx          # real root: fonts · ThemeProvider · dir/lang · meta
+│  │  ├─ page.tsx            # home (Hero + sections)
+│  │  ├─ catalog/            # catalog + filtering
+│  │  ├─ product/[slug]/     # product page
+│  │  ├─ checkout/           # checkout
+│  │  ├─ login/ · register/  # Auth forms
+│  │  ├─ account/            # customer dashboard: tabs (orders/addresses/wishlist) + account/orders/[id] (details + tracking)
+│  │  └─ admin/              # control panel (protected layout + dashboard + products/products/new/products/[id] + orders/orders/[id] + reviews + collections + coupons + users + settings)
+│  ├─ api/auth/[...nextauth]/ # Auth.js route handler
 │  └─ globals.css
 │
-├─ features/                 # ← معظم الكود يعيش هنا
-│  ├─ catalog/               # products (data: mock المرجع + db: getProducts/getProductBySlug/getCollections) · product-card · product-art · add-to-cart
-│  ├─ cart/                  # cart-button · cart-drawer (يقرأ إعدادات الشحن من /api/shipping-config)
-│  ├─ checkout/              # checkout-form (كوبون + ملخص ديناميكي) · actions (createOrder + validateCoupon)
+├─ features/                 # ← most of the code lives here
+│  ├─ catalog/               # products (data: mock reference + db: getProducts/getProductBySlug/getCollections) · product-card · product-art · add-to-cart
+│  ├─ cart/                  # cart-button · cart-drawer (reads shipping config from /api/shipping-config)
+│  ├─ checkout/              # checkout-form (coupon + dynamic summary) · actions (createOrder + validateCoupon)
 │  ├─ account/               # actions (toggleWishlist/removeWishlistItem + createAddress/updateAddress/deleteAddress + cancelOrder) · data (getWishlistIds) · components (account-tabs · address-manager · address-form · cancel-order-button)
 │  ├─ auth/                  # actions (register) · components (auth-form)
 │  ├─ reviews/               # actions (createReview/moderateReview/deleteReview + recomputeProductStats) · components (star-input+StarDisplay · review-form)
-│  ├─ newsletter/            # actions (subscribeNewsletter public + toggle/delete محمية)
-│  └─ admin/                 # actions (CRUD/حالات/أدوار/مستخدمون/شحن/كوبونات/إعدادات) · collections-actions (createCollection/deleteCollection) · status · mappers
+│  ├─ newsletter/            # actions (subscribeNewsletter public + toggle/delete protected)
+│  └─ admin/                 # actions (CRUD/statuses/roles/users/shipping/coupons/settings) · collections-actions (createCollection/deleteCollection) · status · mappers
 │
 ├─ components/
 │  ├─ ui/                    # shadcn primitives
 │  ├─ motion/                # animated-title · aurora-background · particle-field · heartbeat-line · fade-in · reveal (Reveal/Stagger) · marquee · fly-to-cart · page-transition (opacity-only!) · cursor-glow · count-up · stats-band · hero-video-scrub
 │  ├─ theme/                 # ThemeProvider · ThemeToggle
-│  ├─ layout/                # header (+ header-scroll لحالة الـ hero الشفاف) · footer (مجموعات من DB + روابط Insta/TikTok فقط) · newsletter-section (فوق الفوتر) · newsletter-form · section-heading · language-switcher
-│  ├─ wishlist-button.tsx    # زر المفضلة (client) — بطاقات المنتجات + صفحة المنتج
+│  ├─ layout/                # header (+ header-scroll for the transparent hero state) · footer (collections from DB + Insta/TikTok links only) · newsletter-section (above the footer) · newsletter-form · section-heading · language-switcher
+│  ├─ wishlist-button.tsx    # wishlist button (client) — product cards + product page
 │  └─ admin/                 # product-form · product-actions · order-status-select · user-role-select · admin-nav · add-user-form · delete-user-button · shipment-form · coupon-form · coupon-actions · shipping-settings-form · review-actions · collection-form · collection-delete · newsletter-actions
 │
 ├─ lib/                      # prisma · auth · i18n · utils
@@ -344,108 +340,108 @@ src/
 └─ config/                   # site.ts
 ```
 
-**القواعد:**
+**Rules:**
 
-- `app/` للتوجيه فقط. لا منطق أعمال داخل ملفات الصفحات.
-- الـ features لا تستورد من `repositories` الخاصة بـ features أخرى — التواصل عبر `services`.
-- **Server Components افتراضيًا.** `"use client"` عند الحاجة الفعلية فقط (state · event · browser API).
-- كل مكوّن متحرك (motion) هو Client Component يُستدعى من Server Components.
-- لا `any`. لا كود مُكرَّر. مكونات صغيرة. أسماء واضحة.
+- `app/` is for routing only. No business logic inside page files.
+- Features must not import from other features' `repositories` — communication goes through `services`.
+- **Server Components by default.** `"use client"` only when actually needed (state · event · browser API).
+- Every motion component is a Client Component called from Server Components.
+- No `any`. No duplicated code. Small components. Clear names.
 
 ---
 
-## خارطة الطريق الحالية (جلسة 2026-08-07 — قرارات walid)
+## Current roadmap (session 2026-08-07 — walid's decisions)
 
-### الأولوية العاجلة (قبل أي شغل آخر)
+### Urgent priority (before any other work)
 
-1. **رفع المشروع على GitHub** (قرار walid: «قبلها عايز أرفع البروجكت على GitHub»).
-   - حاليًا: repo محلي فقط، commit وحيد `0d3c554 Initial commit from Create Next App` — كل الكود الحقيقي غير committed (`src/` · `prisma/` · `public/` · `components.json` · `.husky/` · إلخ).
-   - يجب إنشاء repo جديد على GitHub ثم push (انتبه: `.env` مُستبعد بـ `.gitignore` — لا يُرفع أبدًا).
-2. **إكمال لوحة الأدمن بالكامل** (قرار walid: «الداشبورد الخاصة بالأدمن لازم تكون كاملة وشغّالة»):
-   - إضافة **صور حقيقية** للمنتجات من لوحة الأدمن (رفع/استبدال لكل منتج — حاليًا `ProductArt` مولّد والـ slider صور ثابتة `/slider/*.png`).
-   - إضافة **وصف** مُحرَّر كامل للمنتجات (حاليًا الحقول ar/en موجودة في النموذج — يُراجع ويُحسَّن العرض).
-   - **تعديل السلايدر** من لوحة الأدمن (حاليًا `page.tsx` يفرض `/slider/{rush,noir,gold}.png` ثابتة — يجب أن تصبح قابلة للإدارة).
-   - تحسين شامل لقابلية استخدام اللوحة (تجربة المستخدم).
+1. **Upload the project to GitHub** (walid's decision: «I want to upload the project to GitHub first»).
+   - Current state: local repo only, single commit `0d3c554 Initial commit from Create Next App` — all the real code is uncommitted (`src/` · `prisma/` · `public/` · `components.json` · `.husky/` · etc.).
+   - Must create a new repo on GitHub then push (note: `.env` is excluded by `.gitignore` — never uploaded).
+2. **Complete the admin dashboard fully** (walid's decision: «the admin dashboard must be complete and working»):
+   - Add **real product images** from the admin dashboard (upload/replace per product — currently `ProductArt` is generated and the slider images are static `/slider/*.png`).
+   - Add **fully editable product descriptions** (currently the ar/en fields exist in the form — review and improve the display).
+   - **Edit the slider** from the admin dashboard (currently `page.tsx` forces static `/slider/{rush,noir,gold}.png` — must become manageable).
+   - Overall usability improvement of the dashboard (user experience).
 
-### ما زال معلّقًا من walid (بيانات خارجية)
+### Still pending from walid (external data)
 
-- `RESEND_API_KEY` (Resend — resend.com → API Keys → `re_...`) — البريد يعمل بلا مفاتيح (تسجيل فقط) حتى يُضاف.
+- `RESEND_API_KEY` (Resend — resend.com → API Keys → `re_...`) — email works without keys (logging only) until added.
 - `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` (console.cloud.google.com → APIs & Services → Credentials → OAuth client ID → **Web application** → redirect URI: `http://localhost:3100/api/auth/callback/google`).
-- Cloudinary (الـ 3) **أُلغي** — غير مهمة حسب walid. الصور ستُدار من لوحة الأدمن نفسها.
+- Cloudinary (the 3rd) **canceled** — not important per walid. Images will be managed from the admin dashboard itself.
 
-- [x] حل تعارضات البريف وتثبيت الستاك (npm بدل pnpm — مصدر npmmirror)
-- [x] كتابة `CLAUDE.md`
-- [x] الإعداد (Setup): Next.js 16 · Tailwind v4 · shadcn/ui (Base UI) · ESLint flat config / Prettier / Husky + lint-staged · هيكل `src/` feature-based
-- [x] Database Schema (Prisma) — models جاهزة و client اتولّد (`prisma/schema.prisma`)
-- [x] الهوية البصرية: **ADDICTIONX** — أسود + نيون أحمر + فضي معدني + Heartbeat line
-- [x] i18n: `[lang]` segment + قواميس AR/EN + LanguageSwitcher + `proxy.ts` (مُختبَر: `/`→307→`/ar`، `/en` يعمل بـ `dir=ltr`)
-- [x] الثيم: `ThemeProvider` + `ThemeToggle` (دارك افتراضي + light palette)
-- [x] الصفحة الرئيسية: Hero سينمائي (Aurora + Particles + AnimatedTitle + Heartbeat) + الأكثر طلبًا + المجموعات + التجربة + CTA
-- [x] الكتالوج: فلترة (مجموعة/نوع) + ترتيب (بأسعار/تقييم) عبر `searchParams`
-- [x] صفحة المنتج: صورة + سعر + مكونات (مقدمة/قلب/قاعدة) + كمية + إضافة للسلة
-- [x] السلة: Zustand `cart-store` (مع persist) + CartDrawer منزلق + عداد في الـ Header
-- [x] Checkout: نموذج RHF + Zod (شحن/دفع) + ملخص الطلب + رسالة نجاح
-- [x] **Auth.js v5 الفعلي:** Credentials + PrismaAdapter + جلسات JWT · `bcryptjs` · `registerAction` (Server Action) · `signIn("credentials")` مع `callbackUrl` · sign-out button
-- [x] **حساب المستخدم حقيقي:** حماية (redirect + callbackUrl) · بيانات العميل وطلباته من DB · رابط اللوحة للأدمن
-- [x] **ربط الـ DB بالكامل:** PostgreSQL محلي (`luxury_perfume`) · `DATABASE_URL` حقيقي · migrations (`init` + حقول الستورفرنت) · الستورفرنت يقرأ عبر `products-db.ts` (صفحات `force-dynamic`)
-- [x] **البذور:** `prisma/seed.ts` + `npm run db:seed` (tsx) → أدمن + 8 منتجات + 3 مجموعات + variant 100ml
-- [x] **لوحة التحكم:** layout محمي · dashboard (إحصائيات/أحدث الطلبات/مخزون منخفض) · CRUD منتجات (نموذج موحّد create/edit) · طلبات (فلاتر/تفاصيل/تغيير حالة) · مستخدمون (تغيير دور) · كل الـ Server Actions محمية بـ `requireAdmin()`
-- [x] التحقق: `next build` + `lint` (0 مشاكل) + `type-check` نظيف + اختبار حي (تسجيل/دخول/أدوار/صفحات 200) — dev على المنفذ 3100
-- [x] **ربط الـ checkout بالطلبات:** السلة تحمل snapshot كامل (اسم/سعر/حجم/art) — الـ drawer والملخص يقرءان منها لا من mock · `createOrder` (سعر من DB لا من العميل · Address + Order + items في معاملة واحدة · خصم مخزون ذرّي مع فشل كامل عند نقصه · رقم طلب `ADDX-...`) · يتطلب تسجيل دخول (redirect مع callbackUrl) · شاشة نجاح برقم الطلب
-- [x] التحقق الحي للطلبات: طلب تجريبي اتعمل وظهر في admin/account، المخزون اتخصم، ومسار STOCK يعمل — وبعده تنظيف كامل للبيانات التجريبية
-- [x] **داشبورد المستخدم (العميل):** صفحة حساب بتبويبات (نظرة عامة/طلباتي/عناويني/مفضلتي) + تفاصيل طلب (عناصر + عنوان + تتبع الشحنة) + مفضلة فعلية (WishlistItem + toggle + زر في البطاقات وصفحة المنتج)
-- [x] **توسيع صلاحيات الأدمن:** إضافة مستخدم (createUser) + حذف مستخدم (deleteUser مع فصل الطلبات) + متابعة الشحن (Shipment ينشأ تلقائيًا عند SHIPPED + `shipment-form` لـ carrier/tracking في تفاصيل الطلب)
-- [x] **إعدادات الشحن من DB:** `StoreSetting` + `getShippingConfig` (ذاكرة 5ث + fallback) + `GET /api/shipping-config` + نموذج `admin/settings` (`updateShippingSettings`) — الـ checkout و cart-drawer يقرءان الإعدادات الفعلية (الشحن مجاني فوق الحد، carrier ظاهر في التتبع)
-- [x] **كوبونات الخصم:** `Coupon` model + إدارة أدمن (`admin/coupons` — إنشاء PERCENT/FIXED، تفعيل/إيقاف، حذف) + `validateCoupon` (تحقق فوري) + `createOrder` يطبّق الخصم (نسبة بسقف `maxDiscount` أو مبلغ ثابت ≤ السلة، بشرط `minOrderAmount`/`maxUses`/`expiresAt`) ويُسجّله في الطلب ويُحدّث `usedCount` في المعاملة
-- [x] **إدارة الـ Sale:** `discountPercent` في نموذج المنتج (0–90) يحسب `compareAtPrice` تلقائيًا + فلتر "على العرض" في قائمة المنتجات + شارة sale في بطاقات الستورفرنت
-- [x] التحقق: `type-check` + `lint` + `build` نظيف · اختبار حي 3100 (الـ API يعكس إعدادات DB بعد التعديل · صفحة الكوبونات تعرض الكوبونات المزروعة · فلتر sale يعرض المنتجات المخفّضة فقط · شارة الخصم تظهر في الكتالوج)
-- [x] **الإبهار البصري — الموجة الأولى (wave 1):** نظام scroll-reveal موحّد (`Reveal/Stagger`) في الرئيسية/الكالوج/صفحة المنتج · شريط marquee بعد الـ hero · **طيران المنتج للسلة** (fly-to-cart + نبضة أيقونة) · hover سينمائي لبطاقات المنتجات (توهج + ضوء ماسح) · عناوين الأقسام metallic-shine + heartbeat · CTA نابض — تحقق: type-check + lint + build + صفحات 200 حي
-- [x] **الإبهار البصري — الموجة الثانية (wave 2):** `PageTransition` في اللayout (دخول ناعم عند كل تنقّل) · `CursorGlow` (توهج يتبع المؤشر — Desktop فقط) · `CountUp` + `StatsBand` (عدّادات أرقام حقيقية من DB في الرئيسية) · نبضة wishlist (انفجار قلب) — تحقق: type-check + lint + build + صفحات 200 حي
-- [x] **الفوتر/السوشيال:** `siteConfig.social` = روابط حقيقية **Instagram (addictionn_x) + TikTok (addiction_x8)** فقط — **حُذف facebook نهائيًا**؛ الفوتر يعرض الرابطين (والـ footer نفسه مجموعاته من DB).
-- [x] **تقييمات المنتجات (Reviews):** `model Review` كان موجودًا بالـ schema — أُضيفت الطبقة الكاملة: `features/reviews/actions.ts` (createReview upsert على `productId_userId` + moderateReview + deleteReview + recomputeProductStats) · `admin/reviews` (قائمة كل التقييمات + موافقة/رفض/حذف) · صفحة المنتج (قائمة المعتمدة + نموذج عميل مع تعديل تقييمه أو رابط تسجيل دخول) · `dict.reviews.*` + مفاتيح admin — تحقق حي: تقييم → موافقة → recompute (4.9/214 → 5.0/1 من الحقيقي) → ظهور في الستورفرنت.
-- [x] **إدارة المجموعات (Collections):** `Collection` model جديد (migration `collections` — **لا FK مع Product**، الـ slug نصي) · بذرة الـ collections حُوّلت من `prisma.category` إلى `prisma.collection` · `getCollections()` fallback للثابتة + مستخدم في footer/home/catalog/نموذج المنتج (select `slug — name`) · `admin/collections` (إضافة مجموعة + حذف محمي من المنتجات + **عرض عطور كل مجموعة بعددها**) — تحقق حي: 3 مجموعات مع عدد كل عطورها.
-- [x] **هرم المكوّنات:** قسم الـ notes في صفحة المنتج أصبح على شكل هرم (قاعدة/قلب/مقدمة) بدل أعمدة متساوية + اسم المجموعة يُقرأ ديناميكيًا.
-- [x] **التحقق الشامل (هذه الجولة):** `type-check` نظيف · `eslint` نظيف على كل الملفات المتغيرة · `next build` ناجح بكل المسارات الجديدة (reviews/collections) · اختبار حي 3100: الرئيسية/الكالوج/صفحة منتج 200 + admin (reviews/collections) 200 بالجلسة الأدمن + anonymous→307 + القاموس AR reviews تمّ.
-- [x] **عناوين العميل — CRUD كامل:** add/edit/delete + افتراضي من حساب العميل (`address-manager` + `address-form`) — تحقق حي: إنشاء → عرض → حذف.
-- [x] **إلغاء الطلب من العميل:** `cancelOrder` (PENDING فقط + ملكية + إعادة المخزون) + زر في تفاصيل الطلب + **admin كمان صار يردّ المخزون عند CANCELLED/REFUNDED** — تحقق حي: إلغاء طلب تجريبي ورجع المخزون 8→10.
-- [x] **النشرة البريدية:** اشتراك من الفوتر (بلا تسجيل دخول، upsert) + `admin/newsletter` (قائمة/تفعيل/إيقاف/حذف) — تحقق حي: إضافة مشترك → ظهور في الأدمن → تنظيف. **ثم قرار نهائي:** النشرة داخل كتلة الفوتر فوق الأعمدة و`newsletter-section.tsx` حُذف.
-- [x] **الـ hero المكتمل (الموجة النهائية):** عكس الدوران (scrub مزدوج) + خروج ناعم fade عند التمرير + **بوب تلقائي GSAP** بعد 3.5s خمول (لف+عكس، تلغيه أي حركة مؤشر) + تلميح مؤشر — تحقق: tsc + eslint + build + حي 200 بلا أخطاء كونسول.
-- [x] **الـ hero — sprite filmstrip (الموجة الأخيرة النهائية):** استبدال `video.currentTime` seek (كان بطيئًا غير طبيعي) بـ `background-position` فوق شرائط `public/sprites/{left,right}.jpg` (10×6) — حركة فورية + اكتشاف تلقائي (بلا تلميح) + no deadZone + `FRAMES=59` (لا فراغ أسود بآخر الشريط) + اللوح الأيمن `translateX(-5px)` للمطابقة بين الجانبين + فيديو الموبايل المتناوب بلا تلميح. تحقق: tsc نظيف + eslint نظيف + build ناجح + حي 200.
-- [x] **كاروسيل المجموعات:** `product-carousel` (أدوار center/left/right بـ CSS transitions 650ms + swipe + كيبورد RTL + IntersectionObserver) بصور `/slider/{rush,noir,gold}.png` — تحقق: tsc + eslint + build + حي 200.
-- [x] **إشعارات الإيميل (Resend):** `src/lib/email.ts` (يعمل بلا مفاتيح) + تكامل في createOrder (عميل/أدمن) + updateOrderStatus + updateShipment + cancelOrder — تحقق: tsc + eslint + build نظيف.
-- [x] **تسجيل الدخول بحساب Google:** provider + زر في auth-form + مفاتيح قاموس — تحقق: tsc + eslint + build نظيف. **معلّق:** مفاتيح `AUTH_GOOGLE_ID/SECRET` من walid.
-- [x] **طلب يدوي من الأدمن + إشعار مخزون منخفض:** `createManualOrder` (تفاصيل الضيف في `Order.notes`) + صفحة/فورم `orders/new` + زر في رأس الطلبات + `notifyLowStock` (إيميل أدمن إن وصل مخزون ≤5) يُستدعى بعد أي طلب — تحقق: tsc + eslint + build + حي 200.
-- [ ] إعداد `RESEND_API_KEY` في `.env` — **محتاج من walid**
-- [ ] مفاتيح Google OAuth (`AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET`) — **محتاج من walid**
-- [ ] ربط صور Cloudinary بدل `ProductArt` — **محتاج بيانات الحساب من walid** (cloud name + API key/secret) + رفع الصور على Cloudinary (سير عمل CLAUDE.md #4)
+- [x] Resolved brief conflicts and installed the stack (npm instead of pnpm — npmmirror source)
+- [x] Wrote `CLAUDE.md`
+- [x] Setup: Next.js 16 · Tailwind v4 · shadcn/ui (Base UI) · ESLint flat config / Prettier / Husky + lint-staged · `src/` feature-based structure
+- [x] Database Schema (Prisma) — models ready and client generated (`prisma/schema.prisma`)
+- [x] Visual identity: **ADDICTIONX** — black + neon red + metallic silver + Heartbeat line
+- [x] i18n: `[lang]` segment + AR/EN dictionaries + LanguageSwitcher + `proxy.ts` (tested: `/`→307→`/ar`, `/en` works with `dir=ltr`)
+- [x] Theme: `ThemeProvider` + `ThemeToggle` (dark default + light palette)
+- [x] Home page: Cinematic Hero (Aurora + Particles + AnimatedTitle + Heartbeat) + bestsellers + collections + experience + CTA
+- [x] Catalog: filtering (collection/type) + sorting (price/rating) via `searchParams`
+- [x] Product page: image + price + notes (top/heart/base) + quantity + add to cart
+- [x] Cart: Zustand `cart-store` (with persist) + sliding CartDrawer + header counter
+- [x] Checkout: RHF + Zod form (shipping/payment) + order summary + success message
+- [x] **Real Auth.js v5:** Credentials + PrismaAdapter + JWT sessions · `bcryptjs` · `registerAction` (Server Action) · `signIn("credentials")` with `callbackUrl` · sign-out button
+- [x] **Real user account:** protection (redirect + callbackUrl) · user data and orders from DB · admin panel link for admins
+- [x] **Full DB wiring:** local PostgreSQL (`luxury_perfume`) · real `DATABASE_URL` · migrations (`init` + storefront fields) · storefront reads via `products-db.ts` (`force-dynamic` pages)
+- [x] **Seeds:** `prisma/seed.ts` + `npm run db:seed` (tsx) → admin + 8 products + 3 collections + 100ml variant
+- [x] **Admin dashboard:** protected layout · dashboard (stats/latest orders/low stock) · product CRUD (unified create/edit form) · orders (filters/details/status change) · users (role change) · all Server Actions protected with `requireAdmin()`
+- [x] Verification: `next build` + `lint` (0 issues) + clean `type-check` + live test (register/login/roles/pages 200) — dev on port 3100
+- [x] **Checkout wired to orders:** the cart carries a full snapshot (name/price/size/art) — the drawer and summary read from it not from mock · `createOrder` (price from DB not from client · Address + Order + items in one transaction · atomic stock decrement with full failure on shortage · order number `ADDX-...`) · requires login (redirect with callbackUrl) · success screen with the order number
+- [x] Live order verification: a test order was created and appeared in admin/account, stock was deducted, STOCK path works — then full cleanup of test data
+- [x] **Customer dashboard:** account page with tabs (Overview/My Orders/My Addresses/My Wishlist) + order details (items + address + shipment tracking) + real wishlist (WishlistItem + toggle + button on cards and product page)
+- [x] **Expanded admin permissions:** add user (createUser) + delete user (deleteUser with order detachment) + shipment tracking (Shipment auto-created on SHIPPED + `shipment-form` for carrier/tracking in order details)
+- [x] **Shipping settings from DB:** `StoreSetting` + `getShippingConfig` (5s cache + fallback) + `GET /api/shipping-config` + `admin/settings` form (`updateShippingSettings`) — the checkout and cart-drawer read the real settings (free shipping above threshold, carrier visible in tracking)
+- [x] **Discount coupons:** `Coupon` model + admin management (`admin/coupons` — create PERCENT/FIXED, activate/deactivate, delete) + `validateCoupon` (instant check) + `createOrder` applies the discount (percentage capped at `maxDiscount` or fixed ≤ cart, requiring `minOrderAmount`/`maxUses`/`expiresAt`) and records it on the order and updates `usedCount` in the transaction
+- [x] **Sale management:** `discountPercent` in the product form (0–90) computes `compareAtPrice` automatically + "on sale" filter in the product list + sale badge on storefront cards
+- [x] Verification: clean `type-check` + `lint` + `build` · live test 3100 (the API reflects DB settings after edit · the coupons page shows seeded coupons · the sale filter shows only discounted products · the discount badge appears in the catalog)
+- [x] **Visual wow — wave 1:** unified scroll-reveal system (`Reveal/Stagger`) on home/catalog/product page · marquee strip after the hero · **product flying to cart** (fly-to-cart + icon pulse) · cinematic product-card hover (glow + scanning light) · section headings metallic-shine + heartbeat · pulsing CTA — verified: type-check + lint + build + live pages 200
+- [x] **Visual wow — wave 2:** `PageTransition` in the layout (smooth entry on every navigation) · `CursorGlow` (glow following the cursor — Desktop only) · `CountUp` + `StatsBand` (real DB number counters on home) · wishlist pulse (heart explosion) — verified: type-check + lint + build + live pages 200
+- [x] **Footer/social:** `siteConfig.social` = real links **Instagram (addictionn_x) + TikTok (addiction_x8)** only — **facebook removed permanently**; the footer shows both links (and its collections come from DB).
+- [x] **Product reviews:** `model Review` existed in the schema — the full layer was added: `features/reviews/actions.ts` (createReview upsert on `productId_userId` + moderateReview + deleteReview + recomputeProductStats) · `admin/reviews` (all reviews + approve/reject/delete) · product page (approved list + customer form to edit their review or login link) · `dict.reviews.*` + admin keys — live check: review → approve → recompute (4.9/214 → 5.0/1 real) → appears on the storefront.
+- [x] **Collections management:** new `Collection` model (migration `collections` — **no FK with Product**, the slug is textual) · the collections seed switched from `prisma.category` to `prisma.collection` · `getCollections()` falls back to the constant + used in footer/home/catalog/product form (select `slug — name`) · `admin/collections` (add collection + deletion protected from products + **shows each collection's perfumes with count**) — live check: 3 collections with their perfume counts.
+- [x] **Notes pyramid:** the notes section on the product page became a pyramid (base/heart/top) instead of equal columns + the collection name is read dynamically.
+- [x] **Comprehensive verification (this round):** clean `type-check` · clean `eslint` on all changed files · successful `next build` with all new routes (reviews/collections) · live test 3100: home/catalog/product 200 + admin (reviews/collections) 200 with admin session + anonymous→307 + AR dictionary reviews done.
+- [x] **Customer addresses — full CRUD:** add/edit/delete + default from the customer account (`address-manager` + `address-form`) — live check: create → view → delete.
+- [x] **Order cancellation from customer:** `cancelOrder` (PENDING only + ownership + stock restore) + button in order details + **admin also now restores stock on CANCELLED/REFUNDED** — live check: canceled a test order and stock returned 8→10.
+- [x] **Newsletter:** subscribe from the footer (no login, upsert) + `admin/newsletter` (list/activate/deactivate/delete) — live check: added a subscriber → appears in admin → cleanup. **Then final decision:** newsletter inside the footer block above the columns and `newsletter-section.tsx` deleted.
+- [x] **Completed hero (final wave):** reverse rotation (double scrub) + smooth fade-out on scroll + **automatic GSAP bob** after 3.5s idle (rotate+reverse, canceled by any cursor move) + cursor hint — verified: tsc + eslint + build + live 200 with no console errors.
+- [x] **Hero — sprite filmstrip (final final wave):** replaced `video.currentTime` seek (was unnaturally slow) with `background-position` over `public/sprites/{left,right}.jpg` strips (10×6) — instant motion + automatic detection (no hint) + no deadZone + `FRAMES=59` (no black gap at the end of the strip) + right plate `translateX(-5px)` to match the two sides + alternating mobile video without hint. Verified: clean tsc + clean eslint + successful build + live 200.
+- [x] **Collections carousel:** `product-carousel` (center/left/right roles with 650ms CSS transitions + swipe + RTL keyboard + IntersectionObserver) with `/slider/{rush,noir,gold}.png` images — verified: tsc + eslint + build + live 200.
+- [x] **Email notifications (Resend):** `src/lib/email.ts` (works without keys) + integration in createOrder (customer/admin) + updateOrderStatus + updateShipment + cancelOrder — verified: clean tsc + eslint + build.
+- [x] **Google sign-in:** provider + button in auth-form + dictionary keys — verified: clean tsc + eslint + build. **Pending:** `AUTH_GOOGLE_ID/SECRET` keys from walid.
+- [x] **Manual order from admin + low-stock notification:** `createManualOrder` (guest details in `Order.notes`) + `orders/new` page/form + button in orders header + `notifyLowStock` (admin email when stock ≤5) called after any order — verified: tsc + eslint + build + live 200.
+- [ ] Set `RESEND_API_KEY` in `.env` — **needed from walid**
+- [ ] Google OAuth keys (`AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET`) — **needed from walid**
+- [ ] Wire Cloudinary images instead of `ProductArt` — **needs walid's account data** (cloud name + API key/secret) + uploading the images to Cloudinary (CLAUDE.md workflow #4)
 
-**قرارات مُثبَّتة:**
+**Fixed decisions:**
 
-- الهوية: **ADDICTIONX** — «Feel the Rush». الجمهور شباب → إبهار بصري أولوية قصوى.
-- الألوان: أسود عميق `oklch(0.12 …)` + نيون أحمر `oklch(0.6 0.22 22)` + فضي معدني متدرج للعناوين.
-- الخطوط: Cairo (عربي+لاتيني، body) · Playfair Display (لاتيني، display). `--font-cairo` و `--font-playfair`.
-- shadcn `base-nova` style + `@base-ui/react` (بدل Radix). `components.json` عند الجذر، `rtl: true`.
-- الترجمة: `[lang]` segment (`/ar`، `/en`)، الافتراضي `ar`، قواميس `src/lib/i18n/dictionary.ts`.
-- الثيم: دارك افتراضي، تفضيل في `localStorage`، ألوان كـ CSS variables، light في `:root[data-theme="light"]`.
-- Framer Motion (framer-motion v13) — بدل motion package (حسب طلب walid).
-- **Base UI Button يستخدم `render={<Link/>}` للـ polymorphism — لا `asChild`.**
-- الأسعار `Int` بالقروش (قرار #3) — `formatPrice()` في `products.ts` للتحويل للعرض، و`egpToQirsh` (×100) عند إدخال الأدمن.
-- الأخطاء عند البناء: أي مشكلة `createMotionComponent` على الـ server = مكوّن Server يستورد `motion` مباشرة. الحل: `"use client"` أو CSS hover بدله.
-- **لا تُمرَّر دوال/أيقونات من Server لـ Client Component** — تُعرَّف داخل الـ client وتُمرَّر نصوص فقط (خطأ `Functions cannot be passed directly to Client Components` وقع في `admin/layout.tsx` مع icons).
-- **سعر الطلب يُحسب في الـ server من الـ DB حصرًا** — snapshot السلة (اسم/سعر/حجم) للعرض فقط ولا يُوثق به في الحساب.
-- **الـ checkout يتطلب تسجيل دخول** — `Order.userId` إجباري؛ غير المسجّل يُحال للـ login مع `callbackUrl`.
-- **فصل واضح بين داشبوردين:** داشبورد العميل (نطاقه: طلباته + عناوينه + مفضلته) وداشبورد الأدمن (صلاحيات كاملة: CRUD منتجات · إدارة مستخدمين بإضافة/حذف · متابعة شحن · متابعة شاملة). `/admin` للأدمن حصرًا.
-- **الشحن:** `Shipment` model مرتبط الآن — يُنشأ تلقائيًا عند تحويل الطلب إلى `SHIPPED` (carrier افتراضي `Bosta`)، يُغلق عند `DELIVERED`، ويُحذف عند `CANCELLED/REFUNDED`. التتبع يظهر للعميل في تفاصيل طلبه وللأدمن في لوحة الطلبات.
-- **إعدادات الشحن = مصدر الحقيقة في DB** (`StoreSetting`): الـ checkout و cart-drawer يجلبانها من `GET /api/shipping-config` — ثوابت `src/lib/checkout-config.ts` fallback فقط للعرض قبل التحميل.
-- **الكوبونات:** `discountValue` — PERCENT كنسبة صحيحة (%)، FIXED بالقروش (الإدخال بالجنيه يُضرب في 100). الخصم يُحتسب في السيرفر دائمًا. `minOrderAmount` في schema `Int?` → أي استخدام يحتاج `?? 0`.
-- **الـ Sale = `compareAtPrice` موجود** (لا حقل مستقل) — `discountPercent` في نموذج الأدمن يولّده تلقائيًا؛ فلتر الأدمن `NOT: { compareAtPrice: null }`.
-- **تحقق الكوبون في `createOrder` هو الحكم النهائي** — `validateCoupon` في الواجهة للمعاينة فقط (السعر النهائي يُحسب في السيرفر داخل المعاملة مع خصم المخزون).
-- **`toLocaleDateString` لا يقبل `timeStyle` في Node** (الباوزر يتسامح، Node يرمي خطأ) — للتاريخ+الوقت استخدم `toLocaleString`.
-- **حذف مستخدم:** لا يسمح بحذف نفسه؛ طلباته تُنقل لـ `userId=null` (تاريخ الطلب يبقى مجهولًا) ثم يُحذف المستخدم في معاملة واحدة.
-- أدمن البذور: `admin@addictionx.com` (كلمة المرور في `prisma/seed.ts`) — **غيّرها فورًا قبل النشر**.
-- `@prisma/client` يستورد خارج المشروع (سكربتات temp) يفشل — ضع السكربت داخل المشروع، وscript بالـ async pattern (لا top-level await مع tsx).
-- **التقييمات (قرار ثابت):** تقييم واحد لكل منتج/مستخدم — upsert على `productId_userId`؛ التعديل يعيد التقييم pending؛ النشر يعتمد موافقة الأدمن؛ `rating`/`reviewsCount` في DB يُعادان من **التقييمات الفعلية المعتمدة فقط** (بذور الأرقام التسويقية تنهار عند أول موافقة — مقصود).
-- **المجموعات (قرار ثابت):** بلا FK — `Product.collection` slug نصي يبقى كما هو؛ `Collection` model يُدار من الداشبورد (add/delete — الحذف يرفض ما دام بها منتجات).
-- **السوشيال (قرار ثابت):** Instagram + TikTok فقط — **لا فيسبوك** (حسب طلب walid).
+- Identity: **ADDICTIONX** — «Feel the Rush». Young audience → visual wow top priority.
+- Colors: deep black `oklch(0.12 …)` + neon red `oklch(0.6 0.22 22)` + metallic silver gradient for titles.
+- Fonts: Cairo (Arabic+Latin, body) · Playfair Display (Latin, display). `--font-cairo` and `--font-playfair`.
+- shadcn `base-nova` style + `@base-ui/react` (instead of Radix). `components.json` at root, `rtl: true`.
+- Translation: `[lang]` segment (`/ar`, `/en`), default `ar`, dictionaries in `src/lib/i18n/dictionary.ts`.
+- Theme: dark default, preference in `localStorage`, colors as CSS variables, light in `:root[data-theme="light"]`.
+- Framer Motion (framer-motion v13) — instead of the motion package (per walid's request).
+- **Base UI Button uses `render={<Link/>}` for polymorphism — not `asChild`.**
+- Prices `Int` in piasters (decision #3) — `formatPrice()` in `products.ts` for display conversion, `egpToQirsh` (×100) on admin input.
+- Build errors: any `createMotionComponent` issue on the server = a Server component importing `motion` directly. Solution: `"use client"` or CSS hover instead.
+- **Never pass functions/icons from Server to Client Component** — define them inside the client and pass text only (the `Functions cannot be passed directly to Client Components` error happened in `admin/layout.tsx` with icons).
+- **Order price is calculated server-side from the DB only** — the cart snapshot (name/price/size) is for display only and never trusted in the calculation.
+- **Checkout requires login** — `Order.userId` is required; unregistered users are sent to login with `callbackUrl`.
+- **Clear separation between the two dashboards:** customer dashboard (scope: their orders + addresses + wishlist) and admin dashboard (full permissions: product CRUD · user management with add/delete · shipment tracking · comprehensive tracking). `/admin` for admins only.
+- **Shipping:** `Shipment` model is now linked — auto-created when the order becomes `SHIPPED` (default carrier `Bosta`), closed on `DELIVERED`, deleted on `CANCELLED/REFUNDED`. Tracking shows to the customer in their order details and to the admin in the orders panel.
+- **Shipping settings = source of truth in DB** (`StoreSetting`): the checkout and cart-drawer fetch from `GET /api/shipping-config` — the constants in `src/lib/checkout-config.ts` are fallback only for display before load.
+- **Coupons:** `discountValue` — PERCENT as an integer percentage (%), FIXED in piasters (input in EGP multiplied by 100). The discount is always computed server-side. `minOrderAmount` in schema `Int?` → any use needs `?? 0`.
+- **Sale = `compareAtPrice` present** (no separate field) — `discountPercent` in the admin form generates it automatically; the admin filter is `NOT: { compareAtPrice: null }`.
+- **Coupon validation in `createOrder` is the final judge** — `validateCoupon` in the UI is preview only (final price is computed server-side inside the transaction along with the stock decrement).
+- **`toLocaleDateString` doesn't accept `timeStyle` in Node** (the browser tolerates it, Node throws) — for date+time use `toLocaleString`.
+- **Delete user:** cannot delete self; their orders move to `userId=null` (order history stays anonymous) then the user is deleted in one transaction.
+- Seed admin: `admin@addictionx.com` (password in `prisma/seed.ts`) — **change it immediately before production**.
+- `@prisma/client` imported outside the project (temp scripts) fails — put the script inside the project, and use the async pattern script (no top-level await with tsx).
+- **Reviews (fixed decision):** one review per product/user — upsert on `productId_userId`; editing returns the review to pending; publishing depends on admin approval; `rating`/`reviewsCount` in DB are recomputed from the **actual approved reviews only** (the fake marketing seed numbers collapse at the first approval — intentional).
+- **Collections (fixed decision):** no FK — `Product.collection` stays a text slug; the `Collection` model is managed from the dashboard (add/delete — deletion is refused while products exist).
+- **Social (fixed decision):** Instagram + TikTok only — **no Facebook** (per walid's request).
 
-**البيئة:** Node v24 · npm 11 (مصدر npmmirror + PRISMA_ENGINES_MIRROR للتثبيت) · git v2.34 · PostgreSQL محلي (منفذ 5432) · dev server يعمل على المنفذ 3100
+**Environment:** Node v24 · npm 11 (npmmirror source + PRISMA_ENGINES_MIRROR for install) · git v2.34 · local PostgreSQL (port 5432) · dev server running on port 3100

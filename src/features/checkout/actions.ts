@@ -17,7 +17,7 @@ import type { CartItem } from "@/stores/cart-store";
 import type { Locale } from "@/lib/i18n/dictionary";
 
 // ============================================================
-// إنشاء طلب من السلة — الأسعار تُقرأ من الـ DB ولا يُثق في سعر العميل
+// Create an order from the cart — prices are read from the DB, the client's price is never trusted
 // ============================================================
 
 const inputSchema = z.object({
@@ -89,7 +89,7 @@ export async function createOrder(
       include: { variants: { where: { isActive: true } } },
     });
 
-    // تجهيز بنود الطلب بسعر الـ variant الفعلي من الـ DB
+    // Build the order lines with the actual variant price from the DB
     const lines: {
       productId: string;
       variantId: string;
@@ -123,7 +123,7 @@ export async function createOrder(
       });
     }
 
-    // التحقق من الكوبون وحساب الخصم — من الـ DB حصرًا
+    // Validate the coupon and compute the discount — from the DB only
     let discount = 0;
     let appliedCouponCode: string | null = null;
     let couponId: string | null = null;
@@ -162,7 +162,7 @@ export async function createOrder(
       .toUpperCase()}`;
 
     const order = await prisma.$transaction(async (tx) => {
-      // خصم المخزون بشكل ذرّي — لو المخزون غير كافٍ يُفشل الطلب بالكامل
+      // Decrement stock atomically — if the stock is insufficient the whole order fails
       for (const line of lines) {
         const updated = await tx.productVariant.updateMany({
           where: { id: line.variantId, stock: { gte: line.quantity } },
@@ -219,7 +219,7 @@ export async function createOrder(
         priceQirsh: l.unitPrice,
       })),
     };
-    // الإشعارات لا تُفشل الطلب أبدًا — تُرسل بعد نجاح الإنشاء
+    // Notifications never fail the order — they are sent after successful creation
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { email: true },
@@ -255,7 +255,7 @@ export async function createOrder(
 }
 
 // ============================================================
-// تحقق فوري من الكوبون (للواجهة) — التحقق النهائي يتم داخل createOrder
+// Instant coupon validation (for the UI) — the final check happens inside createOrder
 // ============================================================
 
 export async function validateCoupon(

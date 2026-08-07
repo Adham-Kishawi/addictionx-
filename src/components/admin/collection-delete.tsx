@@ -6,7 +6,7 @@ import { Trash2, AlertCircle } from "lucide-react";
 import { deleteCollection } from "@/features/admin/collections-actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
-// زر حذف المجموعة — لا يُحذف إلا إذا كانت فارغة من المنتجات.
+// Collection delete button — only deletes when the collection is empty of products.
 
 export function CollectionDelete({
   slug,

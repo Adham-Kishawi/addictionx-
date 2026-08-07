@@ -81,7 +81,7 @@ export default async function AccountOrderDetailPage({
         </div>
       </div>
 
-      {/* تتبع الشحنة */}
+      {/* Shipment tracking */}
       <section className="mb-6 rounded-2xl border border-border bg-card/40 p-5">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
           <Truck className="size-4 text-primary" />
@@ -120,7 +120,7 @@ export default async function AccountOrderDetailPage({
       </section>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        {/* العنوان */}
+        {/* Address */}
         {order.address && (
           <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card/40 p-5">
             <div className="flex items-center gap-2 text-sm font-semibold">
@@ -140,7 +140,7 @@ export default async function AccountOrderDetailPage({
           </section>
         )}
 
-        {/* الملخص */}
+        {/* Summary */}
         <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card/40 p-5">
           <h2 className="text-sm font-semibold">
             {dict.checkout.orderSummary}
@@ -170,7 +170,7 @@ export default async function AccountOrderDetailPage({
         </section>
       </div>
 
-      {/* المنتجات */}
+      {/* Items */}
       <section className="mt-6 rounded-2xl border border-border bg-card/40 p-5">
         <h2 className="mb-4 text-sm font-semibold">
           {dict.account.orderItems}

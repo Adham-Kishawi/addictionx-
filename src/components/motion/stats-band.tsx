@@ -6,7 +6,7 @@ import { HeartbeatLine } from "@/components/motion/heartbeat-line";
 
 export type StatItem = { label: string; value: number; suffix?: string };
 
-// شريط أرقام يعدّ تصاعديًا عند الوصول — أرقام حقيقية من DB.
+// Numbers band that counts up on arrival — real numbers from the DB.
 
 export function StatsBand({ stats }: { stats: StatItem[] }) {
   return (

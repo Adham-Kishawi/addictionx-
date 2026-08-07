@@ -5,8 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
 // ============================================================
-// إدارة المجموعات من الداشبورد (إضافة / حذف)
-// Product.collection مجرد slug نصي — بدون FK حتى لا تكسر القراءات
+// Collections management from the dashboard (add / delete)
+// Product.collection is just a text slug — no FK so readers never break
 // ============================================================
 
 const collectionSchema = z.object({
@@ -49,8 +49,8 @@ export async function createCollection(
   return { success: true };
 }
 
-// الحذف مسموح فقط للمجموعات الفارغة — إن كان بها منتجات نطلب
-// نقلها لمجموعة أخرى أولًا حتى لا تختفي من قسم "كل المنتجات".
+// Deletion is allowed only for empty collections — if it has products we ask
+// to move them to another collection first so they don't disappear from "All products".
 export async function deleteCollection(slug: string): Promise<{
   error?: string;
   success?: boolean;

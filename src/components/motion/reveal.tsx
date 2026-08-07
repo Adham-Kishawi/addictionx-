@@ -3,8 +3,8 @@
 import { motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
 
-// الظهور السينمائي عند التمرير — نظام موحّد لكل أقسام الستورفرنت.
-// مرة واحدة فقط (once)، مع احترام prefers-reduced-motion.
+// Cinematic reveal on scroll — unified system for every storefront section.
+// Runs once (once), respecting prefers-reduced-motion.
 
 export function Reveal({
   children,
@@ -38,7 +38,7 @@ export function Reveal({
   );
 }
 
-// حاوية شبكة بتظهر العناصر واحد ورا التاني (stagger)
+// Grid container that shows the elements one after the other (stagger)
 export function RevealStagger({
   children,
   className,

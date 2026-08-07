@@ -27,7 +27,7 @@ export function Header({
         className="site-header fixed inset-x-0 top-0 z-30"
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          {/* اللوجو */}
+          {/* Logo */}
           <Link
             href={`/${locale}`}
             className="group flex items-center gap-2 text-foreground"
@@ -42,7 +42,7 @@ export function Header({
             </span>
           </Link>
 
-          {/* التنقل — مخفي على الجوال */}
+          {/* Nav — hidden on mobile */}
           <nav
             className="hidden items-center gap-6 text-sm text-muted-foreground md:flex"
             aria-label="Main"
@@ -75,7 +75,7 @@ export function Header({
             )}
           </nav>
 
-          {/* الأيقونات */}
+          {/* Icons */}
           <div className="flex items-center gap-1 text-muted-foreground">
             <LanguageSwitcher currentLocale={locale} />
             <ThemeToggle />

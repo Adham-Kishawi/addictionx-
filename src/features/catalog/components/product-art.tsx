@@ -1,7 +1,7 @@
-// عمل فني للمنتج — لو فيه صورة حقيقية تُعرض هي، وإلا تدرج لوني + زجاجة عطر متوهجة
+// Product artwork — shows the real image if present, otherwise a color gradient + a glowing perfume bottle
 import type { Product } from "@/features/catalog/data/products";
 
-// shape مصغّر يكفي لعرض العمل الفني — يقبل الـ Product كاملًا أو snapshot السلة
+// Minimal shape enough to render the artwork — accepts the full Product or a cart snapshot
 export type ProductArtSource = Pick<Product, "art" | "nameEn"> & {
   image?: string;
 };
@@ -39,7 +39,7 @@ export function ProductArt({
       }}
     >
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center">
-        {/* زجاجة عطر */}
+        {/* Perfume bottle */}
         <svg
           viewBox="0 0 48 96"
           className="w-12 shrink-0 opacity-90"

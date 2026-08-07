@@ -3,11 +3,11 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-// حالة الهيدر فوق الـ hero السينمائي:
-// - على الصفحة الرئيسية وفوق أول 80% من الشاشة → الهيدر شفاف تمامًا
-//   (بلا حدود/blur) وتنخفض شفافية CursorGlow عبر --cursor-glow-opacity.
-// - عند التمرير للأسفل أو على أي صفحة أخرى → يعود لطبيعته.
-// لا يغيّر أي حالة React — مجرد class على #site-header + متغير CSS على <html>.
+// Header state over the cinematic hero:
+// - On the home page and above the first 80% of the screen → the header is completely transparent
+//   (no borders/blur) and the CursorGlow opacity drops via --cursor-glow-opacity.
+// - After scrolling down or on any other page → it returns to normal.
+// It changes no React state — just a class on #site-header + a CSS variable on <html>.
 
 export function HeaderScroll() {
   const pathname = usePathname();

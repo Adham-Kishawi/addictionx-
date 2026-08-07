@@ -64,7 +64,7 @@ export default async function ProductPage({
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
-      {/* مسار التنقل */}
+      {/* Breadcrumb */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
         <Link
           href={`/${locale}`}
@@ -84,11 +84,11 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-        {/* الصورة */}
+        {/* Image */}
         <Reveal y={40}>
           <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border">
             <ProductArt product={product} className="h-full w-full" />
-            {/* الشارات */}
+            {/* Badges */}
             <div className="absolute top-4 start-4 flex flex-col gap-2">
               {product.isNew && (
                 <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
@@ -104,7 +104,7 @@ export default async function ProductPage({
           </div>
         </Reveal>
 
-        {/* التفاصيل */}
+        {/* Details */}
         <Reveal delay={0.15} y={40}>
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
@@ -136,7 +136,7 @@ export default async function ProductPage({
               {description}
             </p>
 
-            {/* السعر */}
+            {/* Price */}
             <div className="flex items-baseline gap-3">
               <span className="font-display text-3xl font-bold">
                 {formatPrice(product.price)}
@@ -151,7 +151,7 @@ export default async function ProductPage({
               )}
             </div>
 
-            {/* المكونات — هرَم النوتات */}
+            {/* Notes — pyramid of notes */}
             <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card/40 p-5">
               <span className="mb-1 text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
                 {dict.product.notes}
@@ -204,7 +204,7 @@ export default async function ProductPage({
         </Reveal>
       </div>
 
-      {/* ====== التقييمات ====== */}
+      {/* ====== Reviews ====== */}
       <section className="mx-auto mt-20 max-w-4xl">
         <Reveal>
           <div className="mb-8 flex flex-col gap-3">

@@ -8,7 +8,7 @@ import { AddressForm } from "./address-form";
 import type { AccountAddress } from "./account-tabs";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
-// إدارة عناوين العميل: قائمة + إضافة + تعديل + حذف + افتراضي.
+// Customer addresses manager: list + add + edit + delete + default.
 
 export function AddressManager({
   dict,

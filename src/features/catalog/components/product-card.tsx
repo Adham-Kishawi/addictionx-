@@ -39,7 +39,7 @@ export function ProductCard({
             className="h-full w-full transition-transform duration-700 group-hover:scale-105"
           />
 
-          {/* توهج نيون يتسلل عند المرور */}
+          {/* Neon glow that fades in on hover */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-0 mix-blend-screen transition-opacity duration-500 group-hover:opacity-100"
@@ -49,13 +49,13 @@ export function ProductCard({
             }}
           />
 
-          {/* شريط الضوء الماسح (shine sweep) */}
+          {/* Sweeping light bar (shine sweep) */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-y-0 w-1/3 -translate-x-[220%] skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[420%]"
           />
 
-          {/* الشارات */}
+          {/* Badges */}
           <div className="absolute top-3 start-3 flex flex-col gap-1.5">
             {product.isNew && (
               <span className="rounded-full bg-primary px-2.5 py-1 text-[0.65rem] font-semibold tracking-wide text-primary-foreground">

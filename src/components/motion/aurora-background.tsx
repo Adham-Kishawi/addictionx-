@@ -10,7 +10,7 @@ export function AuroraBackground() {
       aria-hidden
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
-      {/* توهج أحمر علوي */}
+      {/* Top red glow */}
       <motion.div
         className="absolute -top-1/3 left-1/2 h-[80vh] w-[120vw] -translate-x-1/2 rounded-full blur-3xl"
         style={{
@@ -23,7 +23,7 @@ export function AuroraBackground() {
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* كرة أرجوانية يسار */}
+      {/* Purple orb left */}
       <motion.div
         className="absolute top-1/4 -left-32 h-96 w-96 rounded-full blur-3xl"
         style={{
@@ -34,7 +34,7 @@ export function AuroraBackground() {
         transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* كرة حمراء يمين */}
+      {/* Red orb right */}
       <motion.div
         className="absolute bottom-1/4 -right-32 h-96 w-96 rounded-full blur-3xl"
         style={{
@@ -45,7 +45,7 @@ export function AuroraBackground() {
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* ضباب ضوئي سفلي */}
+      {/* Bottom light mist */}
       <motion.div
         className="absolute -bottom-40 left-1/2 h-96 w-[90vw] -translate-x-1/2 rounded-full blur-3xl"
         style={{

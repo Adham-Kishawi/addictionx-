@@ -1,6 +1,6 @@
-// طبقة إشعارات الإيميل عبر Resend.
-// تعمل بدون مفاتيح: لو RESEND_API_KEY غير موجود (أو الطلب فشل) تسجّل فقط
-// ولا تعطّل تدفق الطلب أبدًا — الإشعار إضافة اختيارية للعملية.
+// Email notification layer via Resend.
+// Works without keys: if RESEND_API_KEY is missing (or the request fails) it only logs
+// and never breaks the order flow — the notification is optional.
 import { Resend } from "resend";
 
 const API_KEY = process.env.RESEND_API_KEY;
@@ -45,7 +45,7 @@ export async function sendEmail(payload: MailPayload): Promise<boolean> {
 }
 
 // ============================================================
-// قوالب HTML بسيطة (inline styles — تعمل في كل عملاء البريد)
+// Simple HTML templates (inline styles — work in every mail client)
 // ============================================================
 
 function shell(title: string, body: string): string {
@@ -83,7 +83,7 @@ function fmt(amountQirsh: number): string {
 }
 
 // ============================================================
-// إشعارات الطلبات
+// Order notifications
 // ============================================================
 
 type OrderMailInfo = {
@@ -112,7 +112,7 @@ function orderTotal(items: OrderMailInfo["items"]): number {
   return items.reduce((s, it) => s + it.priceQirsh * it.qty, 0);
 }
 
-// إشعار العميل عند إنشاء الطلب
+// Customer notification when an order is created
 export function orderConfirmationEmail(info: OrderMailInfo) {
   return shell(
     `تأكيد الطلب ${info.orderNumber}`,
@@ -123,7 +123,7 @@ export function orderConfirmationEmail(info: OrderMailInfo) {
   );
 }
 
-// إشعار الأدمن بطلب جديد
+// Admin notification for a new order
 export function adminNewOrderEmail(info: OrderMailInfo) {
   return shell(
     `طلب جديد — ${info.orderNumber}`,
@@ -134,7 +134,7 @@ export function adminNewOrderEmail(info: OrderMailInfo) {
   );
 }
 
-// إشعار تغيّر حالة الطلب للعميل
+// Customer notification for an order status change
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "قيد الانتظار",
   CONFIRMED: "تم التأكيد",
@@ -145,7 +145,7 @@ const STATUS_LABELS: Record<string, string> = {
   REFUNDED: "تم استرداد المبلغ",
 };
 
-// تنبيه الأدمن بانخفاض المخزون
+// Admin alert for low stock
 export function lowStockEmail(
   items: { name: string; sizeMl: number; stock: number }[],
 ) {
@@ -168,13 +168,13 @@ export function lowStockEmail(
   );
 }
 
-// إعادة استخدام من نقاط خصم المخزون: تفحص ما إذا كان أي variant وصل لحد التنبيه
+// Reused at the stock decrement points: checks whether any variant reached the alert threshold
 export async function notifyLowStock(
   variantIds: string[],
   threshold = 5,
 ): Promise<void> {
   if (!variantIds.length) return;
-  // dynamic import لتجنب استيراد prisma عند استيراد email.ts في البداية
+  // dynamic import to avoid loading prisma when email.ts is imported early
   const { prisma } = await import("@/lib/prisma");
   const low = await prisma.productVariant.findMany({
     where: { id: { in: variantIds }, stock: { lte: threshold } },
@@ -196,7 +196,7 @@ export async function notifyLowStock(
   });
 }
 
-// بيانات شحن الشحنة (شركة + رقم تتبع)
+// Shipment info (carrier + tracking number)
 export function shippingInfoEmail(info: {
   orderNumber: string;
   carrier: string;
@@ -215,7 +215,7 @@ export function shippingInfoEmail(info: {
   );
 }
 
-// إشعار إلغاء الطلب للعميل
+// Customer notification for an order cancellation
 export function orderCancelledEmail(orderNumber: string) {
   return shell(
     `إلغاء الطلب ${orderNumber}`,

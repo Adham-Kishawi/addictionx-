@@ -49,7 +49,7 @@ export function WishlistButton({
         className,
       )}
     >
-      {/* انفجار قلب عند التفعيل */}
+      {/* Heart burst on activation */}
       <AnimatePresence>
         {active && (
           <motion.span

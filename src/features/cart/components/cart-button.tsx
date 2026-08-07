@@ -14,7 +14,7 @@ export function CartButton({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
   const [bump, setBump] = useState(0);
 
-  // نبضة عند وصول جرعة "طيران المنتج للسلة"
+  // Pulse when the "product flying to cart" streak arrives
   useEffect(() => {
     const onBump = () => setBump((b) => b + 1);
     window.addEventListener("addictionx:cart-bump", onBump);

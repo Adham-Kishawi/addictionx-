@@ -11,7 +11,7 @@ type Theme = "dark" | "light";
 
 const THEME_KEY = "theme";
 
-// مصدر الحقيقة الواحد هو classList على <html> — يُحدَّث في البداية من سكربت inline في الـ layout
+// The single source of truth is the classList on <html> — updated initially from an inline script in the layout
 function subscribe(callback: () => void) {
   const observer = new MutationObserver(callback);
   observer.observe(document.documentElement, {

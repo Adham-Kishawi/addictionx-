@@ -9,7 +9,7 @@ import {
 } from "@/features/newsletter/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
-// أزرار إدارة المشترك (تفعيل/إيقاف + حذف).
+// Subscriber management buttons (activate/deactivate + delete).
 
 export function NewsletterActions({
   email,

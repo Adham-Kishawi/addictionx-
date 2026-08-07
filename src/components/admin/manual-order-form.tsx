@@ -103,7 +103,7 @@ export function ManualOrderForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      {/* بيانات العميل */}
+      {/* Customer data */}
       <section className="rounded-2xl border border-border bg-card/40 p-5">
         <h2 className="mb-4 text-sm font-semibold">
           {dict.checkout.shippingInfo}
@@ -120,7 +120,7 @@ export function ManualOrderForm({
         </div>
       </section>
 
-      {/* بنود الطلب */}
+      {/* Order lines */}
       <section className="rounded-2xl border border-border bg-card/40 p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{dict.admin.orderLines}</h2>

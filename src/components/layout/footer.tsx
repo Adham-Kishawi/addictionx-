@@ -12,7 +12,7 @@ export async function Footer({ locale }: { locale: Locale }) {
 
   return (
     <footer className="border-t border-border bg-card/40">
-      {/* النشرة — أول شريط جوه الفوتر، فوق كل الأعمدة */}
+      {/* Newsletter — first strip inside the footer, above all columns */}
       <div className="border-b border-border/60">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-5 px-4 py-12 text-center sm:px-6 lg:px-8">
           <div className="flex flex-col gap-2">
@@ -28,7 +28,7 @@ export async function Footer({ locale }: { locale: Locale }) {
       </div>
 
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
-        {/* عن العلامة */}
+        {/* About the brand */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <HeartbeatLine className="h-5 w-9 text-primary" />
@@ -44,7 +44,7 @@ export async function Footer({ locale }: { locale: Locale }) {
           </p>
         </div>
 
-        {/* روابط سريعة */}
+        {/* Quick links */}
         <div className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold">{dict.footer.quickLinks}</h3>
           <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
@@ -75,7 +75,7 @@ export async function Footer({ locale }: { locale: Locale }) {
           </ul>
         </div>
 
-        {/* المجموعات */}
+        {/* Collections */}
         <div className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold">{dict.footer.collections}</h3>
           <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
@@ -92,7 +92,7 @@ export async function Footer({ locale }: { locale: Locale }) {
           </ul>
         </div>
 
-        {/* تواصل */}
+        {/* Contact */}
         <div className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold">{dict.footer.contact}</h3>
           <ul className="flex flex-col gap-2 text-sm text-muted-foreground">

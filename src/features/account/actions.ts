@@ -44,7 +44,7 @@ export async function removeWishlistItem(productId: string) {
 }
 
 // ============================================================
-// عناوين العميل (CRUD) — الحساب الشخصي
+// Customer addresses (CRUD) — personal account
 // ============================================================
 
 const addressSchema = z.object({
@@ -154,9 +154,9 @@ export async function deleteAddress(addressId: string): Promise<void> {
 }
 
 // ============================================================
-// إلغاء الطلب (العميل)
-// - يسمح فقط لصاحب الطلب، وفقط ما دام الطلب PENDING
-// - عكس أثر createOrder: رد حالة الطلب إلى CANCELLED + إعادة المخزون
+// Order cancellation (customer)
+// - Only the order owner, and only while the order is PENDING
+// - Reverse of createOrder: return the order to CANCELLED + restore stock
 // ============================================================
 
 export async function cancelOrder(orderId: string): Promise<{

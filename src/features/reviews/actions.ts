@@ -7,10 +7,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 // ============================================================
-// تقييمات المنتجات
-// - العميل يكتب تقييمًا (مرة واحدة لكل منتج — upsert لتعديل تقييمه)
-// - التقييم يُنشر فقط بعد موافقة الأدمن (isApproved)
-// - عند أي تغيير معتمد: يُعاد حساب rating/reviewsCount للمنتج
+// Product reviews
+// - The customer writes a review (one per product — upsert to edit their own review)
+// - The review is published only after admin approval (isApproved)
+// - After any approved change: rating/reviewsCount are recomputed for the product
 // ============================================================
 
 async function requireAdmin() {
@@ -88,7 +88,7 @@ export async function createReview(
     },
   });
 
-  // لو كان للعميل تقييم معتمد سابقًا، تعديله يوقف اعتماده → يعاد الحساب
+  // If the customer had a previously approved review, editing it revokes the approval → recompute
   await recomputeProductStats(productId);
   revalidatePath("/", "layout");
   return { success: true };

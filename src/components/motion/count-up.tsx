@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useInView, useReducedMotion, animate } from "framer-motion";
 
-// عدّاد يعدّ تصاعديًا عند وصول القسم للشاشة — تُمرَّر القيمة النهائية فقط.
+// Counter that counts up when the section reaches the screen — only the final value is passed.
 
 export function CountUp({
   to,

@@ -207,7 +207,7 @@ export function ProductForm({
         </p>
       )}
 
-      {/* المعلومات الأساسية */}
+      {/* Basic info */}
       <section className="grid gap-4 rounded-2xl border border-border bg-card/40 p-5 sm:grid-cols-2">
         <Field label={dict.admin.arabicName} required>
           <input
@@ -350,7 +350,7 @@ export function ProductForm({
         </Field>
       </section>
 
-      {/* الحالات */}
+      {/* Flags */}
       <section className="grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card/40 p-5 sm:grid-cols-4">
         <CheckboxField
           label={dict.admin.isActive}
@@ -374,7 +374,7 @@ export function ProductForm({
         />
       </section>
 
-      {/* المكونات */}
+      {/* Notes */}
       <section className="grid gap-4 rounded-2xl border border-border bg-card/40 p-5 sm:grid-cols-3">
         <Field label={dict.admin.notesTop}>
           <textarea
@@ -402,7 +402,7 @@ export function ProductForm({
         </Field>
       </section>
 
-      {/* ألوان التصميم */}
+      {/* Design colors */}
       <section className="grid gap-4 rounded-2xl border border-border bg-card/40 p-5 sm:grid-cols-3">
         <ColorField
           label={dict.admin.colorFrom}
@@ -421,7 +421,7 @@ export function ProductForm({
         />
       </section>
 
-      {/* صورة المنتج */}
+      {/* Product image */}
       <section className="rounded-2xl border border-border bg-card/40 p-5">
         <h2 className="mb-3 text-sm font-semibold">
           {dict.admin.productImage}
@@ -483,7 +483,7 @@ export function ProductForm({
         </div>
       </section>
 
-      {/* المقاسات */}
+      {/* Variants (sizes) */}
       <section className="rounded-2xl border border-border bg-card/40 p-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{dict.admin.variants}</h2>
@@ -567,7 +567,7 @@ export function ProductForm({
         </div>
       </section>
 
-      {/* الأزرار */}
+      {/* Actions */}
       <div className="flex items-center justify-end gap-2">
         <Button
           type="button"

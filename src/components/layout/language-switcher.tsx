@@ -12,7 +12,7 @@ export function LanguageSwitcher({ currentLocale }: { currentLocale: Locale }) {
   const switchTo: Locale = currentLocale === "ar" ? "en" : "ar";
 
   const handleSwitch = () => {
-    // استبدال مقطع اللغة في المسار الحالي: /en/... ← /ar/...
+    // Replace the locale segment in the current path: /en/... ← /ar/...
     const segments = pathname.split("/");
     const index = segments.findIndex((seg) => isLocale(seg));
     if (index !== -1) {

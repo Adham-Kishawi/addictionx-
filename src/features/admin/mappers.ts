@@ -5,7 +5,7 @@ const defaultArt = { from: "#1e1b4b", to: "#020617", glow: "#6366f1" } as const;
 
 type DbProductRow = Prisma.ProductGetPayload<{ include: { variants: true } }>;
 
-// يحوّل صف منتج من قاعدة البيانات إلى شكل الستورفرنت (عرض الفني فقط)
+// Converts a product row from the database into the storefront shape (display fields only)
 export function toStorefrontProduct(p: DbProductRow): Product {
   return {
     id: p.id,

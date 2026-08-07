@@ -3,7 +3,7 @@
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// عرض النجوم للقراءة فقط (قوائم التقييمات).
+// Read-only star display (reviews lists).
 
 export function StarDisplay({
   value,
@@ -32,7 +32,7 @@ export function StarDisplay({
   );
 }
 
-// اختيار النجوم 1..5 مع معاينة عند المرور.
+// Star picker 1..5 with a hover preview.
 
 export function StarInput({
   value,

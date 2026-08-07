@@ -84,7 +84,7 @@ export default async function AdminOrderDetailPage({
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        {/* العميل والعنوان */}
+        {/* Customer and address */}
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card/40 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <UserIcon className="size-4 text-primary" />
@@ -123,7 +123,7 @@ export default async function AdminOrderDetailPage({
           </div>
         </section>
 
-        {/* الملخص */}
+        {/* Summary */}
         <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card/40 p-5">
           <h2 className="text-sm font-semibold">
             {dict.checkout.orderSummary}
@@ -163,7 +163,7 @@ export default async function AdminOrderDetailPage({
         </section>
       </div>
 
-      {/* الشحنة */}
+      {/* Shipment */}
       <section className="mt-6 rounded-2xl border border-border bg-card/40 p-5">
         <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
           <Truck className="size-4 text-primary" />
@@ -203,7 +203,7 @@ export default async function AdminOrderDetailPage({
         )}
       </section>
 
-      {/* المنتجات */}
+      {/* Items */}
       <section className="mt-6 rounded-2xl border border-border bg-card/40 p-5">
         <h2 className="mb-4 text-sm font-semibold">
           {dict.admin.items}

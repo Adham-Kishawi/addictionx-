@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
-// نموذج الاشتراك في النشرة البريدية (الفوتر) — يعمل بلا تسجيل دخول.
+// Newsletter subscription form (footer) — works without login.
 
 export function NewsletterForm({ dict }: { dict: Dictionary }) {
   const [email, setEmail] = useState("");

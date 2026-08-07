@@ -6,7 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// نشرة ADDICTIONX البريدية — الاشتراك من الفوتر بلا تسجيل دخول.
+// ADDICTIONX email newsletter — subscribe from the footer without login.
 
 const newsletterSchema = z.string().trim().email();
 
@@ -40,7 +40,7 @@ export async function subscribeNewsletter(
   return { success: true };
 }
 
-// إدارة الأدمن: إيقاف/تفعيل أو حذف مشترك.
+// Admin management: activate/deactivate or delete a subscriber.
 
 export async function toggleNewsletterEntry(email: string): Promise<void> {
   await requireAdmin();

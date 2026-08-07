@@ -6,7 +6,7 @@ import { XCircle, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { cancelOrder } from "@/features/account/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
-// زر إلغاء الطلب من جهة العميل — يظهر فقط في حالة PENDING.
+// Customer-side cancel order button — only shown in PENDING status.
 
 export function CancelOrderButton({
   orderId,

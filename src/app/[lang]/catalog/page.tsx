@@ -41,7 +41,7 @@ export default async function CatalogPage({
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
-  // بناء رابط فلتر مع الحفاظ على باقي الفلاتر
+  // Build a filter link while keeping the rest of the filters
   const buildFilterUrl = (key: string, value: string | null) => {
     const params = new URLSearchParams();
     if (collection && key !== "collection")
@@ -94,7 +94,7 @@ export default async function CatalogPage({
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
-      {/* العنوان */}
+      {/* Title */}
       <Reveal>
         <header className="mb-8 flex flex-col gap-2">
           <h1 className="font-display text-4xl font-bold">
@@ -104,10 +104,10 @@ export default async function CatalogPage({
         </header>
       </Reveal>
 
-      {/* شريط الفلاتر */}
+      {/* Filter bar */}
       <Reveal delay={0.1}>
         <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-border bg-card/40 p-4 lg:flex-row lg:items-center lg:justify-between">
-          {/* المجموعات */}
+          {/* Collections */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {dict.catalog.collectionFilter}
@@ -129,7 +129,7 @@ export default async function CatalogPage({
             ))}
           </div>
 
-          {/* النوع */}
+          {/* Gender */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {dict.catalog.gender}
@@ -151,7 +151,7 @@ export default async function CatalogPage({
             ))}
           </div>
 
-          {/* الترتيب */}
+          {/* Sort */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {dict.catalog.sort}
@@ -161,7 +161,7 @@ export default async function CatalogPage({
         </div>
       </Reveal>
 
-      {/* مسح الفلاتر */}
+      {/* Clear filters */}
       {hasFilters && (
         <div className="mb-6">
           <Link
@@ -173,7 +173,7 @@ export default async function CatalogPage({
         </div>
       )}
 
-      {/* النتائج */}
+      {/* Results */}
       {filtered.length > 0 ? (
         <>
           <p className="mb-6 text-sm text-muted-foreground">

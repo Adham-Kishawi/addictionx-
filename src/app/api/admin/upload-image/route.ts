@@ -4,9 +4,9 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { auth } from "@/lib/auth";
 
-// رفع صورة منتج من نموذج الأدمن إلى public/uploads —
-// تُخزّن محليًا في مرحلة التجريب، ونفس النمط سيعمل عند الاستضافة لاحقًا
-// (نفس الآلية باختلاف مجلد التخزين أو التحميل إلى Cloudinary).
+// Upload a product image from the admin form to public/uploads —
+// stored locally during the trial phase, and the same pattern will work when hosted later
+// (the same mechanism with a different storage folder or uploading to Cloudinary).
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

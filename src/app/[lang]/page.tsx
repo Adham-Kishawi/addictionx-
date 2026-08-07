@@ -38,9 +38,9 @@ export default async function Home({
   const bestsellers = allProducts.filter((p) => p.isBestseller).slice(0, 4);
   const heroProduct = allProducts[0] ?? null;
 
-  // الكاروسيل: منتج واحد من كل مجموعة — نفضّل المنتج الذي يملك صورة.
-  // صور الـ slider ثابتة حسب المجموعة (أيقونات الزجاجات الثلاث) وتُعرض
-  // أولًا؛ لو غابت المجموعة من الخريطة نقع على صورة المنتج ثم ProductArt.
+  // Carousel: one product from each collection — we prefer the product that has an image.
+  // The slider images are fixed per collection (the three bottle icons) and are shown
+  // first; if the collection is missing from the map we fall back to the product image then ProductArt.
   const carouselImages: Record<string, string> = {
     rush: "/slider/rush.png",
     noir: "/slider/noir.png",
@@ -63,11 +63,11 @@ export default async function Home({
 
   return (
     <main>
-      {/* ====== HERO — المشهد السينمائي (فيديو تفاعلي، أسود دائمًا مستقل عن الثيم) ====== */}
+      {/* ====== HERO — cinematic scene (interactive video, permanently black, independent of the theme) ====== */}
       <section className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[#0a0a0a] text-white">
         <HeroVideoScrub />
 
-        {/* تدرّج أسود شفاف للتباين — يحل مشكلة القراءة بلا mix-blend */}
+        {/* Transparent black gradient for contrast — solves readability without mix-blend */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-[5]"
@@ -77,7 +77,7 @@ export default async function Home({
           }}
         />
 
-        {/* غبار نيون خفيف فوق الفيديو — screen blend (الأحمر يبقى أحمر) */}
+        {/* Light neon dust over the video — screen blend (red stays red) */}
         <ParticleField count={10} blend="screen" opacityScale={0.3} />
 
         <div className="relative z-20 flex flex-col items-center gap-6 px-6 pt-20 text-center">
@@ -121,7 +121,7 @@ export default async function Home({
           </FadeIn>
         </div>
 
-        {/* مؤشر التمرير */}
+        {/* Scroll indicator */}
         <FadeIn
           delay={1.2}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
@@ -133,13 +133,13 @@ export default async function Home({
         </FadeIn>
       </section>
 
-      {/* ====== شريط الكلمات المتحرك ====== */}
+      {/* ====== Moving words strip ====== */}
       <Marquee
         items={dict.home.ticker}
         className="border-y border-border bg-card/40 py-4"
       />
 
-      {/* ====== أرقام العلامة (عدّادات حية) ====== */}
+      {/* ====== Brand numbers (live counters) ====== */}
       <section className="relative overflow-hidden py-16">
         <div
           aria-hidden
@@ -158,7 +158,7 @@ export default async function Home({
         />
       </section>
 
-      {/* ====== كاروسيل الأدوار — أيقونات المجموعات ====== */}
+      {/* ====== Roles carousel — collection icons ====== */}
       <ProductCarousel
         products={carouselProducts}
         locale={locale}
@@ -166,7 +166,7 @@ export default async function Home({
         dict={dict}
       />
 
-      {/* ====== الأكثر طلبًا ====== */}
+      {/* ====== Most wanted ====== */}
       <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
         <div className="mb-10 flex items-end justify-between gap-4">
           <SectionHeading
@@ -196,7 +196,7 @@ export default async function Home({
         </RevealStagger>
       </section>
 
-      {/* ====== المجموعات ====== */}
+      {/* ====== Collections ====== */}
       <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
         <div className="mb-10">
           <SectionHeading
@@ -257,7 +257,7 @@ export default async function Home({
         </RevealStagger>
       </section>
 
-      {/* ====== شريط التجربة ====== */}
+      {/* ====== Experience strip ====== */}
       <section className="relative overflow-hidden border-y border-border bg-card/40 py-20">
         <div
           aria-hidden
@@ -279,7 +279,7 @@ export default async function Home({
             </p>
           </FadeIn>
 
-          {/* مزايا */}
+          {/* Perks */}
           <RevealStagger className="mt-4 grid w-full gap-4 sm:grid-cols-3">
             {[
               { icon: Truck, text: dict.cart.shippingNotice },
@@ -297,7 +297,7 @@ export default async function Home({
         </div>
       </section>
 
-      {/* ====== CTA الختامي ====== */}
+      {/* ====== Closing CTA ====== */}
       <section className="relative overflow-hidden">
         <div
           className="absolute inset-0"

@@ -51,7 +51,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* الخلفية المعتمة */}
+          {/* Dark overlay */}
           <motion.div
             key="overlay"
             initial={{ opacity: 0 }}
@@ -60,7 +60,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
             onClick={closeCart}
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
           />
-          {/* اللوحة */}
+          {/* Panel */}
           <motion.aside
             key="panel"
             initial={{ x: locale === "ar" ? "100%" : "-100%" }}
@@ -104,7 +104,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
               </div>
             ) : (
               <>
-                {/* شريط الشحن المجاني */}
+                {/* Free shipping bar */}
                 <div className="border-b border-border px-5 py-3">
                   <div className="mb-1.5 flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">
@@ -129,7 +129,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
                   </div>
                 </div>
 
-                {/* عناصر السلة */}
+                {/* Cart items */}
                 <div className="flex-1 overflow-y-auto px-5 py-4">
                   <ul className="flex flex-col gap-4">
                     {items.map((item) => {
@@ -160,7 +160,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
                               </Button>
                             </div>
                             <div className="mt-auto flex items-center justify-between pt-2">
-                              {/* التحكم بالكمية */}
+                              {/* Quantity control */}
                               <div className="flex items-center gap-1 rounded-full border border-border px-1 py-0.5">
                                 <Button
                                   variant="ghost"
@@ -206,7 +206,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
                   </ul>
                 </div>
 
-                {/* الملخص */}
+                {/* Summary */}
                 <div className="border-t border-border px-5 py-4">
                   <div className="mb-1 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">

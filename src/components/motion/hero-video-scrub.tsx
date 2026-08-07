@@ -5,23 +5,23 @@ import { useReducedMotion } from "framer-motion";
 import gsap from "gsap";
 
 // ============================================================
-// مشهد الزجاجة التفاعلي — sprite filmstrip (لا فيديو seeking).
+// Interactive bottle scene — sprite filmstrip (no video seeking).
 //
-// مشكلة `video.currentTime = x` أن الـ seek غير متزامن: الباوزر يطلب
-// الإطار لاحقًا فيظهر تأخير و"بطء غير طبيعي" خلف الماوس.
-// الحل الاحترافي (الأكثر نعومةً في متاجر العطور العالمية): نستخرج كل
-// إطارات الفيديو مرة واحدة إلى صورة شبكة (filmstrip) — هنا 60 إطارًا
-// (10 أعمدة × 6 صفوف) لكل اتجاه — والحركة تصير لمجرد `background-position`
-// (عرض فوري، صفر lag، صفر طلب إطارات) مع تسارع GSAP لنعومة العين.
+// The problem with `video.currentTime = x` is that seeking is asynchronous:
+// the browser requests the frame later, which looks like a delay and "unnatural slowness".
+// The professional solution (the smoothest on global perfume stores): extract every
+// video frame once into a grid image (filmstrip) — here 60 frames
+// (10 columns × 6 rows) per side — and motion becomes just `background-position`
+// (instant display, zero lag, zero frame requests) with GSAP easing for visual smoothness.
 //
-// الخرائط: عرض الشاشة كله مجال دوران — يمين المنتصف يتصاعد على
-// right-sprite، يسار المنتصف يتصاعد على left-sprite. **لا deadZone**
-// (كان سابقًا وسط الشاشة لا يستجيب = الشعور بالبطء). العكس يعمل:
-// رجوع الماوس للوسط يعيد الإطار الأول بنعومة.
+// The mapping: the whole screen width is a rotation zone — right of the center scales the
+// right-sprite, left of the center scales the left-sprite. **No deadZone**
+// (previously the center of the screen didn't respond = felt slow). Reverse works:
+// moving the mouse back to the center returns to the first frame smoothly.
 //
-// التفاعل يُكتشف تلقائيًا — بلا hint ولا ضغط ولا نقرة.
-// الموبايل: يبقى الفيديو بالدوران التلقائي المتبادل (يمين/شمال).
-// البوب التلقائي عند الخمول ما زال يعمل عبر gsap بأرقام الإطارات.
+// Interaction is detected automatically — no hint, no nudges, no click.
+// Mobile: stays on the alternating auto-rotation video (right/left).
+// The automatic bob on idle still works via gsap with frame numbers.
 // ============================================================
 
 const LEFT_SRC = "/sprites/left.jpg";
@@ -29,8 +29,8 @@ const RIGHT_SRC = "/sprites/right.jpg";
 
 const COLS = 10;
 const ROWS = 6;
-// الفيديوان فعليًّا 59 إطارًا (0..58) — آخر خلية في الشبكة (59) فارغة.
-// التقيد في clamp على FRAMES يمنع الوصول للأخيرة المفلوفة (السوداء).
+// The two videos actually have only 59 frames (0..58) — the last cell in the grid (59) is empty.
+// Clamping to FRAMES prevents reaching the last wrapped (black) cell.
 const FRAMES = 59;
 const BOB_MS = 1200;
 const IDLE_BOB_MS = 2200;
@@ -42,7 +42,7 @@ function clamp01(v: number) {
   return Math.min(1, Math.max(0, v));
 }
 
-// موضع إطار (index 0..59) في شبكة 10×6 → background-position
+// Frame position (index 0..59) in a 10×6 grid → background-position
 function cssPos(idx: number): string {
   const col = idx % COLS;
   const row = Math.floor(idx / COLS);
@@ -99,10 +99,10 @@ export function HeroVideoScrub() {
 
   const cancelBob = useCallback(() => {
     bobActiveRef.current = false;
-    gsap.killTweensOf(mouseXRef); // أي tween gsap عام يُقتل هنا
+    gsap.killTweensOf(mouseXRef); // any generic gsap tween is killed here
   }, []);
 
-  // ============ الدوران التلقائي (bob) — بعد خمول بلا أي نقرة ============
+  // ============ Auto-rotation (bob) — after idle with no click ============
   const runBob = useCallback(() => {
     if (bobActiveRef.current || !startedRef.current) return;
     bobActiveRef.current = true;
@@ -142,7 +142,7 @@ export function HeroVideoScrub() {
     }, 1000);
   }, [reduce, runBob]);
 
-  // ============ الموبايل: تشغيل الفيديو التلقائي المتبادل ============
+  // ============ Mobile: alternating auto-play video ============
   const playNext = useCallback(() => {
     const l = videoLeftRef.current;
     const r = videoRightRef.current;
@@ -155,7 +155,7 @@ export function HeroVideoScrub() {
     void next.play().catch(() => {});
   }, []);
 
-  // ============ الإعداد الرئيسي ============
+  // ============ Main setup ============
   useEffect(() => {
     if (reduce) return;
 
@@ -164,7 +164,7 @@ export function HeroVideoScrub() {
       window.innerWidth < MOBILE_BREAKPOINT;
 
     if (isMobile) {
-      // فيديو الموبايل التلقائي (يمين/شمال بالتناوب)
+      // Automatic mobile video (right/left alternating)
       const l = videoLeftRef.current;
       const r = videoRightRef.current;
       if (!l || !r) return;
@@ -184,7 +184,7 @@ export function HeroVideoScrub() {
       };
     }
 
-    // ---- الديسكتوب: sprite scrubbing ----
+    // ---- Desktop: sprite scrubbing ----
     const { left, right } = getPlates();
     if (!left || !right) return;
 
@@ -285,7 +285,7 @@ export function HeroVideoScrub() {
     };
   }, [reduce, getPlates, setSide, cancelBob, bobLoop, renderFrame, playNext]);
 
-  // عند جاهزية الصور (بعد لود الشبكتين) نُظهر المشهد بلينّ
+  // When the images are ready (after loading both grids) reveal the scene softly
   useEffect(() => {
     const imgs = [LEFT_SRC, RIGHT_SRC].map((src) => {
       const img = new Image();
@@ -313,8 +313,8 @@ export function HeroVideoScrub() {
         transition: "opacity 0.8s ease 0.15s",
       }}
     >
-      {/* لوحا الـ sprite (ديسكتوب) — فيديو سابق ليس له دلالة هنا */}
-      {/* اللوح الأيمن منزاح 5px ناحية اليسار (الفيديو كامل) لضبط الفرق البسيط بين اللوحين */}
+      {/* The sprite plates (desktop) — the video below has no meaning here */}
+      {/* The right plate is shifted 5px to the left (the full video) to adjust the small difference between the two plates */}
       <div
         ref={rightPlateRef}
         style={{
@@ -340,7 +340,7 @@ export function HeroVideoScrub() {
         }}
       />
 
-      {/* فيديوهات الموبايل (الدوران التلقائي المتناوب) */}
+      {/* Mobile videos (alternating auto-rotation) */}
       <div className="absolute inset-0 lg:hidden">
         <video
           ref={videoRightRef}

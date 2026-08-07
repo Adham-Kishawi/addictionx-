@@ -47,7 +47,7 @@ export default async function AdminOrdersPage({
         </Link>
       </div>
 
-      {/* فلاتر الحالة */}
+      {/* Status filters */}
       <div className="mb-6 flex flex-wrap gap-2">
         <FilterChip
           href={`/${locale}/admin/orders`}

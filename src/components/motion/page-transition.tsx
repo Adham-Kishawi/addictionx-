@@ -4,13 +4,13 @@ import { motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-// انتقال ناعم بين الصفحات — يُركَّب حول {children} في الlayout الجذري.
-// التغيير في الـ pathname يغيّر الـ key فيُعيد التمثيل بحركة دخول.
+// Smooth transition between pages — mounted around {children} in the root layout.
+// A change in pathname changes the key and re-renders with an entry animation.
 //
-// ملاحظة حرجة: نتحرك بـ opacity فقط — أي transform أو filter على هذا
-// العنصر يُنشئ containing block جديدًا يجعل أي position:fixed بداخله
-// (مثل فيديو الـ hero السينمائي) يتحرك مع التمرير بدل الثبات على الشاشة.
-// opacity يُنشئ stacking context لكنه لا يمسّ الـ fixed — فهو آمن.
+// Critical note: we animate with opacity only — any transform or filter on this
+// element creates a new containing block that makes any position:fixed inside it
+// (like the cinematic hero video) scroll with the page instead of staying fixed.
+// opacity creates a stacking context but doesn't touch fixed positioning — it is safe.
 
 export function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();

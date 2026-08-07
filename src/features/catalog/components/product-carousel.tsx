@@ -15,14 +15,14 @@ import { formatPrice, type Product } from "@/features/catalog/data/products";
 import type { Locale, Dictionary } from "@/lib/i18n/dictionary";
 
 // ============================================================
-// كاروسيل الأدوار — منتج واحد عن كل مجموعة.
+// Roles carousel — one product from each collection.
 //
-// الفكرة الجوهرية: لا نحرّك أي عنصر من مكان إلى مكان — كل عنصر
-// يسأل «ما دوري الآن؟» ويطبّق ستايله. عند تغيّر activeIndex تتبادل
-// الأدوار و الـ CSS transition هو من يرى الفرق وينفّذ الحركة.
-// لذلك هنا **CSS transitions لا Framer Motion** — استثناء مقصود
-// من قاعدة المشروع وسببه الأداء (مسجّل في CLAUDE.md).
-// مع 3 عناصر يُلغى دور back حتى لا يقع تعارض left == back.
+// Core idea: we don't move any element from place to place — each element
+// asks "what is my role now?" and applies its own style. When activeIndex changes
+// the roles swap and the CSS transition is what sees the difference and performs the motion.
+// Therefore here **CSS transitions not Framer Motion** — an intentional exception
+// to the project rule and its reason is performance (recorded in CLAUDE.md).
+// With 3 items the back role is disabled so left == back never conflicts.
 // ============================================================
 
 type Role = "center" | "left" | "right" | "back";
@@ -105,14 +105,14 @@ export function ProductCarousel({
   const goPrev = useCallback(() => goTo(left), [goTo, left]);
   const goNext = useCallback(() => goTo(right), [goTo, right]);
 
-  // إطلاق القفل بعد انتهاء الـ transition بالضبط (يُطابق ANIM_MS)
+  // Release the lock exactly after the transition ends (matches ANIM_MS)
   useEffect(() => {
     if (!isAnimating) return;
     const t = window.setTimeout(() => setIsAnimating(false), ANIM_MS);
     return () => window.clearTimeout(t);
   }, [isAnimating]);
 
-  // ============ السحب باللمس (swipe) ============
+  // ============ Touch swipe ============
   const onPointerDown = (e: React.PointerEvent) => {
     pointerRef.current = { x: e.clientX, y: e.clientY, active: true };
   };
@@ -121,14 +121,14 @@ export function ProductCarousel({
     if (!p.active) return;
     const dx = e.clientX - p.x;
     const dy = e.clientY - p.y;
-    // السحب الرأسي = تمرير الصفحة — لا نعترضه إطلاقًا
+    // Vertical swipe = page scroll — we never intercept it
     if (Math.abs(dy) > Math.abs(dx)) {
       p.active = false;
       return;
     }
     if (Math.abs(dx) > SWIPE_THRESHOLD) {
       p.active = false;
-      // في RTL عكس الاتجاهات المنطقية
+      // In RTL the logical directions are reversed
       const dir = dx < 0 ? 1 : -1;
       goTo(active + dir * (isRtl ? -1 : 1));
     }
@@ -137,7 +137,7 @@ export function ProductCarousel({
     pointerRef.current.active = false;
   };
 
-  // ============ الإيقاف عند الخروج من الشاشة ============
+  // ============ Pause off-screen ============
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -151,7 +151,7 @@ export function ProductCarousel({
     return () => obs.disconnect();
   }, []);
 
-  // ============ الكيبورد (احترام RTL) ============
+  // ============ Keyboard (RTL-aware) ============
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowRight") {
       e.preventDefault();
@@ -173,7 +173,7 @@ export function ProductCarousel({
 
   return (
     <section className="relative overflow-hidden border-y border-border bg-card/40 py-14">
-      {/* توهج يتغيّر لونه مع المنتج النشط — الخلفية تبقى ثابتة */}
+      {/* Glow whose color follows the active product — the background stays fixed */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -183,7 +183,7 @@ export function ProductCarousel({
         }}
       />
 
-      {/* النص العملاق — لاتيني دائمًا بلا قراءة من القاموس */}
+      {/* Giant text — always Latin, not read from the dictionary */}
       <div
         aria-hidden
         dir="ltr"
@@ -209,7 +209,7 @@ export function ProductCarousel({
 
         <Reveal delay={0.12}>
           <div className="mt-8 flex flex-col items-center gap-6">
-            {/* ===== المسرح ===== */}
+            {/* ===== Stage ===== */}
             <div
               ref={stageRef}
               role="region"
@@ -271,7 +271,7 @@ export function ProductCarousel({
               })}
             </div>
 
-            {/* ===== معلومات المنتج النشط ===== */}
+            {/* ===== Active product info ===== */}
             <div className="flex flex-col items-center gap-1.5 text-center">
               <h3 className="font-display text-xl font-bold sm:text-2xl">
                 {locale === "ar" ? activeProduct.nameAr : activeProduct.nameEn}
@@ -301,7 +301,7 @@ export function ProductCarousel({
               </div>
             </div>
 
-            {/* ===== أزرار التنقّل ===== */}
+            {/* ===== Navigation buttons ===== */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -329,7 +329,7 @@ export function ProductCarousel({
           </div>
         </Reveal>
 
-        {/* معلن قارئ الشاشة — خارج الـ Reveal كي لا يهتز مع الأدوار */}
+        {/* Screen-reader announcement — outside the Reveal so it doesn't shake with the roles */}
         <div className="sr-only" aria-live="polite">
           {dict.home.carouselItem} {active + 1} {dict.home.carouselOf} {total} —{" "}
           {locale === "ar" ? activeProduct.nameAr : activeProduct.nameEn}

@@ -4,10 +4,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 // ============================================================
-// طيران المنتج للسلة — جرعة ضوء تتطاير من زر الإضافة إلى أيقونة
-// السلة في الهيدر، ثم نبضة على العدّاد.
-// الاستخدام: استدعي flyToCart(e.currentTarget.getBoundingClientRect())
-// من أي زر إضافة، وارفع <CartFlyProvider/> في الـ layout الجذري.
+// Product flying to the cart — a light streak flies from the add button to the
+// cart icon in the header, then a pulse on the counter.
+// Usage: call flyToCart(e.currentTarget.getBoundingClientRect())
+// from any add button, and mount <CartFlyProvider/> in the root layout.
 // ============================================================
 
 export function flyToCart(rect: DOMRect) {

@@ -3,7 +3,7 @@
 import { useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-// شريط الكلمات المتحرك (ticker) — توقيع بصري بين الأقسام.
+// Moving words strip (ticker) — visual signature between sections.
 
 export function Marquee({
   items,
@@ -15,7 +15,7 @@ export function Marquee({
   speed?: number;
 }) {
   const reduce = useReducedMotion();
-  // 3 نسخ متتالية للكسر، والتحريك بنسبة –33.333% يلتف بلا فاصل
+  // 3 consecutive copies for the seam, and moving by –33.333% wraps without a gap
   const row = [...items, ...items, ...items];
 
   return (

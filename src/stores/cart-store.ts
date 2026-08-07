@@ -3,15 +3,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-// كل عنصر يحمل snapshot كامل من لحظة إضافته للسلة —
-// اسم/سعر/حجم/tدرجات اللون — حتى لا يحتاج الـ client للاستعلام عن الـ DB
-// ولتتحقق الواجهة والـ server من نفس السعر وقت إنشاء الطلب.
+// Each item carries a full snapshot from the moment it was added to the cart —
+// name/price/size/shade — so the client doesn't need to query the DB
+// and the UI and server validate the same price when the order is created.
 export type CartItem = {
   productId: string;
   quantity: number;
   nameAr: string;
   nameEn: string;
-  price: number; // بالقروش — سعر الـ variant المضاف
+  price: number; // in piasters — the added variant's price
   sizeMl: number;
   art: { from: string; to: string; glow: string };
   image?: string;
@@ -78,13 +78,13 @@ export const useCartStore = create<CartState>()(
     {
       name: "addictionx-cart",
       version: 2,
-      // سلات الإصدار القديم (بلا snapshot) تُهجر بأمان
+      // Old-version carts (without snapshot) are safely discarded
       migrate: () => ({ items: [], isOpen: false }),
     },
   ),
 );
 
-// أدوات مساعدة (خارج الـ store حتى تستخدم في أي مكان)
+// Helpers (outside the store so they can be used anywhere)
 export function getCartSubtotal(items: CartItem[]): number {
   return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }

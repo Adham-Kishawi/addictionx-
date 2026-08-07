@@ -5,7 +5,7 @@ import { defaultLocale, isLocale } from "@/lib/i18n/dictionary";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // تجاهل الملفات الثابتة (صور + فيديو) والـ API
+  // Ignore static files (images + video) and the API
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
@@ -14,13 +14,13 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // إذا كان المسار يبدأ بلغة صالحة، مرر مباشرة
+  // If the path already starts with a valid locale, pass it through
   const firstSegment = pathname.split("/")[1];
   if (firstSegment && isLocale(firstSegment)) {
     return NextResponse.next();
   }
 
-  // التحويل من / إلى اللغة الافتراضية
+  // Redirect from / to the default language
   const url = request.nextUrl.clone();
   url.pathname = `/${defaultLocale}${pathname === "/" ? "" : pathname}`;
   return NextResponse.redirect(url);

@@ -1,9 +1,9 @@
-// إعدادات المتجر القابلة للتعديل من اللوحة — تُقرأ من الـ DB مع بدائل افتراضية
-// حتى يعمل كل شيء حتى لو المفاتيح غير موجودة بعد (أو حدث خطأ قراءة).
+// Store settings editable from the dashboard — read from the DB with default fallbacks
+// so everything works even if the keys are missing yet (or a read error occurs).
 import { prisma } from "@/lib/prisma";
 
-export const DEFAULT_SHIPPING_FEE = 5000; // 50 ج.م بالقروش
-export const DEFAULT_FREE_SHIPPING_THRESHOLD = 150000; // 1500 ج.م بالقروش
+export const DEFAULT_SHIPPING_FEE = 5000; // 50 EGP in piasters
+export const DEFAULT_FREE_SHIPPING_THRESHOLD = 150000; // 1500 EGP in piasters
 export const DEFAULT_CARRIER = "Bosta";
 
 export type ShippingConfig = {
@@ -54,7 +54,7 @@ export async function getShippingConfig(): Promise<ShippingConfig> {
   }
 }
 
-// لتصفية الكاش عند التحديث من اللوحة
+// Clear the cache when settings change from the dashboard
 export function clearConfigCache() {
   cache.clear();
 }

@@ -11,7 +11,7 @@ const genderMap: Record<string, Gender> = {
 };
 
 async function main() {
-  // ---------- أول حساب أدمن ----------
+  // ---------- First admin account ----------
   const email = (process.env.ADMIN_EMAIL || "admin@addictionx.com")
     .trim()
     .toLowerCase();
@@ -30,7 +30,7 @@ async function main() {
   });
   console.log("✅ Admin ready:", email, "| password:", password);
 
-  // ---------- المنتجات ----------
+  // ---------- Products ----------
   for (const p of products) {
     const data = {
       name: p.nameAr,
@@ -72,7 +72,7 @@ async function main() {
   }
   console.log(`✅ Seeded ${products.length} products`);
 
-  // ---------- المجموعات ----------
+  // ---------- Collections ----------
   const collections = [
     { slug: "rush", nameAr: "الإحساس", nameEn: "The Rush", sortOrder: 10 },
     { slug: "noir", nameAr: "الليل", nameEn: "Noir", sortOrder: 20 },

@@ -2,11 +2,11 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 
-// حقل جسيمات صاعدة — يُستخدم في الـ hero وبقية الصفحة.
-// كل الخيارات افتراضية تساوي السلوك الأصلي، وفي الـ hero السينمائي
-// نمرّر نسخة مخفّفة (count أصغر + blend screen + opacityScale أخفّ)
-// لتُقرأ كـ«غبار في شعاع الضوء» لا كـ«نويز» فوق الفيديو.
-// blend: screen يضيف نورًا دون قلب الألوان (الأحمر يبقى أحمر).
+// Rising particle field — used in the hero and the rest of the page.
+// All options default to the original behavior, and in the cinematic hero
+// we pass a reduced version (smaller count + screen blend + lighter opacityScale)
+// to read as "dust in a light beam" rather than "noise" over the video.
+// blend: screen adds light without flipping colors (red stays red).
 
 export function ParticleField({
   count = 24,

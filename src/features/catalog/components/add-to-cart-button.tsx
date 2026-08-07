@@ -41,7 +41,7 @@ export function AddToCartButton({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* التحكم بالكمية */}
+      {/* Quantity control */}
       <div className="flex items-center gap-3">
         <span className="text-sm text-muted-foreground">
           {dict.cart.quantity}

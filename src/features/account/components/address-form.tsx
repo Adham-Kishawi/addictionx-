@@ -25,8 +25,8 @@ const governorates = [
 const inputClass =
   "h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
 
-// نموذج إضافة/تعديل عنوان — نفس حقول الـ checkout + حقول جانبية اختيارية.
-// address = null → إنشاء جديد، غير ذلك → تعديل.
+// Add/edit address form — same fields as checkout + optional side fields.
+// address = null → create new, otherwise → edit.
 
 export function AddressForm({
   dict,

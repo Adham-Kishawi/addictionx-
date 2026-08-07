@@ -8,12 +8,12 @@ import {
   useSpring,
 } from "framer-motion";
 
-// توهج نيون يتبع المؤشر (Desktops فقط) — توقيع بصري للعلامة.
-// مخفي تمامًا على اللمس وعند prefers-reduced-motion.
+// Neon glow following the cursor (Desktops only) — the brand's visual signature.
+// Completely hidden on touch and with prefers-reduced-motion.
 //
-// فوق الـ hero السينمائي (حيث الفيديو يتبع المؤشر أيضًا) يخفت التوهج
-// عبر --cursor-glow-opacity الذي يضبطه HeaderScroll — توهجان متزامنان
-// على اليد نفسها تشويش، فالمستخدم يرى تأثير سحب الفيديو لا التوهج.
+// Over the cinematic hero (where the video also follows the cursor) the glow dims
+// via --cursor-glow-opacity which HeaderScroll controls — two synchronized glows
+// on the same hand are noise, so the user sees the video-drag effect, not the glow.
 
 export function CursorGlow() {
   const reduce = useReducedMotion();

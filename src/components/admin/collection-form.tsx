@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
-// نموذج إضافة مجموعة جديدة من الداشبورد.
+// Form to add a new collection from the dashboard.
 
 export function CollectionForm({ dict }: { dict: Dictionary }) {
   const [nameAr, setNameAr] = useState("");

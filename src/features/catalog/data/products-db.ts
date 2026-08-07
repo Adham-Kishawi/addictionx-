@@ -2,9 +2,9 @@ import { prisma } from "@/lib/prisma";
 import type { Product } from "./products";
 import { collections as staticCollections } from "./products";
 
-// طبقة بيانات تقرأ من قاعدة البيانات بنفس واجهة الملف الثابت —
-// بحيث الستورفرنت يتغير فقط في مصدر البيانات بدون أي تغيير في الواجهات.
-// "use server" غير مطلوب — تُستدعى من Server Components فقط.
+// Data layer that reads from the database with the same interface as the static file —
+// so the storefront only changes its data source without any change in the interfaces.
+// "use server" is not required — it is only called from Server Components.
 
 export interface CollectionRow {
   slug: string;
@@ -12,8 +12,8 @@ export interface CollectionRow {
   nameEn: string;
 }
 
-// المجموعات تُدار من الداشبورد. عند غياب أي سجلات (قاعدة جديدة بلا seed)
-// نقع إلى المصفوفة الثابتة حتى لا تنكسر الصفحات.
+// Collections are managed from the dashboard. When no records exist (new DB without seed)
+// we fall back to the static array so the pages never break.
 export async function getCollections(): Promise<CollectionRow[]> {
   const rows = await prisma.collection.findMany({
     orderBy: { sortOrder: "asc" },

@@ -18,7 +18,7 @@ import { siteConfig } from "@/config/site";
 import type { OrderStatus } from "@prisma/client";
 
 // ============================================================
-// حماية
+// Protection
 // ============================================================
 
 async function requireAdmin() {
@@ -32,7 +32,7 @@ async function requireAdmin() {
 }
 
 // ============================================================
-// منتجات
+// Products
 // ============================================================
 
 export type AdminActionState = { error?: string; success?: boolean };
@@ -148,8 +148,8 @@ function toCreateData(
   p: ProductData,
   extras: ReturnType<typeof readProductForm>,
 ) {
-  // إذا حدّد الأدمن خصمًا % نحسب السعر قبل الخصم (compareAtPrice) تلقائيًا
-  // من أقل سعر variant فعلي — لأنه هو المعروض في الستورفرنت.
+  // If the admin set a % discount we compute the pre-discount price (compareAtPrice) automatically
+  // from the cheapest actual variant price — because it is the one shown on the storefront.
   let compareAtPrice =
     p.compareAtPrice != null ? egpToQirsh(p.compareAtPrice) : null;
   const minVariantPrice = extras.variants.reduce(
@@ -196,7 +196,7 @@ export async function createProduct(
 
   const { parsed, variants } = extras;
 
-  // image من النموذج — يُحفظ كصورة رئيسية
+  // image from the form — saved as the main image
   const imageUrl = extras.image.startsWith("/uploads/") ? extras.image : "";
 
   try {
@@ -241,7 +241,7 @@ export async function updateProduct(
 
   const { parsed, variants } = extras;
 
-  // يحافظ على الصورة الرئيسية الحالية إن لم يُرفَع جديد
+  // Keeps the current main image if no new one was uploaded
   let imageUrl = extras.image;
 
   try {
@@ -303,7 +303,7 @@ export async function toggleProductActive(id: string) {
 }
 
 // ============================================================
-// طلبات
+// Orders
 // ============================================================
 
 export async function updateOrderStatus(orderId: string, status: string) {
@@ -356,7 +356,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
 
     if (next === "CANCELLED" || next === "REFUNDED") {
       await tx.shipment.deleteMany({ where: { orderId } });
-      // إعادة المخزون المحجوز في createOrder حتى لا يُفقد عند الإلغاء
+      // Restore the stock reserved in createOrder so it isn't lost on cancellation
       const items = await tx.orderItem.findMany({
         where: { orderId },
         select: { variantId: true, quantity: true },
@@ -387,7 +387,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
 }
 
 // ============================================================
-// الشحن
+// Shipping
 // ============================================================
 
 export async function updateShipment(
@@ -431,7 +431,7 @@ export async function updateShipment(
 }
 
 // ============================================================
-// مستخدمون
+// Users
 // ============================================================
 
 const createUserSchema = z.object({
@@ -489,7 +489,7 @@ export async function deleteUser(userId: string) {
 }
 
 // ============================================================
-// إعدادات المتجر (الشحن)
+// Store settings (shipping)
 // ============================================================
 
 const shippingSettingsSchema = z.object({
@@ -545,7 +545,7 @@ export async function updateShippingSettings(
 }
 
 // ============================================================
-// كوبونات
+// Coupons
 // ============================================================
 
 const couponSchema = z.object({
@@ -643,8 +643,8 @@ export async function updateUserRole(
 }
 
 // ============================================================
-// طلب يدوي من الأدمن — لطلبات التليفون والواتساب (COD)
-// الأسعار تُقرأ من الـ DB حصرًا، مثل createOrder في الستورفرنت
+// Manual order from the admin — for phone/WhatsApp orders (COD)
+// Prices are read from the DB only, like createOrder on the storefront
 // ============================================================
 
 const manualOrderSchema = z.object({
@@ -685,7 +685,7 @@ export async function createManualOrder(
       include: { product: { select: { id: true, name: true } } },
     });
 
-    // التحقق: كل الـ variants موجودة، المنتج نشط، والمخزون يكفي
+    // Validate: every variant exists, the product is active, and the stock is sufficient
     for (const line of lines) {
       const variant = variants.find((v) => v.id === line.variantId);
       if (!variant || variant.productId !== line.productId) {
@@ -748,7 +748,7 @@ export async function createManualOrder(
       });
     });
 
-    // إشعار الأدمن بطلب يدوي جديد (نفس قالب الطلب الجديد)
+    // Notify the admin about a new manual order (same new-order template)
     await sendEmail({
       to: process.env.ADMIN_EMAIL || siteConfig.adminEmail,
       subject: `طلب يدوي جديد ${order.orderNumber} — ${siteConfig.name}`,

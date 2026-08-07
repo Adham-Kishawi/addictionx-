@@ -49,7 +49,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ADDICTIONX Palette — أسود عميق + نيون أحمر + فضي معدني */
+/* ADDICTIONX Palette — deep black + neon red + metallic silver */
 :root,
 .dark {
   --background: oklch(0.12 0.005 285);
@@ -86,7 +86,7 @@
   --sidebar-ring: oklch(0.6 0.22 22);
 }
 
-/* وضع نهاري (light) — نفس هوية ADDICTIONX بألوان فاتحة */
+/* Light mode — the same ADDICTIONX identity in light colors */
 :root[data-theme="light"]:not(.dark) {
   --background: oklch(0.97 0.004 285);
   --foreground: oklch(0.2 0.01 285);
@@ -135,11 +135,11 @@
   }
 }
 
-/* العنوان المعدني المتحرك اللمعان (shine sweep) */
+/* Animated metallic moving title (shine sweep) */
 
-/* الهيدر — شفاف فوق الـ hero السينمائي، وضبابي بعد التمرير.
-   الحالة الافتراضية (بدون .header-over-hero) هي الضبابية العادية،
-   و الـ HeaderScroll يضيف الفئة فوق المشهد فقط. */
+/* Header — transparent over the cinematic hero, blurred after scroll.
+   The default state (without .header-over-hero) is the regular blur,
+   and HeaderScroll adds the class over the hero only. */
 .site-header {
   border-bottom: 1px solid var(--border);
   background: color-mix(in srgb, var(--background) 70%, transparent);
@@ -173,7 +173,7 @@
     0 4px 24px rgb(0 0 0 / 0.45);
 }
 
-/* عنوان معدني متحرك اللمعان (shine sweep) */
+/* Animated metallic moving title (shine sweep) */
 .text-metallic-shine {
   background-image: linear-gradient(
     115deg,
@@ -198,7 +198,7 @@
   }
 }
 
-/* شريط الكلمات المتحرك (marquee) — يستخدمه Marquee */
+/* Moving words strip (marquee) — used by Marquee */
 @keyframes marquee-x {
   from {
     transform: translateX(0);

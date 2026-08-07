@@ -6,7 +6,7 @@ import { Check, X, Trash2 } from "lucide-react";
 import { moderateReview, deleteReview } from "@/features/reviews/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
-// إجراءات الأدمن على التقييم: موافقة / رفض / حذف.
+// Admin actions on a review: approve / reject / delete.
 
 export function ReviewActions({
   reviewId,

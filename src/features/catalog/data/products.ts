@@ -1,5 +1,5 @@
-// نموذج منتج مطابق لبنية Prisma schema — mock حتى ربط الـ DB
-// الأسعار أعداد صحيحة بالقروش (100 قرش = 1 جنيه) حسب قرار #3
+// Product model matching the Prisma schema structure — mock until the DB is wired
+// Prices are integers in piasters (100 piasters = 1 EGP) per decision #3
 
 export type Gender = "male" | "female" | "unisex";
 
@@ -16,9 +16,9 @@ export type Product = {
   nameEn: string;
   descriptionAr: string;
   descriptionEn: string;
-  price: number; // بالقروش
-  compareAtPrice?: number; // بالقروش
-  // حجم الـ variant الافتراضي بالمل — يُضبط من DB (غير متوفر في الـ mock)
+  price: number; // in piasters
+  compareAtPrice?: number; // in piasters
+  // The default variant size in ml — set from DB (not available in the mock)
   sizeMl?: number;
   gender: Gender;
   collection: string;
@@ -28,7 +28,7 @@ export type Product = {
   isNew: boolean;
   isBestseller: boolean;
   isSoldOut?: boolean;
-  // لو الصورة غير موجودة، يُعرض ProductArt بالتدرج اللوني
+  // If the image is missing, ProductArt with the gradient is shown
   image?: string;
   art: { from: string; to: string; glow: string };
 };

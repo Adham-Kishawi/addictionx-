@@ -90,7 +90,7 @@ export default async function AdminPage({
         </div>
       </div>
 
-      {/* الإحصائيات */}
+      {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <div
@@ -111,7 +111,7 @@ export default async function AdminPage({
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        {/* أحدث الطلبات */}
+        {/* Latest orders */}
         <section className="rounded-2xl border border-border bg-card/40 p-6 lg:col-span-2">
           <h2 className="mb-4 text-lg font-semibold">
             {dict.admin.recentOrders}
@@ -170,7 +170,7 @@ export default async function AdminPage({
           )}
         </section>
 
-        {/* مخزون منخفض */}
+        {/* Low stock */}
         <section className="rounded-2xl border border-border bg-card/40 p-6">
           <div className="mb-4 flex items-center gap-2">
             <AlertTriangle className="size-5 text-destructive" />

@@ -185,7 +185,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-      {/* النموذج */}
+      {/* Form */}
       <form onSubmit={onSubmit} className="flex flex-col gap-8" noValidate>
         {error && (
           <div
@@ -204,7 +204,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
           </div>
         )}
 
-        {/* بيانات الشحن */}
+        {/* Shipping info */}
         <fieldset className="flex flex-col gap-4 rounded-2xl border border-border bg-card/40 p-6">
           <legend className="px-2 text-sm font-semibold">
             {dict.checkout.shippingInfo}
@@ -268,7 +268,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
           </Field>
         </fieldset>
 
-        {/* كوبون الخصم */}
+        {/* Discount coupon */}
         <fieldset className="flex flex-col gap-4 rounded-2xl border border-border bg-card/40 p-6">
           <legend className="px-2 text-sm font-semibold">
             {dict.checkout.couponTitle}
@@ -336,7 +336,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
           )}
         </fieldset>
 
-        {/* طريقة الدفع */}
+        {/* Payment method */}
         <fieldset className="flex flex-col gap-4 rounded-2xl border border-border bg-card/40 p-6">
           <legend className="px-2 text-sm font-semibold">
             {dict.checkout.payment}
@@ -376,7 +376,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
         </Button>
       </form>
 
-      {/* ملخص الطلب */}
+      {/* Order summary */}
       <aside className="h-fit rounded-2xl border border-border bg-card/40 p-6 lg:sticky lg:top-24">
         <h2 className="mb-4 text-sm font-semibold">
           {dict.checkout.orderSummary} ({count})
