@@ -99,11 +99,20 @@ export function Header({
                   label: dict.nav.collection,
                 },
               ]}
+              search={
+                <SearchBox
+                  locale={locale}
+                  labels={{ placeholder: dict.catalog.searchPlaceholder }}
+                  fullWidth
+                />
+              }
             />
-            <SearchBox
-              locale={locale}
-              labels={{ placeholder: dict.catalog.searchPlaceholder }}
-            />
+            <div className="hidden sm:block">
+              <SearchBox
+                locale={locale}
+                labels={{ placeholder: dict.catalog.searchPlaceholder }}
+              />
+            </div>
             <LanguageSwitcher currentLocale={locale} />
             <ThemeToggle />
             <Link

@@ -9,9 +9,11 @@ import { useState } from "react";
 export function SearchBox({
   locale,
   labels,
+  fullWidth = false,
 }: {
   locale: string;
   labels: { placeholder: string };
+  fullWidth?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,7 +37,11 @@ export function SearchBox({
         onChange={(e) => setValue(e.target.value)}
         placeholder={labels.placeholder}
         aria-label={labels.placeholder}
-        className="h-9 w-36 rounded-lg border border-border bg-background/60 pl-8 pr-3 text-sm outline-none transition-[width] duration-300 focus:w-52 focus-visible:ring-2 focus-visible:ring-ring sm:w-44"
+        className={
+          fullWidth
+            ? "h-10 w-full rounded-lg border border-border bg-background/60 pl-9 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            : "h-9 w-36 rounded-lg border border-border bg-background/60 pl-8 pr-3 text-sm outline-none transition-[width] duration-300 focus:w-52 focus-visible:ring-2 focus-visible:ring-ring sm:w-44"
+        }
       />
       <Search
         aria-hidden

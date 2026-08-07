@@ -63,17 +63,22 @@ export default async function Home({
 
   return (
     <main>
-      {/* ====== HERO — cinematic scene (interactive video, permanently black, independent of the theme) ====== */}
-      <section className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[#0a0a0a] text-white">
+      {/* ====== HERO — cinematic scene: the video stays dark in BOTH themes (black product footage
+            cannot go light), but the veil/bg follow the theme via --hero-* vars so the hero melts
+            into the page below instead of floating on a black slab in light mode ====== */}
+      <section
+        className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden text-white"
+        style={{ backgroundColor: "var(--hero-bg)" }}
+      >
         <HeroVideoScrub />
 
-        {/* Transparent black gradient for contrast — solves readability without mix-blend */}
+        {/* Theme-aware contrast veil — solves readability without mix-blend */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-[5]"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.35) 78%, rgba(0,0,0,0.75) 100%)",
+              "linear-gradient(to bottom, var(--hero-veil-1) 0%, var(--hero-veil-2) 40%, var(--hero-veil-3) 78%, var(--hero-veil-4) 100%)",
           }}
         />
 

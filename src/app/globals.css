@@ -77,6 +77,14 @@
   --chart-5: oklch(0.65 0.15 10);
   --radius: 0.5rem;
   --sidebar: oklch(0.14 0.006 285);
+  /* Cinematic hero — the video stays dark in BOTH themes (a black product video
+     cannot adapt to a light page), but the backdrop/veil follow the theme so the
+     hero melts into the page below it (dark → black, light → soft dark float). */
+  --hero-bg: #0a0a0a;
+  --hero-veil-1: rgba(0, 0, 0, 0.6);
+  --hero-veil-2: rgba(0, 0, 0, 0.15);
+  --hero-veil-3: rgba(0, 0, 0, 0.35);
+  --hero-veil-4: rgba(0, 0, 0, 0.75);
   --sidebar-foreground: oklch(0.95 0.004 285);
   --sidebar-primary: oklch(0.6 0.22 22);
   --sidebar-primary-foreground: oklch(0.98 0.005 285);
@@ -120,6 +128,13 @@
   --sidebar-accent-foreground: oklch(0.3 0.01 285);
   --sidebar-border: oklch(0 0 0 / 12%);
   --sidebar-ring: oklch(0.55 0.22 22);
+  /* Hero veil — softer darkness in light mode, and the bottom melts into the
+     light page (--background) so the dark video doesn't float on a black box. */
+  --hero-veil-1: rgba(0, 0, 0, 0.45);
+  --hero-veil-2: rgba(0, 0, 0, 0.1);
+  --hero-veil-3: rgba(0, 0, 0, 0.22);
+  --hero-veil-4: var(--background);
+  --hero-bg: #0d0d0f;
 }
 
 @layer base {

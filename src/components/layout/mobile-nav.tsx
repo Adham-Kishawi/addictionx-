@@ -11,6 +11,7 @@ export function MobileNav({
   isAdmin,
   labels,
   items,
+  search,
 }: {
   locale: string;
   isAdmin: boolean;
@@ -24,6 +25,7 @@ export function MobileNav({
     admin: string;
   };
   items: { href: string; label: string }[];
+  search?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -90,6 +92,8 @@ export function MobileNav({
                 {item.label}
               </Link>
             ))}
+
+            {search && <div className="mt-1">{search}</div>}
 
             <Link
               href={isAdmin ? `/${locale}/admin` : `/${locale}/account`}
