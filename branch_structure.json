@@ -1,0 +1,15 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feat/cloudflare-deployment",
+    "main"
+  ],
+  "parent": {
+    "feat/cloudflare-deployment": "main",
+    "main": null
+  },
+  "order": [
+    "main",
+    "feat/cloudflare-deployment"
+  ]
+}
