@@ -1,5 +1,5 @@
 // Prisma Schema — Luxury Perfume E-commerce (Egypt, EGP)
-// القاعدة الحاكمة: كل المبالغ Int بوحدة القرش (100 قرش = 1 جنيه). لا Float أبدًا.
+// Rule of thumb: all amounts are Int in piasters (100 piasters = 1 EGP). Never Float.
 
 generator client {
   provider = "prisma-client-js"
@@ -81,7 +81,7 @@ model VerificationToken {
 }
 
 // ============================================================
-// الكتالوج
+// Catalog
 // ============================================================
 
 model Category {
@@ -130,17 +130,17 @@ model Product {
   brandId       String?
   categoryId    String?
   gender        Gender   @default(UNISEX)
-  // المجموعة (rush / noir / gold)
+  // Collection (rush / noir / gold)
   collection    String?
-  // المكونات { top, heart, base } — مصفوفات نصوص
+  // Notes { top, heart, base } — arrays of strings
   notes         Json?
-  // التدرج اللوني الفني { from, to, glow }
+  // Art color gradient { from, to, glow }
   art           Json?
   rating        Float    @default(0)
   reviewsCount  Int      @default(0)
-  // السعر الأساسي بالقرش — لكل size يخصم منه السعر الفعلي
+  // Base price in piasters — the actual price is derived per size
   basePrice     Int
-  // السعر قبل الخصم (للـ sale badge) — null يعني مفيش خصم
+  // Price before discount (for the sale badge) — null means no discount
   compareAtPrice Int?
   isActive      Boolean  @default(true)
   isFeatured    Boolean  @default(false)
@@ -181,9 +181,9 @@ model ProductImage {
 model ProductVariant {
   id        String   @id @default(cuid())
   productId String
-  // الحجم بالمل — مثل 50ml / 100ml
+  // Size in ml — e.g. 50ml / 100ml
   sizeMl    Int
-  // سعر فعلي بالقرش
+  // Actual price in piasters
   price     Int
   stock     Int      @default(0)
   sku       String   @unique
@@ -230,7 +230,7 @@ model WishlistItem {
 }
 
 // ============================================================
-// الطلبات
+// Orders
 // ============================================================
 
 enum OrderStatus {
@@ -255,10 +255,10 @@ model Order {
   userId        String?
   status        OrderStatus @default(PENDING)
   paymentMethod PaymentMethod
-  subtotal      Int // بالقرش
+  subtotal      Int // in piasters
   shippingFee   Int
   discount      Int         @default(0)
-  total         Int // بالقرش
+  total         Int // in piasters
   couponCode    String?
   notes         String?
   addressId     String?
@@ -282,12 +282,12 @@ model OrderItem {
   orderId   String
   productId String
   variantId String?
-  // snapshot وقت الطلب — السعر/الاسم لا يتأثران بتعديل الكتالوج لاحقًا
+  // Order-time snapshot — price/name are unaffected by later catalog edits
   productName String
   sizeMl      Int?
-  unitPrice   Int // بالقرش
+  unitPrice   Int // in piasters
   quantity    Int
-  lineTotal   Int // بالقرش
+  lineTotal   Int // in piasters
 
   order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product        @relation(fields: [productId], references: [id])
@@ -317,7 +317,7 @@ model Transaction {
   orderId   String
   provider  String // paymob / fawry / vodafone cash
   reference String?
-  amount    Int // بالقرش
+  amount    Int // in piasters
   status    String   @default("PENDING")
   raw       Json?
   createdAt DateTime @default(now())
@@ -329,7 +329,7 @@ model Transaction {
 }
 
 // ============================================================
-// إعدادات المتجر (شحن ...)
+// Store settings (shipping ...)
 // ============================================================
 
 model StoreSetting {
@@ -341,7 +341,7 @@ model StoreSetting {
 }
 
 // ============================================================
-// العناوين والكوبونات
+// Addresses and coupons
 // ============================================================
 
 model Address {
@@ -371,7 +371,7 @@ model Coupon {
   id            String    @id @default(cuid())
   code          String    @unique
   discountType  DiscountType
-  discountValue Int // نسبة مئوية أو مبلغ بالقرش حسب النوع
+  discountValue Int // percentage or amount in piasters depending on type
   minOrderAmount Int?     @default(0)
   maxDiscount   Int?
   maxUses       Int?
@@ -390,9 +390,9 @@ enum DiscountType {
 }
 
 // ============================================================
-// المجموعات (Collections) — تُدار من الداشبورد
-// Product.collection عبارة عن slug نصي يشير إلى هذه الجداول
-// (بدون FK تدخّلي — حتى لا تنكسر الأماكن التي تقرأ الـ slug مباشرة)
+// Collections — managed from the dashboard
+// Product.collection is a string slug pointing to these tables
+// (no intrusive FK — so places reading the slug directly don't break)
 // ============================================================
 
 model Collection {
@@ -409,7 +409,7 @@ model Collection {
 }
 
 // ============================================================
-// النشرة البريدية
+// Newsletter
 // ============================================================
 
 model NewsletterEntry {
@@ -425,7 +425,7 @@ model NewsletterEntry {
 }
 
 // ============================================================
-// الأنواع (enums)
+// Enums
 // ============================================================
 
 enum Role {
