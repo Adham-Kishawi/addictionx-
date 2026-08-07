@@ -1,0 +1,46 @@
+name = "addictionx"
+type = "javascript"
+account_id = ""
+workers_dev = true
+compatibility_date = "2024-12-16"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+name = "addictionx-prod"
+workers_dev = false
+routes = [
+  { pattern = "addictionx.com", zone_name = "addictionx.com" }
+  ]
+
+  [build]
+  command = "npm run build"
+  cwd = "./"
+  watch_paths = ["src/**/*.ts", "src/**/*.tsx"]
+
+  [build.upload]
+  format = "service-worker"
+  main = "./dist/index.js"
+
+  [d1]
+  binding = "DB"
+  database_name = "addictionx_db"
+  database_id = ""
+
+  [[d1_databases]]
+  binding = "DB"
+  database_name = "addictionx_db"
+  database_id = ""
+
+  [env.production.d1_databases]
+  binding = "DB"
+  database_name = "addictionx_db"
+  database_id = ""
+
+  [env.development]
+  name = "addictionx-dev"
+  d1_databases = [
+    { binding = "DB", database_name = "addictionx_db_dev", database_id = "" }
+    ]
+
+    [[triggers.scheduled]]
+    crons = ["0 0 * * *"]
