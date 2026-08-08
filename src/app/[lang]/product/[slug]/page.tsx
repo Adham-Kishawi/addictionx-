@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Star } from "lucide-react";
-import { ProductArt } from "@/features/catalog/components/product-art";
+import { ProductGallery } from "@/features/catalog/components/product-gallery";
 import { AddToCartButton } from "@/features/catalog/components/add-to-cart-button";
 import {
   getProductBySlug,
@@ -84,12 +84,12 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-        {/* Image */}
+        {/* Gallery */}
         <Reveal y={40}>
-          <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border">
-            <ProductArt product={product} className="h-full w-full" />
+          <div className="relative">
+            <ProductGallery product={product} />
             {/* Badges */}
-            <div className="absolute top-4 start-4 flex flex-col gap-2">
+            <div className="absolute top-4 start-4 z-10 flex flex-col gap-2">
               {product.isNew && (
                 <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
                   {dict.product.new}

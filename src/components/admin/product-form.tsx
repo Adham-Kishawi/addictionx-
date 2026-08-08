@@ -33,7 +33,7 @@ export type ProductFormInitial = {
   notesTop: string;
   notesHeart: string;
   notesBase: string;
-  image: string;
+  images: string[];
   artFrom: string;
   artTo: string;
   artGlow: string;
@@ -60,7 +60,7 @@ const emptyInitial: ProductFormInitial = {
   notesTop: "",
   notesHeart: "",
   notesBase: "",
-  image: "",
+  images: [] as string[],
   artFrom: "#1e1b4b",
   artTo: "#020617",
   artGlow: "#6366f1",
@@ -104,12 +104,25 @@ export function ProductForm({
         setError(dict.admin.uploadError);
         return;
       }
-      set("image", data.url);
+      // Append to the gallery — first image becomes the primary.
+      set("images", [...form.images, data.url]);
     } catch {
       setError(dict.admin.uploadError);
     } finally {
       setUploading(false);
     }
+  };
+
+  const removeImage = (index: number) =>
+    set(
+      "images",
+      form.images.filter((_, i) => i !== index),
+    );
+
+  const makePrimary = (index: number) => {
+    const next = [...form.images];
+    const [primary] = next.splice(index, 1);
+    set("images", [primary, ...next]);
   };
 
   const set = <K extends keyof ProductFormInitial>(
@@ -151,7 +164,7 @@ export function ProductForm({
     fd.set("notesTop", form.notesTop);
     fd.set("notesHeart", form.notesHeart);
     fd.set("notesBase", form.notesBase);
-    fd.set("image", form.image);
+    form.images.forEach((url) => fd.append("images", url));
     fd.set("artFrom", form.artFrom);
     fd.set("artTo", form.artTo);
     fd.set("artGlow", form.artGlow);
@@ -421,58 +434,76 @@ export function ProductForm({
         />
       </section>
 
-      {/* Product image */}
+      {/* Product images (gallery) */}
       <section className="rounded-2xl border border-border bg-card/40 p-5">
         <h2 className="mb-3 text-sm font-semibold">
           {dict.admin.productImage}
         </h2>
-        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-          {form.image ? (
-            <div className="relative size-24 shrink-0 overflow-hidden rounded-xl border border-border">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={form.image}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            </div>
-          ) : (
-            <div className="grid size-24 shrink-0 place-items-center rounded-xl border border-dashed border-border bg-muted/30 text-xs text-muted-foreground">
-              {dict.admin.noImage}
-            </div>
+        <div className="flex flex-col items-start gap-4">
+          <div className="flex flex-wrap gap-3">
+            {form.images.map((url, i) => (
+              <div
+                key={i}
+                className="relative size-24 shrink-0 overflow-hidden rounded-xl border border-border"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt="" className="h-full w-full object-cover" />
+                {i === 0 && (
+                  <span className="absolute left-0 top-0 rounded-br-lg bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                    {dict.admin.primaryImage}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeImage(i)}
+                  aria-label={dict.admin.removeImage}
+                  title={dict.admin.removeImage}
+                  className="absolute right-1 top-1 grid size-5 place-items-center rounded-md bg-black/70 text-white transition-colors hover:bg-destructive"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ))}
+            {form.images.length === 0 && (
+              <div className="grid size-24 shrink-0 place-items-center rounded-xl border border-dashed border-border bg-muted/30 text-xs text-muted-foreground">
+                {dict.admin.noImage}
+              </div>
+            )}
+          </div>
+
+          {form.images.length > 1 && (
+            <p className="text-xs text-muted-foreground">
+              {dict.admin.primaryHint}
+            </p>
           )}
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors hover:bg-muted/50 focus-within:ring-2 focus-within:ring-ring">
                 <Upload className="size-4" />
-                {uploading
-                  ? dict.admin.uploading
-                  : form.image
-                    ? dict.admin.changeImage
-                    : dict.admin.uploadImage}
+                {uploading ? dict.admin.uploading : dict.admin.addImages}
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
+                  multiple
                   className="sr-only"
                   disabled={uploading}
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImageUpload(file);
+                    const files = Array.from(e.target.files ?? []);
+                    files.forEach((file) => handleImageUpload(file));
                     e.target.value = "";
                   }}
                 />
               </label>
-              {form.image && (
+              {form.images.length > 1 && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => set("image", "")}
-                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => makePrimary(1)}
+                  className="text-primary hover:bg-primary/10"
                 >
-                  <X className="size-4" />
-                  {dict.admin.removeImage}
+                  {dict.admin.makePrimary}
                 </Button>
               )}
             </div>

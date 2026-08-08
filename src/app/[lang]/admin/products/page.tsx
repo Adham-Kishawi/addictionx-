@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { formatPrice } from "@/features/catalog/data/products";
 import { ProductArt } from "@/features/catalog/components/product-art";
@@ -16,6 +17,7 @@ export default async function AdminProductsPage({
   params: Promise<{ lang: string }>;
   searchParams: Promise<{ q?: string; sale?: string }>;
 }) {
+  await requirePermission("products");
   const [{ lang }, st] = await Promise.all([params, searchParams]);
   const { q, sale } = st;
   const locale = isLocale(lang) ? lang : defaultLocale;

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requirePermission } from "@/lib/admin-permissions";
 import { prisma } from "@/lib/prisma";
 
 // ============================================================
@@ -29,6 +30,7 @@ export async function createCollection(
   _prev: CollectionActionState | undefined,
   fd: FormData,
 ): Promise<CollectionActionState> {
+  await requirePermission("collections");
   const parsed = collectionSchema.safeParse({
     nameAr: fd.get("nameAr"),
     nameEn: fd.get("nameEn"),
@@ -55,6 +57,7 @@ export async function deleteCollection(slug: string): Promise<{
   error?: string;
   success?: boolean;
 }> {
+  await requirePermission("collections");
   const productsCount = await prisma.product.count({
     where: { collection: slug },
   });

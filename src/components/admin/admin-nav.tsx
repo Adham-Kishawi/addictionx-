@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 export function AdminNav({
   basePath,
   labels,
+  visible,
 }: {
   basePath: string;
   labels: {
@@ -31,10 +32,11 @@ export function AdminNav({
     collections: string;
     newsletter: string;
   };
+  visible: string[];
 }) {
   const pathname = usePathname();
 
-  const items = [
+  const allItems = [
     {
       href: basePath,
       label: labels.dashboard,
@@ -45,43 +47,55 @@ export function AdminNav({
       href: `${basePath}/products`,
       label: labels.products,
       icon: Package,
+      key: "products",
     },
     {
       href: `${basePath}/orders`,
       label: labels.orders,
       icon: ShoppingBag,
+      key: "orders",
     },
     {
       href: `${basePath}/collections`,
       label: labels.collections,
       icon: Layers,
+      key: "collections",
     },
     {
       href: `${basePath}/reviews`,
       label: labels.reviews,
       icon: Star,
+      key: "reviews",
     },
     {
       href: `${basePath}/coupons`,
       label: labels.coupons,
       icon: TicketPercent,
+      key: "coupons",
     },
     {
       href: `${basePath}/users`,
       label: labels.users,
       icon: Users,
+      key: "users",
     },
     {
       href: `${basePath}/newsletter`,
       label: labels.newsletter,
       icon: Mail,
+      key: "newsletter",
     },
     {
       href: `${basePath}/settings`,
       label: labels.settings,
       icon: Truck,
+      key: "settings",
     },
   ];
+
+  const items = allItems.filter(
+    (item) => item.exact || visible.includes(item.key!),
+  );
 
   return (
     <nav className="flex flex-col gap-1 rounded-2xl border border-border bg-card/40 p-3">

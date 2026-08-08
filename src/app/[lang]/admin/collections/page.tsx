@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { CollectionForm } from "@/components/admin/collection-form";
 import { CollectionDelete } from "@/components/admin/collection-delete";
@@ -10,6 +11,7 @@ export default async function AdminCollectionsPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
+  await requirePermission("collections");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);

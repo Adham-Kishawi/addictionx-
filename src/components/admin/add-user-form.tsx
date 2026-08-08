@@ -6,16 +6,29 @@ import { Plus, Check, AlertCircle } from "lucide-react";
 import { createUser, type UserActionState } from "@/features/admin/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
-export function AddUserForm({ dict }: { dict: Dictionary }) {
+export function AddUserForm({
+  dict,
+  limited = false,
+  canManageUsers = true,
+}: {
+  dict: Dictionary;
+  limited?: boolean;
+  canManageUsers?: boolean;
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<UserActionState>({});
 
+  const canCreate = limited ? canManageUsers : true;
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!canCreate) return;
     setPending(true);
     setState({});
     const fd = new FormData(e.currentTarget);
+    // A limited admin may only create customers — force the role.
+    if (limited) fd.set("role", "CUSTOMER");
     const res = await createUser(undefined, fd);
     setState(res);
     setPending(false);
@@ -66,19 +79,21 @@ export function AddUserForm({ dict }: { dict: Dictionary }) {
           minLength={6}
           placeholder="••••••••"
         />
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            {dict.admin.changeRole}
-          </label>
-          <select
-            name="role"
-            defaultValue="CUSTOMER"
-            className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="CUSTOMER">{dict.admin.customerRole}</option>
-            <option value="ADMIN">{dict.admin.adminRole}</option>
-          </select>
-        </div>
+        {!limited && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              {dict.admin.changeRole}
+            </label>
+            <select
+              name="role"
+              defaultValue="CUSTOMER"
+              className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="CUSTOMER">{dict.admin.customerRole}</option>
+              <option value="ADMIN">{dict.admin.adminRole}</option>
+            </select>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 flex items-center gap-3">

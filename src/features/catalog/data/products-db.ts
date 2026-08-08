@@ -81,6 +81,7 @@ export function productFromRow(db: DbProduct): Product {
     isSoldOut: stockTotal === 0,
     art,
     image: db.images?.[0]?.url ?? undefined,
+    images: db.images?.map((img) => img.url) ?? undefined,
   };
 }
 

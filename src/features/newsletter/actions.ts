@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requirePermission } from "@/lib/admin-permissions";
 import { prisma } from "@/lib/prisma";
 
 // ADDICTIONX email newsletter — subscribe from the footer without login.
@@ -14,12 +13,6 @@ export type NewsletterState = {
   error?: boolean;
   success?: boolean;
 };
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/account");
-}
 
 export async function subscribeNewsletter(
   _prev: NewsletterState | undefined,
@@ -43,7 +36,7 @@ export async function subscribeNewsletter(
 // Admin management: activate/deactivate or delete a subscriber.
 
 export async function toggleNewsletterEntry(email: string): Promise<void> {
-  await requireAdmin();
+  await requirePermission("newsletter");
   const entry = await prisma.newsletterEntry.findUnique({ where: { email } });
   if (!entry) return;
   await prisma.newsletterEntry.update({
@@ -54,7 +47,7 @@ export async function toggleNewsletterEntry(email: string): Promise<void> {
 }
 
 export async function deleteNewsletterEntry(email: string): Promise<void> {
-  await requireAdmin();
+  await requirePermission("newsletter");
   await prisma.newsletterEntry.deleteMany({ where: { email } });
   revalidatePath("/", "layout");
 }

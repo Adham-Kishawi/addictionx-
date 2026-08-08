@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { hasPermission } from "@/lib/admin-permissions";
+import type { AdminPermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -28,7 +31,31 @@ export default async function AdminLayout({
     redirect(`/${locale}/account`);
   }
 
+  // Fresh permissions from the DB (JWT carries only the role).
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { permissions: true },
+  });
+  const permissions = dbUser?.permissions ?? [];
+
   const basePath = `/${locale}/admin`;
+  // Which sections this admin may access — dashboard is always visible.
+  const visible = [
+    "products",
+    "orders",
+    "collections",
+    "reviews",
+    "coupons",
+    "users",
+    "newsletter",
+    "settings",
+  ].filter((key) =>
+    key === "users"
+      ? hasPermission(permissions, "users") ||
+        hasPermission(permissions, "admins")
+      : hasPermission(permissions, key as AdminPermission),
+  );
+
   const navLabels = {
     dashboard: dict.admin.dashboard,
     products: dict.admin.products,
@@ -49,7 +76,7 @@ export default async function AdminLayout({
             {dict.admin.title}
           </p>
         </div>
-        <AdminNav basePath={basePath} labels={navLabels} />
+        <AdminNav basePath={basePath} labels={navLabels} visible={visible} />
         <div className="mt-3 flex flex-col gap-2 px-1">
           <Link
             href={`/${locale}`}

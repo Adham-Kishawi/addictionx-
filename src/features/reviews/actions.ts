@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { requirePermission } from "@/lib/admin-permissions";
 import { prisma } from "@/lib/prisma";
 
 // ============================================================
@@ -12,12 +12,6 @@ import { prisma } from "@/lib/prisma";
 // - The review is published only after admin approval (isApproved)
 // - After any approved change: rating/reviewsCount are recomputed for the product
 // ============================================================
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/account");
-}
 
 async function recomputeProductStats(productId: string) {
   const agg = await prisma.review.aggregate({
@@ -98,7 +92,7 @@ export async function moderateReview(
   reviewId: string,
   approved: boolean,
 ): Promise<void> {
-  await requireAdmin();
+  await requirePermission("reviews");
   const review = await prisma.review.findUnique({
     where: { id: reviewId },
     select: { productId: true },
@@ -113,7 +107,7 @@ export async function moderateReview(
 }
 
 export async function deleteReview(reviewId: string): Promise<void> {
-  await requireAdmin();
+  await requirePermission("reviews");
   const review = await prisma.review.findUnique({
     where: { id: reviewId },
     select: { productId: true },

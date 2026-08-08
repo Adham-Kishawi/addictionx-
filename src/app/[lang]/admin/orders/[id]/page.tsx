@@ -8,6 +8,7 @@ import {
   Truck,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { formatPrice } from "@/features/catalog/data/products";
 import { statusLabel, statusStyles } from "@/features/admin/status";
@@ -21,6 +22,7 @@ export default async function AdminOrderDetailPage({
 }: {
   params: Promise<{ lang: string; id: string }>;
 }) {
+  await requirePermission("orders");
   const { lang, id } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);

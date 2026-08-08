@@ -11,11 +11,13 @@ export function UserRoleSelect({
   role,
   self,
   dict,
+  disabled = false,
 }: {
   userId: string;
   role: Role;
   self: boolean;
   dict: Dictionary;
+  disabled?: boolean;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -30,7 +32,7 @@ export function UserRoleSelect({
   return (
     <select
       value={role}
-      disabled={pending || self}
+      disabled={pending || self || disabled}
       onChange={(e) => onChange(e.target.value)}
       className="h-8 rounded-lg border border-border bg-background px-2 text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
     >

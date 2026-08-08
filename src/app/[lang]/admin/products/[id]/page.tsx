@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import {
   ProductForm,
@@ -15,6 +16,7 @@ export default async function EditProductPage({
 }: {
   params: Promise<{ lang: string; id: string }>;
 }) {
+  await requirePermission("products");
   const { lang, id } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
@@ -62,7 +64,7 @@ export default async function EditProductPage({
     notesTop: (notes.top ?? []).join("\n"),
     notesHeart: (notes.heart ?? []).join("\n"),
     notesBase: (notes.base ?? []).join("\n"),
-    image: product.images?.[0]?.url ?? "",
+    images: product.images.map((img) => img.url),
     artFrom: art.from ?? "#1e1b4b",
     artTo: art.to ?? "#020617",
     artGlow: art.glow ?? "#6366f1",

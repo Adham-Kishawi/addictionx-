@@ -30,6 +30,8 @@ export type Product = {
   isSoldOut?: boolean;
   // If the image is missing, ProductArt with the gradient is shown
   image?: string;
+  // Full gallery (DB-backed uploads). image === images[0]
+  images?: string[];
   art: { from: string; to: string; glow: string };
 };
 

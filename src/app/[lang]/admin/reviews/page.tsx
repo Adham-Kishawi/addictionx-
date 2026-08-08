@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { StarDisplay } from "@/features/reviews/components/star-input";
 import { ReviewActions } from "@/components/admin/review-actions";
@@ -11,6 +12,7 @@ export default async function AdminReviewsPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
+  await requirePermission("reviews");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);

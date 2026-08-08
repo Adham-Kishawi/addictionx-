@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { formatPrice } from "@/features/catalog/data/products";
 import { CouponForm } from "@/components/admin/coupon-form";
@@ -11,6 +12,7 @@ export default async function AdminCouponsPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
+  await requirePermission("coupons");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);

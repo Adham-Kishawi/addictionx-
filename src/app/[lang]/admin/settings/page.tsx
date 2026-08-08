@@ -1,4 +1,5 @@
 import { Truck } from "lucide-react";
+import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { getShippingConfig } from "@/lib/store-config";
 import { ShippingSettingsForm } from "@/components/admin/shipping-settings-form";
@@ -10,6 +11,7 @@ export default async function AdminSettingsPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
+  await requirePermission("settings");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);

@@ -16,6 +16,7 @@ export function toStorefrontProduct(p: DbProductRow): Product {
     nameEn: p.nameEn ?? p.name,
     descriptionAr: p.description ?? "",
     descriptionEn: p.descriptionEn ?? p.description ?? "",
+    images: p.images?.map((img) => img.url) ?? undefined,
     image: p.images?.[0]?.url ?? undefined,
     price: p.basePrice,
     gender: (p.gender as string).toLowerCase() as Product["gender"],

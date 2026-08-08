@@ -1,4 +1,5 @@
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
+import { requirePermission } from "@/lib/admin-permissions";
 import { ProductForm } from "@/components/admin/product-form";
 import { getCollections } from "@/features/catalog/data/products-db";
 
@@ -7,6 +8,7 @@ export default async function NewProductPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
+  await requirePermission("products");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { NewsletterActions } from "@/components/admin/newsletter-actions";
 
@@ -9,6 +10,7 @@ export default async function AdminNewsletterPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
+  await requirePermission("newsletter");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);

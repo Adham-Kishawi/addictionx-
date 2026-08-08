@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { hash } from "bcryptjs";
 import { auth } from "@/lib/auth";
+import {
+  requirePermission,
+  requireAnyPermission,
+} from "@/lib/admin-permissions";
+import { ADMIN_PERMISSIONS } from "@/lib/admin-permissions-core";
 import { prisma } from "@/lib/prisma";
 import { clearConfigCache, getShippingConfig } from "@/lib/store-config";
 import {
@@ -16,20 +21,6 @@ import {
 } from "@/lib/email";
 import { siteConfig } from "@/config/site";
 import type { OrderStatus } from "@prisma/client";
-
-// ============================================================
-// Protection
-// ============================================================
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/login");
-  }
-  if (session.user.role !== "ADMIN") {
-    redirect("/account");
-  }
-}
 
 // ============================================================
 // Products
@@ -134,7 +125,13 @@ function readProductForm(fd: FormData) {
       heart: splitNotes(fd.get("notesHeart")),
       base: splitNotes(fd.get("notesBase")),
     },
-    image: String(fd.get("image") || "").trim(),
+    // All gallery images (DB uploads or static /uploads paths)
+    images: fd
+      .getAll("images")
+      .map((v) => String(v).trim())
+      .filter(
+        (url) => url.startsWith("/uploads/") || url.startsWith("/api/uploads/"),
+      ),
     art: {
       from: String(fd.get("artFrom") || "#1e1b4b"),
       to: String(fd.get("artTo") || "#020617"),
@@ -192,7 +189,7 @@ export async function createProduct(
   _prev: AdminActionState | undefined,
   fd: FormData,
 ): Promise<AdminActionState> {
-  await requireAdmin();
+  await requirePermission("products");
 
   let extras: ReturnType<typeof readProductForm>;
   try {
@@ -202,13 +199,6 @@ export async function createProduct(
   }
 
   const { parsed, variants } = extras;
-
-  // image from the form — saved as the main image
-  const imageUrl = extras.image.startsWith("/uploads/")
-    ? extras.image
-    : extras.image.startsWith("/api/uploads/")
-      ? extras.image
-      : "";
 
   try {
     const slugExists = await prisma.product.findUnique({
@@ -220,11 +210,16 @@ export async function createProduct(
       data: {
         slug: parsed.slug,
         ...toCreateData(parsed, extras),
-        images: imageUrl
-          ? {
-              create: [{ url: imageUrl, isPrimary: true, position: 0 }],
-            }
-          : undefined,
+        images:
+          extras.images.length > 0
+            ? {
+                create: extras.images.map((url, i) => ({
+                  url,
+                  isPrimary: i === 0,
+                  position: i,
+                })),
+              }
+            : undefined,
         variants: { create: variants },
       },
     });
@@ -241,7 +236,7 @@ export async function updateProduct(
   _prev: AdminActionState | undefined,
   fd: FormData,
 ): Promise<AdminActionState> {
-  await requireAdmin();
+  await requirePermission("products");
 
   let extras: ReturnType<typeof readProductForm>;
   try {
@@ -252,8 +247,7 @@ export async function updateProduct(
 
   const { parsed, variants } = extras;
 
-  // Keeps the current main image if no new one was uploaded
-  let imageUrl = extras.image;
+  const images = extras.images;
 
   try {
     const slugExists = await prisma.product.findFirst({
@@ -261,19 +255,20 @@ export async function updateProduct(
     });
     if (slugExists) return { error: "SLUG_EXISTS" };
 
-    if (
-      !imageUrl.startsWith("/uploads/") &&
-      !imageUrl.startsWith("/api/uploads/")
-    ) {
-      imageUrl = "";
-    }
-
     const currentImages = await prisma.productImage.findMany({
       where: { productId: id },
     });
+    // Delete stored uploads that are no longer part of the gallery.
+    const keptStoredIds = new Set(
+      images
+        .map((url) => storedImageId(url))
+        .filter((v): v is string => Boolean(v)),
+    );
     const oldStoredIds = currentImages
       .map((img) => storedImageId(img.url))
-      .filter((v): v is string => Boolean(v) && v !== storedImageId(imageUrl));
+      .filter(
+        (v): v is string => Boolean(v) && !keptStoredIds.has(v as string),
+      );
 
     await prisma.$transaction([
       prisma.productVariant.deleteMany({ where: { productId: id } }),
@@ -282,18 +277,16 @@ export async function updateProduct(
         where: { id },
         data: toCreateData(parsed, extras),
       }),
-      ...(imageUrl
-        ? [
-            prisma.productImage.create({
-              data: {
-                productId: id,
-                url: imageUrl,
-                isPrimary: true,
-                position: 0,
-              },
-            }),
-          ]
-        : []),
+      ...images.map((url, i) =>
+        prisma.productImage.create({
+          data: {
+            productId: id,
+            url,
+            isPrimary: i === 0,
+            position: i,
+          },
+        }),
+      ),
       ...variants.map((v) =>
         prisma.productVariant.create({ data: { ...v, productId: id } }),
       ),
@@ -314,7 +307,7 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: string) {
-  await requireAdmin();
+  await requirePermission("products");
   const orderedCount = await prisma.orderItem.count({
     where: { productId: id },
   });
@@ -335,7 +328,7 @@ export async function deleteProduct(id: string) {
 }
 
 export async function toggleProductActive(id: string) {
-  await requireAdmin();
+  await requirePermission("products");
   const product = await prisma.product.findUnique({ where: { id } });
   if (!product) return;
   await prisma.product.update({
@@ -350,7 +343,7 @@ export async function toggleProductActive(id: string) {
 // ============================================================
 
 export async function updateOrderStatus(orderId: string, status: string) {
-  await requireAdmin();
+  await requirePermission("orders");
   const next = status as OrderStatus;
 
   const order = await prisma.order.findUnique({
@@ -437,7 +430,7 @@ export async function updateShipment(
   orderId: string,
   data: { carrier: string; trackingNumber: string },
 ) {
-  await requireAdmin();
+  await requirePermission("orders");
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -490,8 +483,6 @@ export async function createUser(
   _prev: UserActionState | undefined,
   fd: FormData,
 ): Promise<UserActionState> {
-  await requireAdmin();
-
   const parsed = createUserSchema.safeParse({
     name: fd.get("name"),
     email: fd.get("email"),
@@ -499,6 +490,16 @@ export async function createUser(
     role: fd.get("role"),
   });
   if (!parsed.success) return { error: "INVALID" };
+
+  // Creating an ADMIN is a sensitive action — only super admins or
+  // users with the "admins" permission can do it. Plain customer accounts
+  // can be created by anyone with the "users" permission.
+  const isAdminCreation = parsed.data.role === "ADMIN";
+  if (isAdminCreation) {
+    await requirePermission("admins");
+  } else {
+    await requirePermission("users");
+  }
 
   const { name, email, password, role } = parsed.data;
 
@@ -516,9 +517,23 @@ export async function createUser(
 }
 
 export async function deleteUser(userId: string) {
-  await requireAdmin();
   const session = await auth();
-  if (session?.user?.id === userId) return;
+  if (!session?.user) return;
+  if (session.user.id === userId) return;
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (!target) return;
+
+  // Deleting an admin requires the "admins" permission; deleting a
+  // customer only needs "users" (any user-management admin).
+  if (target.role === "ADMIN") {
+    await requirePermission("admins");
+  } else {
+    await requireAnyPermission(["users", "admins"]);
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.order.updateMany({
@@ -526,6 +541,38 @@ export async function deleteUser(userId: string) {
       data: { userId: null },
     });
     await tx.user.delete({ where: { id: userId } });
+  });
+
+  revalidatePath("/", "layout");
+}
+
+export async function updateUserPermissions(
+  userId: string,
+  permissions: string[],
+) {
+  const session = await auth();
+  if (!session?.user) return;
+  if (session.user.id === userId) return;
+
+  await requirePermission("admins");
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (!target) return;
+
+  // Only admins carry permissions — demoting a customer to an admin is done
+  // through updateUserRole, but we reject permission edits on non-admins.
+  if (target.role !== "ADMIN") return;
+
+  const clean = permissions.filter((p) =>
+    (ADMIN_PERMISSIONS as readonly string[]).includes(p),
+  );
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { permissions: clean },
   });
 
   revalidatePath("/", "layout");
@@ -545,7 +592,7 @@ export async function updateShippingSettings(
   _prev: UserActionState | undefined,
   fd: FormData,
 ): Promise<UserActionState> {
-  await requireAdmin();
+  await requirePermission("settings");
 
   const parsed = shippingSettingsSchema.safeParse({
     shippingFee: fd.get("shippingFee"),
@@ -606,7 +653,7 @@ export async function createCoupon(
   _prev: UserActionState | undefined,
   fd: FormData,
 ): Promise<UserActionState> {
-  await requireAdmin();
+  await requirePermission("coupons");
 
   const parsed = couponSchema.safeParse({
     code: fd.get("code"),
@@ -655,7 +702,7 @@ export async function createCoupon(
 }
 
 export async function toggleCoupon(id: string) {
-  await requireAdmin();
+  await requirePermission("coupons");
   const coupon = await prisma.coupon.findUnique({ where: { id } });
   if (!coupon) return;
   await prisma.coupon.update({
@@ -666,7 +713,7 @@ export async function toggleCoupon(id: string) {
 }
 
 export async function deleteCoupon(id: string) {
-  await requireAdmin();
+  await requirePermission("coupons");
   await prisma.coupon.delete({ where: { id } });
   revalidatePath("/", "layout");
 }
@@ -675,9 +722,14 @@ export async function updateUserRole(
   userId: string,
   role: "CUSTOMER" | "ADMIN",
 ) {
-  await requireAdmin();
   const session = await auth();
-  if (session?.user?.id === userId) return;
+  if (!session?.user) return;
+  if (session.user.id === userId) return;
+
+  // Promoting a user to ADMIN grants dashboard access — sensitive, so it
+  // requires the "admins" permission. Demoting also needs it.
+  await requirePermission("admins");
+
   await prisma.user.update({
     where: { id: userId },
     data: { role },
@@ -715,7 +767,7 @@ export type ManualOrderResult =
 export async function createManualOrder(
   input: z.infer<typeof manualOrderSchema>,
 ): Promise<ManualOrderResult> {
-  await requireAdmin();
+  await requirePermission("orders");
 
   const parsed = manualOrderSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "INVALID" };
