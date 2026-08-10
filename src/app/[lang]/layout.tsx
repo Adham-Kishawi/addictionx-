@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/footer";
 import { CartDrawer } from "@/features/cart/components/cart-drawer";
 import { CartFlyProvider } from "@/components/motion/fly-to-cart";
 import { CursorGlow } from "@/components/motion/cursor-glow";
+import { DepthBackdrop } from "@/components/motion/depth-backdrop";
 import { NoiseOverlay } from "@/components/motion/noise-overlay";
 import { PageTransition } from "@/components/motion/page-transition";
 import { auth } from "@/lib/auth";
@@ -71,14 +72,19 @@ export default async function RootLayout({
     >
       <body className="min-h-full">
         <ThemeProvider>
-          <CursorGlow />
-          <CartFlyProvider>
-            <Header locale={locale} session={session} />
-            <CartDrawer locale={locale} />
-            <PageTransition>{children}</PageTransition>
-            <Footer locale={locale} />
-          </CartFlyProvider>
-          <NoiseOverlay />
+          {/* isolate = stacking context: the fixed DepthBackdrop (-z-10) stays
+              behind all page content of every route — the site-wide depth layer */}
+          <div className="relative isolate">
+            <DepthBackdrop />
+            <CursorGlow />
+            <CartFlyProvider>
+              <Header locale={locale} session={session} />
+              <CartDrawer locale={locale} />
+              <PageTransition>{children}</PageTransition>
+              <Footer locale={locale} />
+            </CartFlyProvider>
+            <NoiseOverlay />
+          </div>
           <script
             id="theme-init"
             dangerouslySetInnerHTML={{

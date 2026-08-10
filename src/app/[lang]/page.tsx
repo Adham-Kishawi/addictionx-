@@ -11,6 +11,8 @@ import { WordReveal } from "@/components/motion/word-reveal";
 import { RevealStagger, RevealItem } from "@/components/motion/reveal";
 import { Marquee } from "@/components/motion/marquee";
 import { StatsBand } from "@/components/motion/stats-band";
+import { SectionGlow } from "@/components/motion/section-glow";
+import { CtaScene } from "@/components/motion/cta-scene";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { ProductCard } from "@/features/catalog/components/product-card";
 import { ProductArt } from "@/features/catalog/components/product-art";
@@ -149,16 +151,9 @@ export default async function Home({
         className="sticky top-16 z-20 border-y border-border bg-card/40 py-4 backdrop-blur-md"
       />
 
-      {/* ====== Brand numbers (live counters) ====== */}
+      {/* ====== Brand numbers (live counters) — glow drifts slower than the content ====== */}
       <section className="relative overflow-hidden py-16">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(50% 90% at 50% 50%, oklch(0.6 0.22 22 / 0.08), transparent 70%)",
-          }}
-        />
+        <SectionGlow />
         <StatsBand
           stats={[
             { label: dict.home.statsProducts, value: allProducts.length },
@@ -244,7 +239,7 @@ export default async function Home({
               <RevealItem key={collection.slug}>
                 <Link
                   href={`/${locale}/collections/${collection.slug}`}
-                  className="group relative block aspect-[3/4] overflow-hidden rounded-2xl border border-border transition-shadow duration-500 hover:border-primary/40 hover:shadow-[0_0_45px_-14px_oklch(0.6_0.22_22/0.6)]"
+                  className="group relative block aspect-[3/4] overflow-hidden rounded-2xl border border-border shadow-[0_15px_50px_-25px_rgba(0,0,0,0.6)] transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_0_50px_-14px_oklch(0.6_0.22_22/0.6)]"
                 >
                   <ProductArt
                     product={cover}
@@ -267,16 +262,9 @@ export default async function Home({
         </RevealStagger>
       </section>
 
-      {/* ====== Experience strip ====== */}
+      {/* ====== Experience strip — glow drifts on its own scroll layer ====== */}
       <section className="relative overflow-hidden border-y border-border bg-card/40 py-20">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(60% 80% at 50% 0%, oklch(0.6 0.22 22 / 0.12), transparent 70%)",
-          }}
-        />
+        <SectionGlow background="radial-gradient(60% 80% at 50% 0%, oklch(0.6 0.22 22 / 0.12), transparent 70%)" />
         <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 text-center sm:px-6">
           <WordReveal
             as="h2"
@@ -307,49 +295,35 @@ export default async function Home({
         </div>
       </section>
 
-      {/* ====== Closing CTA — giant metallic brand watermark + glass card stacked
-            over the experience strip (bombon-style display type depth) ====== */}
-      <section className="relative overflow-hidden">
-        {/* Giant rotated ADDICTIONX watermark — metallic shine sweeping */}
-        <span
-          aria-hidden
-          dir="ltr"
-          className="text-watermark text-metallic-shine pointer-events-none absolute inset-0 flex select-none items-center justify-center rotate-[-6deg] text-[15vw]"
-        >
-          ADDICTIONX
-        </span>
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(90% 120% at 50% 50%, ${heroProduct?.art.glow ?? "#ef4444"}22 0%, transparent 70%)`,
-          }}
-        />
-        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="relative -mt-20 rounded-2xl border border-border bg-card/70 px-6 py-16 text-center shadow-[0_30px_90px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl sm:-mt-28 sm:rounded-3xl sm:px-10 sm:py-20">
-            <FadeIn>
-              <WordReveal
-                as="h2"
-                text={dict.home.ctaTitle}
-                className="font-display text-3xl font-bold sm:text-5xl"
-              />
-            </FadeIn>
-            <FadeIn delay={0.15}>
-              <p className="mx-auto max-w-xl text-muted-foreground">
-                {dict.home.ctaText}
-              </p>
-            </FadeIn>
-            <FadeIn delay={0.3}>
-              <Button
-                render={<Link href={`/${locale}/catalog`} />}
-                size="lg"
-                className="h-12 rounded-full px-10 text-base animate-[heartbeat-pulse_2.6s_ease-in-out_infinite]"
-              >
-                {dict.home.ctaButton}
-              </Button>
-            </FadeIn>
-          </div>
-        </div>
-      </section>
+      {/* ====== Closing CTA — layered depth scene: watermark parallax (z-0) →
+            glow (z-1) → drifting orbs (z-2) → sparks (z-5) → glass card
+            (z-10) → bottom fade (z-20). "Join thousands who chose to
+            live the moment." lives on the glass layer ====== */}
+      <CtaScene glow={heroProduct?.art.glow ?? "#ef4444"}>
+        <FadeIn>
+          <WordReveal
+            as="h2"
+            text={dict.home.ctaTitle}
+            className="font-display text-3xl font-bold sm:text-5xl"
+          />
+        </FadeIn>
+        <FadeIn delay={0.15}>
+          <p className="mx-auto max-w-xl text-muted-foreground">
+            {dict.home.ctaText}
+          </p>
+        </FadeIn>
+        <FadeIn delay={0.3}>
+          <span className="btn-conic-ring inline-flex">
+            <Button
+              render={<Link href={`/${locale}/catalog`} />}
+              size="lg"
+              className="h-12 rounded-full px-10 text-base"
+            >
+              {dict.home.ctaButton}
+            </Button>
+          </span>
+        </FadeIn>
+      </CtaScene>
     </main>
   );
 }

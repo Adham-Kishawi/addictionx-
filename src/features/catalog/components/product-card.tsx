@@ -30,7 +30,7 @@ export function ProductCard({
     >
       <Link
         href={`/${locale}/product/${product.slug}`}
-        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-500 hover:border-primary/50 hover:shadow-[0_0_50px_-12px_oklch(0.6_0.22_22/0.55)]"
+        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_40px_-22px_rgba(0,0,0,0.55)] transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/50 hover:shadow-[0_0_60px_-14px_oklch(0.6_0.22_22/0.55)]"
       >
         <div className="relative aspect-[4/5] overflow-hidden">
           <ProductArt

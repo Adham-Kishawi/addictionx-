@@ -233,6 +233,94 @@
   }
 }
 
+/* ============================================================
+   GLOBAL BACKGROUND DEPTH — the ambient layer behind ALL pages
+   (not just the hero video). EDIT HERE = the "edit on background"
+   control room: tune the aurora glow + the two drifting orbs.
+   Layer order (bottom → top):
+   body bg → .depth-backdrop (fixed, -z) → page content → film grain.
+   ============================================================ */
+:root,
+.dark {
+  --depth-glow: radial-gradient(
+    55% 45% at 50% -5%,
+    oklch(0.6 0.22 22 / 0.14),
+    transparent 70%
+  );
+  --depth-orb-a: oklch(0.6 0.22 22 / 0.09);
+  --depth-orb-b: oklch(0.45 0.1 285 / 0.07);
+  --depth-orb-blur: 90px;
+}
+
+:root[data-theme="light"]:not(.dark) {
+  --depth-glow: radial-gradient(
+    55% 45% at 50% -5%,
+    oklch(0.55 0.22 22 / 0.1),
+    transparent 70%
+  );
+  --depth-orb-a: oklch(0.55 0.22 22 / 0.07);
+  --depth-orb-b: oklch(0.6 0.15 285 / 0.05);
+  --depth-orb-blur: 80px;
+}
+
+.depth-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -10; /* inside the isolate wrapper — below content, above body bg */
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--depth-glow);
+}
+
+.depth-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(var(--depth-orb-blur));
+  will-change: transform;
+}
+
+.depth-orb-a {
+  top: 18%;
+  inset-inline-start: -12%;
+  width: 55vw;
+  height: 55vw;
+  background: var(--depth-orb-a);
+  animation: depth-drift-a 55s ease-in-out infinite;
+}
+
+.depth-orb-b {
+  bottom: 8%;
+  inset-inline-end: -14%;
+  width: 48vw;
+  height: 48vw;
+  background: var(--depth-orb-b);
+  animation: depth-drift-b 70s ease-in-out infinite;
+}
+
+@keyframes depth-drift-a {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(8vw, -6vh, 0) scale(1.12);
+  }
+  100% {
+    transform: translate3d(-4vw, 4vh, 0) scale(0.95);
+  }
+}
+
+@keyframes depth-drift-b {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-10vw, 5vh, 0) scale(0.9);
+  }
+  100% {
+    transform: translate3d(5vw, -7vh, 0) scale(1.15);
+  }
+}
+
 /* Film grain — full-bleed texture layer (coparadiso pattern: tiled SVG noise,
    pointer-events-none, blends over everything below the drawers). */
 .noise-overlay {
@@ -253,6 +341,143 @@
   letter-spacing: 0.08em;
   color: var(--foreground);
   opacity: 0.04;
+}
+
+/* ============================================================
+   CLOSING CTA — the layered depth scene (ui-skill z-ladder).
+   z-0 watermark · z-1 glow · z-2 orbs · z-5 sparks · z-10 glass ·
+   z-20 bottom fade. Every animation: explicit duration + easing.
+   ============================================================ */
+
+/* Glass card — frost + gradient-only border via mask-composite: exclude
+   (the "expensive feel" layer of the corpus). Never animate the card
+   itself: animation-fill-mode on the element breaks its backdrop-filter. */
+.glass-card {
+  position: relative;
+  background: color-mix(in srgb, var(--card) 55%, transparent);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 30px 90px -24px rgba(0, 0, 0, 0.7);
+}
+
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(
+    180deg,
+    oklch(1 0 0 / 0.5) 0%,
+    oklch(1 0 0 / 0.1) 40%,
+    oklch(0.6 0.22 22 / 0.4) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Animated conic ring around the CTA button (corpus #21 pattern) —
+   a rotating accent border, driven by an animatable custom property. */
+@property --border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.btn-conic-ring {
+  position: relative;
+  border-radius: 9999px;
+  padding: 1.5px;
+}
+
+.btn-conic-ring::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--border-angle),
+    oklch(0.6 0.22 22 / 0) 0%,
+    oklch(0.6 0.22 22 / 0.9) 25%,
+    oklch(1 0 0 / 0.25) 45%,
+    oklch(0.6 0.22 22 / 0) 60%,
+    oklch(0.6 0.22 22 / 0.9) 85%,
+    oklch(0.6 0.22 22 / 0) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: border-spin 3.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes border-spin {
+  to {
+    --border-angle: 360deg;
+  }
+}
+
+/* Two huge blurred orbs floating behind the card — slow loops */
+.cta-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.cta-orb-a {
+  top: 10%;
+  inset-inline-start: -8%;
+  width: 42vmin;
+  height: 42vmin;
+  background: var(--depth-orb-a);
+  animation: cta-orb-a 26s ease-in-out infinite;
+}
+
+.cta-orb-b {
+  bottom: 0%;
+  inset-inline-end: -10%;
+  width: 38vmin;
+  height: 38vmin;
+  background: oklch(0.45 0.1 285 / 0.1);
+  animation: cta-orb-b 34s ease-in-out infinite;
+}
+
+@keyframes cta-orb-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6vmin, -4vmin, 0) scale(1.15);
+  }
+}
+
+@keyframes cta-orb-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-7vmin, 3vmin, 0) scale(1.1);
+  }
+}
+
+/* Melt the closing scene into the footer (corpus #70 bottom gradient fade) */
+.section-bottom-fade {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 10rem;
+  background: linear-gradient(to top, var(--background), transparent);
+  pointer-events: none;
 }
 
 /* Respect users who reduce motion — kill CSS-driven animation/transitions globally.

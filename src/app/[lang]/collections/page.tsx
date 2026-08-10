@@ -9,6 +9,7 @@ import {
 import { getWishlistIds } from "@/features/account/data";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/reveal";
+import { SectionGlow } from "@/components/motion/section-glow";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,8 @@ export default async function CollectionsPage({
   ]);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+    <main className="relative mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+      <SectionGlow />
       {/* Title */}
       <Reveal>
         <header className="mb-12 flex flex-col gap-2">

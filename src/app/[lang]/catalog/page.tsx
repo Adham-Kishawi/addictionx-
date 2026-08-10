@@ -3,6 +3,7 @@ import { ProductCard } from "@/features/catalog/components/product-card";
 import { ProductArt } from "@/features/catalog/components/product-art";
 import { CatalogSort } from "@/features/catalog/components/catalog-sort";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/reveal";
+import { SectionGlow } from "@/components/motion/section-glow";
 import { type Gender } from "@/features/catalog/data/products";
 import {
   getProducts,
@@ -121,11 +122,16 @@ export default async function CatalogPage({
   const queryStr = queryString.toString();
 
   return (
-    <main className="mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+    <main className="relative mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+      <SectionGlow />
+
       {/* Title */}
       <Reveal>
         <header className="mb-8 flex flex-col gap-2">
-          <h1 className="font-display text-4xl font-bold">
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+            ADDICTIONX
+          </span>
+          <h1 className="font-display text-4xl font-bold sm:text-5xl">
             {dict.catalog.title}
           </h1>
           {searchQ ? (

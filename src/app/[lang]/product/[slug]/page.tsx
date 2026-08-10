@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/features/catalog/data/products";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { Reveal } from "@/components/motion/reveal";
+import { SectionGlow } from "@/components/motion/section-glow";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,8 @@ export default async function ProductPage({
   const collectionMeta = collections.find((c) => c.slug === product.collection);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+    <main className="relative mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+      <SectionGlow />
       {/* Breadcrumb */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
         <Link
