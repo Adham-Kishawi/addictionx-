@@ -32,7 +32,9 @@ export function LanguageSwitcher({ currentLocale }: { currentLocale: Locale }) {
       className="gap-1.5 text-sm"
     >
       <Languages className="size-4" />
-      {switchTo === "en" ? "English" : "عربي"}
+      <span className="hidden sm:inline">
+        {switchTo === "en" ? "English" : "عربي"}
+      </span>
     </Button>
   );
 }

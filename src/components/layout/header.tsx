@@ -28,16 +28,16 @@ export function Header({
         id="site-header"
         className="site-header fixed inset-x-0 top-0 z-30"
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-3 sm:gap-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <Link
             href={`/${locale}`}
             className="group flex items-center gap-2 text-foreground"
             aria-label="ADDICTIONX"
           >
-            <HeartbeatLine className="h-5 w-9 text-primary transition-colors group-hover:text-primary/70" />
+            <HeartbeatLine className="h-4 w-8 text-primary transition-colors group-hover:text-primary/70 sm:h-5 sm:w-9" />
             <span
-              className="font-display text-lg font-bold tracking-wide"
+              className="font-display text-base font-bold tracking-wide sm:text-lg"
               dir="ltr"
             >
               ADDICTION<span className="text-primary">X</span>
@@ -78,7 +78,7 @@ export function Header({
           </nav>
 
           {/* Icons */}
-          <div className="flex items-center gap-2 text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-muted-foreground sm:gap-2">
             <MobileNav
               locale={locale}
               isAdmin={isAdmin}
@@ -118,7 +118,7 @@ export function Header({
             <Link
               href={isAuthed ? `/${locale}/account` : `/${locale}/login`}
               aria-label={dict.header.account}
-              className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="hidden size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
             >
               <User className="size-5" />
             </Link>

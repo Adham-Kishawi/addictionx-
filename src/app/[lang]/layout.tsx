@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/footer";
 import { CartDrawer } from "@/features/cart/components/cart-drawer";
 import { CartFlyProvider } from "@/components/motion/fly-to-cart";
 import { CursorGlow } from "@/components/motion/cursor-glow";
+import { NoiseOverlay } from "@/components/motion/noise-overlay";
 import { PageTransition } from "@/components/motion/page-transition";
 import { auth } from "@/lib/auth";
 import { getDictionary, isLocale, type Locale } from "@/lib/i18n/dictionary";
@@ -77,6 +78,7 @@ export default async function RootLayout({
             <PageTransition>{children}</PageTransition>
             <Footer locale={locale} />
           </CartFlyProvider>
+          <NoiseOverlay />
           <script
             id="theme-init"
             dangerouslySetInnerHTML={{

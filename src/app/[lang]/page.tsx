@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { AnimatedTitle } from "@/components/motion/animated-title";
 import { ParticleField } from "@/components/motion/particle-field";
 import { HeroVideoScrub } from "@/components/motion/hero-video-scrub";
+import { HeroParallax } from "@/components/motion/hero-parallax";
 import { HeartbeatLine } from "@/components/motion/heartbeat-line";
 import { FadeIn } from "@/components/motion/fade-in";
+import { WordReveal } from "@/components/motion/word-reveal";
 import { RevealStagger, RevealItem } from "@/components/motion/reveal";
 import { Marquee } from "@/components/motion/marquee";
 import { StatsBand } from "@/components/motion/stats-band";
@@ -65,83 +67,86 @@ export default async function Home({
     <main>
       {/* ====== HERO — cinematic scene: the video stays dark in BOTH themes (black product footage
             cannot go light), but the veil/bg follow the theme via --hero-* vars so the hero melts
-            into the page below instead of floating on a black slab in light mode ====== */}
-      <section
-        className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden text-white"
-        style={{ backgroundColor: "var(--hero-bg)" }}
-      >
-        <HeroVideoScrub />
+            into the page below. HeroParallax slides three layers at different scroll speeds
+            (backdrop slow + zoom, veil mid, content fast fade) — the depth that makes the
+            next sections feel like they're rolling OVER the hero ====== */}
+      <HeroParallax
+        backdrop={<HeroVideoScrub />}
+        mid={
+          <>
+            {/* Theme-aware contrast veil — solves readability without mix-blend */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-[5]"
+              style={{
+                background:
+                  "linear-gradient(to bottom, var(--hero-veil-1) 0%, var(--hero-veil-2) 40%, var(--hero-veil-3) 78%, var(--hero-veil-4) 100%)",
+              }}
+            />
+            {/* Light neon dust over the video — screen blend (red stays red) */}
+            <ParticleField count={10} blend="screen" opacityScale={0.3} />
+          </>
+        }
+        content={
+          <div className="flex flex-col items-center gap-6 px-6 pt-20 text-center">
+            <FadeIn delay={0.1}>
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-1.5 text-xs tracking-[0.25em] text-red-400 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)]">
+                <Sparkles className="size-3.5" />
+                {dict.hero.badge}
+              </span>
+            </FadeIn>
 
-        {/* Theme-aware contrast veil — solves readability without mix-blend */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-[5]"
-          style={{
-            background:
-              "linear-gradient(to bottom, var(--hero-veil-1) 0%, var(--hero-veil-2) 40%, var(--hero-veil-3) 78%, var(--hero-veil-4) 100%)",
-          }}
-        />
+            <AnimatedTitle text={dict.hero.title} />
 
-        {/* Light neon dust over the video — screen blend (red stays red) */}
-        <ParticleField count={10} blend="screen" opacityScale={0.3} />
+            <FadeIn delay={0.5}>
+              <HeartbeatLine className="h-10 w-56 text-red-500 [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))_drop-shadow(0_4px_24px_rgba(0,0,0,0.45))]" />
+            </FadeIn>
 
-        <div className="relative z-20 flex flex-col items-center gap-6 px-6 pt-20 text-center">
-          <FadeIn delay={0.1}>
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-1.5 text-xs tracking-[0.25em] text-red-400 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)]">
-              <Sparkles className="size-3.5" />
-              {dict.hero.badge}
+            <FadeIn delay={0.6}>
+              <p className="max-w-xl text-base leading-relaxed text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)] sm:text-lg">
+                {dict.hero.subtitle}
+              </p>
+            </FadeIn>
+
+            <FadeIn delay={0.75}>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button
+                  render={<Link href={`/${locale}/catalog`} />}
+                  size="lg"
+                  className="h-12 rounded-full px-8 text-base shadow-[0_0_30px_-8px_theme(colors.red.600)]"
+                >
+                  {dict.hero.ctaPrimary}
+                </Button>
+                <Button
+                  render={<Link href={`/${locale}/catalog`} />}
+                  size="lg"
+                  variant="outline"
+                  className="h-12 rounded-full border-white/30 bg-white/5 px-8 text-base text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
+                >
+                  {dict.hero.ctaSecondary}
+                </Button>
+              </div>
+            </FadeIn>
+          </div>
+        }
+        indicator={
+          <FadeIn
+            delay={1.2}
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
+          >
+            <span className="flex flex-col items-center gap-1 text-xs text-white/70 [text-shadow:0_1px_2px_rgba(0,0,0,0.6)]">
+              {dict.hero.scroll}
+              <span className="block size-4 animate-bounce border-b-2 border-r-2 border-primary rotate-45" />
             </span>
           </FadeIn>
+        }
+      />
 
-          <AnimatedTitle text={dict.hero.title} />
-
-          <FadeIn delay={0.5}>
-            <HeartbeatLine className="h-10 w-56 text-red-500 [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))_drop-shadow(0_4px_24px_rgba(0,0,0,0.45))]" />
-          </FadeIn>
-
-          <FadeIn delay={0.6}>
-            <p className="max-w-xl text-base leading-relaxed text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)] sm:text-lg">
-              {dict.hero.subtitle}
-            </p>
-          </FadeIn>
-
-          <FadeIn delay={0.75}>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button
-                render={<Link href={`/${locale}/catalog`} />}
-                size="lg"
-                className="h-12 rounded-full px-8 text-base shadow-[0_0_30px_-8px_theme(colors.red.600)]"
-              >
-                {dict.hero.ctaPrimary}
-              </Button>
-              <Button
-                render={<Link href={`/${locale}/catalog`} />}
-                size="lg"
-                variant="outline"
-                className="h-12 rounded-full border-white/30 bg-white/5 px-8 text-base text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
-              >
-                {dict.hero.ctaSecondary}
-              </Button>
-            </div>
-          </FadeIn>
-        </div>
-
-        {/* Scroll indicator */}
-        <FadeIn
-          delay={1.2}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
-        >
-          <span className="flex flex-col items-center gap-1 text-xs text-white/70 [text-shadow:0_1px_2px_rgba(0,0,0,0.6)]">
-            {dict.hero.scroll}
-            <span className="block size-4 animate-bounce border-b-2 border-r-2 border-primary rotate-45" />
-          </span>
-        </FadeIn>
-      </section>
-
-      {/* ====== Moving words strip ====== */}
+      {/* ====== Moving words strip — pinned under the header while the next sections
+            slide beneath it (bombon-style sticky layer) ====== */}
       <Marquee
         items={dict.home.ticker}
-        className="border-y border-border bg-card/40 py-4"
+        className="sticky top-16 z-20 border-y border-border bg-card/40 py-4 backdrop-blur-md"
       />
 
       {/* ====== Brand numbers (live counters) ====== */}
@@ -273,11 +278,11 @@ export default async function Home({
           }}
         />
         <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 text-center sm:px-6">
-          <FadeIn>
-            <h2 className="font-display text-3xl font-bold sm:text-4xl">
-              {dict.home.experienceTitle}
-            </h2>
-          </FadeIn>
+          <WordReveal
+            as="h2"
+            text={dict.home.experienceTitle}
+            className="font-display text-3xl font-bold sm:text-4xl"
+          />
           <FadeIn delay={0.15}>
             <p className="max-w-2xl leading-relaxed text-muted-foreground">
               {dict.home.experienceText}
@@ -302,32 +307,47 @@ export default async function Home({
         </div>
       </section>
 
-      {/* ====== Closing CTA ====== */}
+      {/* ====== Closing CTA — giant metallic brand watermark + glass card stacked
+            over the experience strip (bombon-style display type depth) ====== */}
       <section className="relative overflow-hidden">
+        {/* Giant rotated ADDICTIONX watermark — metallic shine sweeping */}
+        <span
+          aria-hidden
+          dir="ltr"
+          className="text-watermark text-metallic-shine pointer-events-none absolute inset-0 flex select-none items-center justify-center rotate-[-6deg] text-[15vw]"
+        >
+          ADDICTIONX
+        </span>
         <div
           className="absolute inset-0"
           style={{
             background: `radial-gradient(90% 120% at 50% 50%, ${heroProduct?.art.glow ?? "#ef4444"}22 0%, transparent 70%)`,
           }}
         />
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-24 text-center sm:px-6">
-          <FadeIn>
-            <h2 className="font-display text-3xl font-bold sm:text-5xl">
-              {dict.home.ctaTitle}
-            </h2>
-          </FadeIn>
-          <FadeIn delay={0.15}>
-            <p className="text-muted-foreground">{dict.home.ctaText}</p>
-          </FadeIn>
-          <FadeIn delay={0.3}>
-            <Button
-              render={<Link href={`/${locale}/catalog`} />}
-              size="lg"
-              className="h-12 rounded-full px-10 text-base animate-[heartbeat-pulse_2.6s_ease-in-out_infinite]"
-            >
-              {dict.home.ctaButton}
-            </Button>
-          </FadeIn>
+        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="relative -mt-20 rounded-2xl border border-border bg-card/70 px-6 py-16 text-center shadow-[0_30px_90px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl sm:-mt-28 sm:rounded-3xl sm:px-10 sm:py-20">
+            <FadeIn>
+              <WordReveal
+                as="h2"
+                text={dict.home.ctaTitle}
+                className="font-display text-3xl font-bold sm:text-5xl"
+              />
+            </FadeIn>
+            <FadeIn delay={0.15}>
+              <p className="mx-auto max-w-xl text-muted-foreground">
+                {dict.home.ctaText}
+              </p>
+            </FadeIn>
+            <FadeIn delay={0.3}>
+              <Button
+                render={<Link href={`/${locale}/catalog`} />}
+                size="lg"
+                className="h-12 rounded-full px-10 text-base animate-[heartbeat-pulse_2.6s_ease-in-out_infinite]"
+              >
+                {dict.home.ctaButton}
+              </Button>
+            </FadeIn>
+          </div>
         </div>
       </section>
     </main>

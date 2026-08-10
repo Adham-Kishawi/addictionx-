@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/motion/reveal";
+import { WordReveal } from "@/components/motion/word-reveal";
 import { HeartbeatLine } from "@/components/motion/heartbeat-line";
 
 export function SectionHeading({
@@ -17,9 +18,11 @@ export function SectionHeading({
           {eyebrow}
         </span>
       )}
-      <h2 className="text-metallic-shine font-display text-3xl font-bold sm:text-4xl">
-        {title}
-      </h2>
+      <WordReveal
+        as="h2"
+        text={title}
+        className="text-metallic-shine font-display text-3xl font-bold sm:text-4xl"
+      />
       <HeartbeatLine className="h-5 w-24 text-primary" />
       {subtitle && <p className="max-w-xl text-muted-foreground">{subtitle}</p>}
     </Reveal>
