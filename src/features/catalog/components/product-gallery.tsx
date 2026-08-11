@@ -10,11 +10,13 @@ import {
 // ProductArt with the active image injected, so products without real photos
 // still render their gradient art as the visible fallback.
 //
-// Multi-angle: every product with a photo automatically gets the shared
-// back/side studio shots appended (walid's back.png + side.png), so the
-// customer sees the bottle from several angles. Real per-product uploads
-// (product.images from the DB) come first and override the fallbacks.
+// Multi-angle: every product automatically gets the studio set — front
+// (prodact.png or the product's own photo) + back + side (walid's back.png
+// + side.png) — so the customer sees the bottle from several angles.
+// Real per-product uploads (product.images from the DB) come first and
+// override the fallbacks.
 
+const FRONT_FALLBACK = "/uploads/prodact.png";
 const FALLBACK_VIEWS = ["/uploads/back.png", "/uploads/side.png"];
 
 export function ProductGallery({
@@ -22,10 +24,13 @@ export function ProductGallery({
 }: {
   product: ProductArtSource & { images?: string[] };
 }) {
-  const dbImages = product.images ?? [];
-  const views = product.image
-    ? Array.from(new Set([...dbImages, ...FALLBACK_VIEWS])).slice(0, 3)
-    : dbImages;
+  const views = Array.from(
+    new Set([
+      ...(product.images ?? []),
+      product.image ?? FRONT_FALLBACK,
+      ...FALLBACK_VIEWS,
+    ]),
+  ).slice(0, 3);
   const [active, setActive] = useState(0);
 
   const activeProduct: ProductArtSource =
