@@ -5,6 +5,8 @@ import { CatalogSort } from "@/features/catalog/components/catalog-sort";
 import { Reveal, RevealItem } from "@/components/motion/reveal";
 import { RepulsionGrid } from "@/components/motion/repulsion-grid";
 import { SectionGlow } from "@/components/motion/section-glow";
+import { ScrollWordReveal } from "@/components/motion/scroll-word-reveal";
+import { TiltCard } from "@/components/motion/tilt-card";
 import { type Gender } from "@/features/catalog/data/products";
 import {
   getProducts,
@@ -126,24 +128,24 @@ export default async function CatalogPage({
     <main className="relative mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
       <SectionGlow />
 
-      {/* Title */}
-      <Reveal>
-        <header className="mb-8 flex flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-            ADDICTIONX
-          </span>
-          <h1 className="font-display text-4xl font-bold sm:text-5xl">
-            {dict.catalog.title}
-          </h1>
-          {searchQ ? (
-            <p className="text-muted-foreground">
-              {dict.catalog.searchFor.replace("{q}", q?.trim() ?? "")}
-            </p>
-          ) : (
-            <p className="text-muted-foreground">{dict.catalog.subtitle}</p>
-          )}
-        </header>
-      </Reveal>
+      {/* Title — writes itself while you scroll */}
+      <header className="mb-8 flex flex-col gap-2">
+        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+          ADDICTIONX
+        </span>
+        <ScrollWordReveal
+          as="h1"
+          text={dict.catalog.title}
+          className="justify-start text-4xl font-bold sm:text-5xl"
+        />
+        {searchQ ? (
+          <p className="text-muted-foreground">
+            {dict.catalog.searchFor.replace("{q}", q?.trim() ?? "")}
+          </p>
+        ) : (
+          <p className="text-muted-foreground">{dict.catalog.subtitle}</p>
+        )}
+      </header>
 
       {/* Filter bar */}
       <Reveal delay={0.1}>
@@ -223,11 +225,13 @@ export default async function CatalogPage({
           <RepulsionGrid className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
             {pageProducts.map((product) => (
               <RevealItem key={product.id}>
-                <ProductCard
-                  product={product}
-                  locale={locale}
-                  wishlisted={wishlist?.includes(product.id) ?? null}
-                />
+                <TiltCard className="h-full">
+                  <ProductCard
+                    product={product}
+                    locale={locale}
+                    wishlisted={wishlist?.includes(product.id) ?? null}
+                  />
+                </TiltCard>
               </RevealItem>
             ))}
           </RepulsionGrid>

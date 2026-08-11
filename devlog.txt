@@ -1,0 +1,115 @@
+npm warn Unknown project config "network-concurrency". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> luxury-perfume@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.183.214.189:3000
+- Environments: .env.local, .env
+✓ Ready in 1051ms
+✓ Running next.config.ts took 3.1s
+
+✓ Finished filesystem cache database compaction in 10.2s
+✓ Finished filesystem cache database compaction in 20.2s
+✓ Finished filesystem cache database compaction in 10.5s
+ GET /ar 200 in 10.5s (next.js: 6.6s, proxy.ts: 494ms, application-code: 3.4s)
+⨯ TypeError: Cannot destructure property 'lang' of '(intermediate value)' as it is undefined.
+    at NotFound (src\app\[lang]\not-found.tsx:11:11)
+   9 |   params: Promise<{ lang: string }>;
+  10 | }) {
+> 11 |   const { lang } = await params;
+     |           ^
+  12 |   const locale = isLocale(lang) ? lang : defaultLocale;
+  13 |   const dict = getDictionary(locale);
+  14 | {
+  digest: '3901925207'
+}
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].product.findMany()` invocation in
+D:\E-Commrece\.next\dev\server\chunks\ssr\[root-of-the-server]__1n-_gad._.js:1563:159
+
+  1560     };
+  1561 }
+  1562 async function getProducts() {
+→ 1563     const rows = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].product.findMany(
+Can't reach database server at `ep-wild-violet-ayuhz2yi-pooler.c-5.us-east-2.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-wild-violet-ayuhz2yi-pooler.c-5.us-east-2.aws.neon.tech:5432`.
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].collection.findMany()` invocation in
+D:\E-Commrece\.next\dev\server\chunks\ssr\[root-of-the-server]__1n-_gad._.js:1487:162
+
+  1484 ;
+  1485 ;
+  1486 async function getCollections() {
+→ 1487     const rows = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].collection.findMany(
+Can't reach database server at `ep-wild-violet-ayuhz2yi-pooler.c-5.us-east-2.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-wild-violet-ayuhz2yi-pooler.c-5.us-east-2.aws.neon.tech:5432`.
+⨯ Error [PrismaClientInitializationError]: 
+Invalid `{imported module ./src/lib/prisma.ts}["prisma"].product.findMany()` invocation in
+D:\E-Commrece\.next\dev\server\chunks\ssr\[root-of-the-server]__1n-_gad._.js:1563:159
+
+  1560     };
+  1561 }
+  1562 async function getProducts() {
+→ 1563     const rows = await {imported module ./src/lib/prisma.ts}["prisma"].product.findMany(
+Can't reach database server at `ep-wild-violet-ayuhz2yi-pooler.c-5.us-east-2.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-wild-violet-ayuhz2yi-pooler.c-5.us-east-2.aws.neon.tech:5432`.
+    at <unknown> (src\features\catalog\data\products-db.ts:89:37)
+    at async getProducts (src\features\catalog\data\products-db.ts:89:16)
+    at async Home (src\app\[lang]\page.tsx:43:23)
+  87 |
+  88 | export async function getProducts(): Promise<Product[]> {
+> 89 |   const rows = await prisma.product.findMany({
+     |                                     ^
+  90 |     where: { isActive: true },
+  91 |     include,
+  92 |     orderBy: { createdAt: "desc" }, {
+  clientVersion: '6.19.3',
+  errorCode: undefined,
+  retryable: undefined,
+  digest: '4259218375'
+}
+⨯ Error [PrismaClientInitializationError]: 
+Invalid `{imported module ./src/lib/prisma.ts}["prisma"].collection.findMany()` invocation in
+D:\E-Commrece\.next\dev\server\chunks\ssr\[root-of-the-server]__1n-_gad._.js:1487:162
+
+  1484 ;
+  1485 ;
+  1486 async function getCollections() {
+→ 1487     const rows = await {imported module ./src/lib/prisma.ts}["prisma"].collection.findMany(
+Can't reach database server at `ep-wild-violet-ayuhz2yi-pooler.c-5.us-east-2.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-wild-violet-ayuhz2yi-pooler.c-5.us-east-2.aws.neon.tech:5432`.
+    at <unknown> (src\features\catalog\data\products-db.ts:18:40)
+    at async getCollections (src\features\catalog\data\products-db.ts:18:16)
+    at async Footer (src\components\layout\footer.tsx:11:23)
+  16 | // we fall back to the static array so the pages never break.
+  17 | export async function getCollections(): Promise<CollectionRow[]> {
+> 18 |   const rows = await prisma.collection.findMany({
+     |                                        ^
+  19 |     orderBy: { sortOrder: "asc" },
+  20 |     select: { slug: true, nameAr: true, nameEn: true },
+  21 |   }); {
+  clientVersion: '6.19.3',
+  errorCode: undefined,
+  retryable: undefined,
+  digest: '1302046023'
+}
+⨯ TypeError: Cannot destructure property 'lang' of '(intermediate value)' as it is undefined.
+    at NotFound (src\app\[lang]\not-found.tsx:11:11)
+   9 |   params: Promise<{ lang: string }>;
+  10 | }) {
+> 11 |   const { lang } = await params;
+     |           ^
+  12 |   const locale = isLocale(lang) ? lang : defaultLocale;
+  13 |   const dict = getDictionary(locale);
+  14 | {
+  digest: '3901925207'
+}
+ GET /ar 200 in 6.0s (next.js: 92ms, proxy.ts: 31ms, application-code: 5.9s)
+prisma:error Error in PostgreSQL connection: Error { kind: Closed, cause: None }
+prisma:error Error in PostgreSQL connection: Error { kind: Closed, cause: None }

@@ -31,6 +31,31 @@ type Panel = {
   span: [number, number];
 };
 
+function TurnView({
+  src,
+  alt,
+  progress,
+  points,
+  className,
+}: {
+  src: string;
+  alt: string;
+  progress: ReturnType<typeof useScroll>["scrollYProgress"];
+  points: { i: number[]; o: number[] };
+  className: string;
+}) {
+  const opacity = useTransform(progress, points.i, points.o);
+  return (
+    <motion.img
+      src={src}
+      alt={alt}
+      draggable={false}
+      className={className}
+      style={{ opacity }}
+    />
+  );
+}
+
 function NotePanel({
   panel,
   progress,
@@ -102,6 +127,17 @@ export function RotatingShowcase({
   const scale = useTransform(scrollYProgress, [0, 0.45, 1], [0.72, 1, 0.9]);
   const sheenX = useTransform(scrollYProgress, [0, 1], ["-180%", "180%"]);
   const watermarkOpacity = useTransform(scrollYProgress, [0, 0.3], [0.45, 0.1]);
+
+  // Multi-angle turn: the visible photo swaps front → side → back → front
+  // across the scroll (walid's back.png + side.png turn this into a real
+  // spin). Four crossfaded views, each handed off to the next.
+  const frontView = product.image ?? "/uploads/prodact.png";
+  const turnViews = [
+    { src: frontView, i: [0.02, 0.24, 0.24, 0.26], o: [0, 1, 1, 0] },
+    { src: "/uploads/side.png", i: [0.24, 0.26, 0.49, 0.51], o: [0, 1, 1, 0] },
+    { src: "/uploads/back.png", i: [0.49, 0.51, 0.74, 0.76], o: [0, 1, 1, 0] },
+    { src: frontView, i: [0.74, 0.76, 1, 1], o: [0, 1, 1, 1] },
+  ];
   const floorScale = useTransform(
     scrollYProgress,
     [0, 0.5, 1],
@@ -116,19 +152,19 @@ export function RotatingShowcase({
   const panels: Panel[] = [
     {
       label: dict.product.topNotes,
-      notes: product.notes.top,
+      notes: product.notes?.top ?? [],
       side: "start",
       span: [0.06, 0.3],
     },
     {
       label: dict.product.heartNotes,
-      notes: product.notes.heart,
+      notes: product.notes?.heart ?? [],
       side: "end",
       span: [0.32, 0.55],
     },
     {
       label: dict.product.baseNotes,
-      notes: product.notes.base,
+      notes: product.notes?.base ?? [],
       side: "start",
       span: [0.57, 0.8],
     },
@@ -179,22 +215,33 @@ export function RotatingShowcase({
           ADDICTIONX
         </motion.span>
 
-        {/* The turning bottle */}
+        {/* The turning bottle — photo swaps across front/side/back/front */}
         <motion.div
-          className="relative z-10 flex items-center justify-center px-6"
+          className="relative z-10 flex w-full items-center justify-center px-6"
           style={
             reduce ? undefined : { rotateY, scale, transformPerspective: 1400 }
           }
         >
-          {product.image ? (
+          {reduce ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={product.image}
+              src={frontView}
               alt={name}
               draggable={false}
               className="max-h-[56vh] w-auto max-w-[74vw] select-none object-contain [filter:drop-shadow(0_0_80px_oklch(0.6_0.22_22/0.4))_drop-shadow(0_40px_80px_rgba(0,0,0,0.6))]"
             />
-          ) : null}
+          ) : (
+            turnViews.map((view, i) => (
+              <TurnView
+                key={`${view.src}-${i}`}
+                src={view.src}
+                alt={name}
+                progress={scrollYProgress}
+                points={view}
+                className="absolute inset-0 m-auto max-h-[56vh] w-auto max-w-[74vw] select-none object-contain [filter:drop-shadow(0_0_80px_oklch(0.6_0.22_22/0.4))_drop-shadow(0_40px_80px_rgba(0,0,0,0.6))]"
+              />
+            ))
+          )}
 
           {/* Sweeping sheen over the glass */}
           {!reduce && (

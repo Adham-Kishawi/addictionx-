@@ -468,6 +468,14 @@ src/
   - `Magnetic` (`src/components/motion/magnetic.tsx`) — spring-loaded cursor pull (stiffness 150/damping 15/mass .1, strength .35) wrapped around the two hero CTAs + the closing CTA button (strength .25). "Expensive feel" micro-interaction, snaps back on leave, disabled by reduced motion.
   - `Spotlight` (`src/components/motion/spotlight.tsx`) — cursor-tracking radial light inside a card: writes `--sp-x/--sp-y` CSS vars on pointermove, overlay radial-gradient (26rem×18rem, accent tint `oklch(0.6 0.22 22/0.16)`) fades in via `group-hover/spot:`. Now the inner layer of the `.glass-card` in `CtaScene` (L10) — the glass itself still never animates (CLAUDE.md rule).
   - Verified: clean `tsc --noEmit` + `npm run lint` + `next build` + live 200.
+- [x] **Multi-angle product views + home fix + collections/shop depth (wave 7):**
+  - **Multi-angle:** walid added `/uploads/back.png` + `/uploads/side.png`. `ProductGallery` now auto-appends them (deduped, cap 3) to EVERY product with a photo — customers see front/back/side thumbnails; real DB uploads (`product.images`) come first. `RotatingShowcase` upgraded from a fake turn to a **real spin**: 4 crossfaded `TurnView` layers (front→side→back→front, hand-off points 0.02/0.24/0.26/0.49/0.51/0.74/0.76) bound to scroll — the bottle visibly changes angle.
+  - **Home Oops fix:** root cause = heavy sequential DB calls (`getProducts` → `getCollections` → `getWishlistIds`) + Neon cold-start timeouts → 500 → dead-end default error screen. Fixed: `Promise.all` on the three calls + null-guards (`product.notes?.top ?? []` in showcase, `product.art?.glow ?? "#ef4444"` in ExplodedProduct) + new `[lang]/error.tsx` client boundary with «إعادة المحاولة»/Try again + Home link (bilingual via useParams). SSR verified clean (200, full HTML).
+  - **Collections page depth:** title → `ScrollWordReveal`; cover cards wrapped in `TiltCard` (3D cursor tilt + glare) + a floating `orb-drift` glow orb (14s CSS loop) using the collection's own `art.glow`; product cards → `TiltCard`.
+  - **Catalog (shop) depth:** title → `ScrollWordReveal` (justify-start); product cards → `TiltCard` inside the existing `RepulsionGrid`.
+  - **Home extra awe:** hero content wrapped in `MouseDrift` (slow cursor parallax ±8) + **twin marquee** below the pinned one (`reverse` prop on Marquee, speed 48, opacity-70 — coparadiso multi-speed pattern).
+  - New components: `tilt-card.tsx` (rotateX/Y springs 180/18, perspective 900, `--glare-x/y` highlight, group-hover) + `mouse-drift.tsx` (stiffness 55 drift) + `marquee reverse` prop.
+  - Verified: clean tsc + lint + build + live 200.
 - [ ] Set `RESEND_API_KEY` in `.env` — **needed from walid**
 - [ ] Google OAuth keys (`AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET`) — **needed from walid**
 - [ ] Wire Cloudinary images instead of `ProductArt` — **needs walid's account data** (cloud name + API key/secret) + uploading the images to Cloudinary (CLAUDE.md workflow #4)

@@ -39,7 +39,7 @@ export function ExplodedProduct({
   const dict = getDictionary(locale);
   const name = locale === "ar" ? product.nameAr : product.nameEn;
   const href = `/${locale}/product/${product.slug}`;
-  const glow = product.art.glow;
+  const glow = product.art?.glow ?? "#ef4444";
 
   return (
     <motion.div

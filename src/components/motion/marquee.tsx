@@ -9,10 +9,12 @@ export function Marquee({
   items,
   className,
   speed = 30,
+  reverse = false,
 }: {
   items: readonly string[];
   className?: string;
   speed?: number;
+  reverse?: boolean;
 }) {
   const reduce = useReducedMotion();
   // 3 consecutive copies for the seam, and moving by –33.333% wraps without a gap
@@ -29,7 +31,11 @@ export function Marquee({
         style={
           reduce
             ? undefined
-            : { animation: `marquee-x ${speed}s linear infinite` }
+            : {
+                animation: `marquee-x ${speed}s linear infinite${
+                  reverse ? " reverse" : ""
+                }`,
+              }
         }
       >
         {row.map((item, i) => (

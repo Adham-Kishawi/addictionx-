@@ -11,6 +11,7 @@ import { WordReveal } from "@/components/motion/word-reveal";
 import { RevealStagger, RevealItem } from "@/components/motion/reveal";
 import { Marquee } from "@/components/motion/marquee";
 import { Magnetic } from "@/components/motion/magnetic";
+import { MouseDrift } from "@/components/motion/mouse-drift";
 import { BottleRush } from "@/components/motion/bottle-rush";
 import { StatsBand } from "@/components/motion/stats-band";
 import { SectionGlow } from "@/components/motion/section-glow";
@@ -40,9 +41,11 @@ export default async function Home({
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
-  const allProducts = await getProducts();
-  const collections = await getCollections();
-  const wishlist = await getWishlistIds();
+  const [allProducts, collections, wishlist] = await Promise.all([
+    getProducts(),
+    getCollections(),
+    getWishlistIds(),
+  ]);
   const bestsellers = allProducts.filter((p) => p.isBestseller).slice(0, 4);
   const heroProduct = allProducts[0] ?? null;
 
@@ -94,50 +97,55 @@ export default async function Home({
           </>
         }
         content={
-          <div className="flex flex-col items-center gap-6 px-6 pt-20 text-center">
-            <FadeIn delay={0.1}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-1.5 text-xs tracking-[0.25em] text-red-400 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)]">
-                <Sparkles className="size-3.5" />
-                {dict.hero.badge}
-              </span>
-            </FadeIn>
+          <MouseDrift
+            strength={8}
+            className="flex w-full flex-col items-center"
+          >
+            <div className="flex flex-col items-center gap-6 px-6 pt-20 text-center">
+              <FadeIn delay={0.1}>
+                <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-1.5 text-xs tracking-[0.25em] text-red-400 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)]">
+                  <Sparkles className="size-3.5" />
+                  {dict.hero.badge}
+                </span>
+              </FadeIn>
 
-            <AnimatedTitle text={dict.hero.title} />
+              <AnimatedTitle text={dict.hero.title} />
 
-            <FadeIn delay={0.5}>
-              <HeartbeatLine className="h-10 w-56 text-red-500 [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))_drop-shadow(0_4px_24px_rgba(0,0,0,0.45))]" />
-            </FadeIn>
+              <FadeIn delay={0.5}>
+                <HeartbeatLine className="h-10 w-56 text-red-500 [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))_drop-shadow(0_4px_24px_rgba(0,0,0,0.45))]" />
+              </FadeIn>
 
-            <FadeIn delay={0.6}>
-              <p className="max-w-xl text-base leading-relaxed text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)] sm:text-lg">
-                {dict.hero.subtitle}
-              </p>
-            </FadeIn>
+              <FadeIn delay={0.6}>
+                <p className="max-w-xl text-base leading-relaxed text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)] sm:text-lg">
+                  {dict.hero.subtitle}
+                </p>
+              </FadeIn>
 
-            <FadeIn delay={0.75}>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Magnetic>
-                  <Button
-                    render={<Link href={`/${locale}/catalog`} />}
-                    size="lg"
-                    className="h-12 rounded-full px-8 text-base shadow-[0_0_30px_-8px_theme(colors.red.600)]"
-                  >
-                    {dict.hero.ctaPrimary}
-                  </Button>
-                </Magnetic>
-                <Magnetic>
-                  <Button
-                    render={<Link href={`/${locale}/catalog`} />}
-                    size="lg"
-                    variant="outline"
-                    className="h-12 rounded-full border-white/30 bg-white/5 px-8 text-base text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
-                  >
-                    {dict.hero.ctaSecondary}
-                  </Button>
-                </Magnetic>
-              </div>
-            </FadeIn>
-          </div>
+              <FadeIn delay={0.75}>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Magnetic>
+                    <Button
+                      render={<Link href={`/${locale}/catalog`} />}
+                      size="lg"
+                      className="h-12 rounded-full px-8 text-base shadow-[0_0_30px_-8px_theme(colors.red.600)]"
+                    >
+                      {dict.hero.ctaPrimary}
+                    </Button>
+                  </Magnetic>
+                  <Magnetic>
+                    <Button
+                      render={<Link href={`/${locale}/catalog`} />}
+                      size="lg"
+                      variant="outline"
+                      className="h-12 rounded-full border-white/30 bg-white/5 px-8 text-base text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
+                    >
+                      {dict.hero.ctaSecondary}
+                    </Button>
+                  </Magnetic>
+                </div>
+              </FadeIn>
+            </div>
+          </MouseDrift>
         }
         indicator={
           <FadeIn
@@ -164,6 +172,15 @@ export default async function Home({
       <Marquee
         items={dict.home.ticker}
         className="sticky top-16 z-20 border-y border-border bg-card/40 py-4 backdrop-blur-md"
+      />
+
+      {/* Second strip — reversed direction + slower (coparadiso-style twin marquees),
+            this one scrolls WITH the page under the pinned one ====== */}
+      <Marquee
+        items={[...dict.home.ticker].reverse()}
+        reverse
+        speed={48}
+        className="border-b border-border/60 bg-background/60 py-3 opacity-70"
       />
 
       {/* ====== Brand numbers (live counters) — glow drifts slower than the content ====== */}
