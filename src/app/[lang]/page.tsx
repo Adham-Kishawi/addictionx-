@@ -14,10 +14,12 @@ import { Magnetic } from "@/components/motion/magnetic";
 import { BottleRush } from "@/components/motion/bottle-rush";
 import { StatsBand } from "@/components/motion/stats-band";
 import { SectionGlow } from "@/components/motion/section-glow";
+import { RotatingShowcase } from "@/components/motion/rotating-showcase";
+import { ExplodedProduct } from "@/components/motion/exploded-product";
+import { DepthStack } from "@/components/motion/depth-stack";
+import { ScrollWordReveal } from "@/components/motion/scroll-word-reveal";
 import { CtaScene } from "@/components/motion/cta-scene";
 import { SectionHeading } from "@/components/layout/section-heading";
-import { ProductCard } from "@/features/catalog/components/product-card";
-import { ProductArt } from "@/features/catalog/components/product-art";
 import { ProductCarousel } from "@/features/catalog/components/product-carousel";
 import { type Product } from "@/features/catalog/data/products";
 import {
@@ -150,6 +152,13 @@ export default async function Home({
         }
       />
 
+      {/* ====== ROTATING SHOWCASE — 300vh pinned stage: the hero product turns on
+            its axis bound to scroll, note panels slide through per quarter, the
+            backdrop hue drifts red → gold → silver, price+CTA take the last turn ====== */}
+      {heroProduct ? (
+        <RotatingShowcase product={heroProduct} locale={locale} />
+      ) : null}
+
       {/* ====== Moving words strip — pinned under the header while the next sections
             slide beneath it (bombon-style sticky layer) ====== */}
       <Marquee
@@ -204,20 +213,23 @@ export default async function Home({
           </Link>
         </div>
 
-        <RevealStagger className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+        {/* ====== Most wanted — EXPLODED: every card is a 5-layer float in
+              perspective (pattern / glow / bottle / glass chip / CTA), layers
+              split apart on hover and the bottle turns ====== */}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
           {bestsellers.map((product: Product) => (
-            <RevealItem key={product.id}>
-              <ProductCard
-                product={product}
-                locale={locale}
-                wishlisted={wishlist?.includes(product.id) ?? null}
-              />
-            </RevealItem>
+            <ExplodedProduct
+              key={product.id}
+              product={product}
+              locale={locale}
+            />
           ))}
-        </RevealStagger>
+        </div>
       </section>
 
-      {/* ====== Collections ====== */}
+      {/* ====== Collections — DEPTH STACK: a scroll-driven deck where each card
+            lives on its own depth slot (x/scale/rotateY/z) and rises to the
+            front as its turn comes, then exits right ====== */}
       <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
         <div className="mb-10">
           <SectionHeading
@@ -227,63 +239,31 @@ export default async function Home({
           />
         </div>
 
-        <RevealStagger className="grid gap-4 sm:grid-cols-3 lg:gap-6">
-          {collections.map((collection) => {
+        <DepthStack
+          cards={collections.map((collection) => {
             const collectionProducts = allProducts.filter(
               (p) => p.collection === collection.slug,
             );
-            const cover =
-              collectionProducts[0] ??
-              ({
-                id: `c-${collection.slug}`,
-                slug: collection.slug,
-                nameAr: collection.nameAr,
-                nameEn: collection.nameEn,
-                descriptionAr: "",
-                descriptionEn: "",
-                price: 0,
-                gender: "unisex",
-                collection: collection.slug,
-                notes: { top: [], heart: [], base: [] },
-                rating: 0,
-                reviewsCount: 0,
-                isNew: false,
-                isBestseller: false,
-                art: { from: "#1e1b4b", to: "#020617", glow: "#6366f1" },
-              } satisfies Product);
-            return (
-              <RevealItem key={collection.slug}>
-                <Link
-                  href={`/${locale}/collections/${collection.slug}`}
-                  className="group relative block aspect-[3/4] overflow-hidden rounded-2xl border border-border shadow-[0_15px_50px_-25px_rgba(0,0,0,0.6)] transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_0_50px_-14px_oklch(0.6_0.22_22/0.6)]"
-                >
-                  <ProductArt
-                    product={cover}
-                    showName={false}
-                    className="h-full w-full transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 flex flex-col items-center justify-end gap-1 bg-gradient-to-t from-black/70 to-transparent p-6 text-center">
-                    <h3 className="font-display text-xl font-bold text-white">
-                      {locale === "ar" ? collection.nameAr : collection.nameEn}
-                    </h3>
-                    <span className="flex items-center gap-1 text-sm text-white/80 transition-colors group-hover:text-primary">
-                      {dict.home.viewAll}
-                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
-                    </span>
-                  </div>
-                </Link>
-              </RevealItem>
-            );
+            const cover = collectionProducts[0] ?? {
+              image: undefined,
+              art: { from: "#1e1b4b", to: "#020617", glow: "#6366f1" },
+            };
+            return {
+              key: collection.slug,
+              href: `/${locale}/collections/${collection.slug}`,
+              name: locale === "ar" ? collection.nameAr : collection.nameEn,
+              image: cover.image,
+              art: cover.art,
+            };
           })}
-        </RevealStagger>
+        />
       </section>
 
       {/* ====== Experience strip — glow drifts on its own scroll layer ====== */}
       <section className="relative overflow-hidden border-y border-border bg-card/40 py-20">
         <SectionGlow background="radial-gradient(60% 80% at 50% 0%, oklch(0.6 0.22 22 / 0.12), transparent 70%)" />
         <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 text-center sm:px-6">
-          <WordReveal
-            as="h2"
+          <ScrollWordReveal
             text={dict.home.experienceTitle}
             className="font-display text-3xl font-bold sm:text-4xl"
           />

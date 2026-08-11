@@ -493,3 +493,83 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   Depth Fog — atmospheric perspective (wave plan #7).
+   Two fixed gradient washes whose opacity is scroll-driven by
+   DepthFog (client). Theme-aware via color-mix with --background,
+   so they pick up dark/light automatically.
+   ============================================================ */
+.depth-fog {
+  position: fixed;
+  inset-inline: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.depth-fog-top {
+  top: 0;
+  height: 38vh;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--background) 62%, transparent),
+    transparent
+  );
+}
+
+.depth-fog-bottom {
+  bottom: 0;
+  height: 42vh;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--background) 72%, transparent),
+    transparent
+  );
+}
+
+/* ============================================================
+   CTA orbit ring — a giant rotating neon ring around the closing
+   glass card (wave plan #6, generalization of .btn-conic-ring).
+   Reuses @property --border-angle; hover (on the .group wrapper)
+   accelerates the orbit from 16s to 5s. Purely decorative.
+   ============================================================ */
+.cta-orbit-ring {
+  position: absolute;
+  inset: -12% -4%;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 9999px;
+  --border-angle: 0deg;
+  background: conic-gradient(
+    from var(--border-angle),
+    transparent 0deg,
+    transparent 40deg,
+    oklch(0.6 0.22 22 / 0.5) 70deg,
+    transparent 130deg,
+    transparent 200deg,
+    oklch(0.6 0.22 22 / 0.28) 250deg,
+    transparent 320deg,
+    transparent 360deg
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    #000 calc(100% - 2px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    #000 calc(100% - 2px)
+  );
+  animation: orbit-spin 16s linear infinite;
+}
+
+.group:hover .cta-orbit-ring {
+  animation-duration: 5s;
+}
+
+@keyframes orbit-spin {
+  to {
+    --border-angle: 360deg;
+  }
+}

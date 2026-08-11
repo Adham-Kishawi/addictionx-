@@ -7,6 +7,7 @@ import { CartDrawer } from "@/features/cart/components/cart-drawer";
 import { CartFlyProvider } from "@/components/motion/fly-to-cart";
 import { CursorGlow } from "@/components/motion/cursor-glow";
 import { DepthBackdrop } from "@/components/motion/depth-backdrop";
+import { DepthFog } from "@/components/motion/depth-fog";
 import { NoiseOverlay } from "@/components/motion/noise-overlay";
 import { PageTransition } from "@/components/motion/page-transition";
 import { auth } from "@/lib/auth";
@@ -76,6 +77,7 @@ export default async function RootLayout({
               behind all page content of every route — the site-wide depth layer */}
           <div className="relative isolate">
             <DepthBackdrop />
+            <DepthFog />
             <CursorGlow />
             <CartFlyProvider>
               <Header locale={locale} session={session} />

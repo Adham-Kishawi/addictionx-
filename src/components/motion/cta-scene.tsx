@@ -78,7 +78,9 @@ export function CtaScene({
 
       {/* L10 — glass card with gradient-only border, stacked over the previous section.
             A cursor-tracking spotlight (Neon Dark Tech) lives on the glass */}
-      <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
+      <div className="group relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
+        {/* L3b — giant rotating neon orbit around the card (speeds up on hover) */}
+        <div aria-hidden className="cta-orbit-ring" />
         <Spotlight className="glass-card relative -mt-20 rounded-2xl px-6 py-16 text-center sm:-mt-28 sm:rounded-3xl sm:px-10 sm:py-20">
           {children}
         </Spotlight>

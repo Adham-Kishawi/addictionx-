@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ProductCard } from "@/features/catalog/components/product-card";
 import { ProductArt } from "@/features/catalog/components/product-art";
 import { CatalogSort } from "@/features/catalog/components/catalog-sort";
-import { Reveal, RevealStagger, RevealItem } from "@/components/motion/reveal";
+import { Reveal, RevealItem } from "@/components/motion/reveal";
+import { RepulsionGrid } from "@/components/motion/repulsion-grid";
 import { SectionGlow } from "@/components/motion/section-glow";
 import { type Gender } from "@/features/catalog/data/products";
 import {
@@ -219,7 +220,7 @@ export default async function CatalogPage({
           <p className="mb-6 text-sm text-muted-foreground">
             {filtered.length} {dict.catalog.results}
           </p>
-          <RevealStagger className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
+          <RepulsionGrid className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
             {pageProducts.map((product) => (
               <RevealItem key={product.id}>
                 <ProductCard
@@ -229,7 +230,7 @@ export default async function CatalogPage({
                 />
               </RevealItem>
             ))}
-          </RevealStagger>
+          </RepulsionGrid>
 
           <Pagination
             baseHref={`/${locale}/catalog`}
