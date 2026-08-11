@@ -10,6 +10,8 @@ import { FadeIn } from "@/components/motion/fade-in";
 import { WordReveal } from "@/components/motion/word-reveal";
 import { RevealStagger, RevealItem } from "@/components/motion/reveal";
 import { Marquee } from "@/components/motion/marquee";
+import { Magnetic } from "@/components/motion/magnetic";
+import { BottleRush } from "@/components/motion/bottle-rush";
 import { StatsBand } from "@/components/motion/stats-band";
 import { SectionGlow } from "@/components/motion/section-glow";
 import { CtaScene } from "@/components/motion/cta-scene";
@@ -112,21 +114,25 @@ export default async function Home({
 
             <FadeIn delay={0.75}>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button
-                  render={<Link href={`/${locale}/catalog`} />}
-                  size="lg"
-                  className="h-12 rounded-full px-8 text-base shadow-[0_0_30px_-8px_theme(colors.red.600)]"
-                >
-                  {dict.hero.ctaPrimary}
-                </Button>
-                <Button
-                  render={<Link href={`/${locale}/catalog`} />}
-                  size="lg"
-                  variant="outline"
-                  className="h-12 rounded-full border-white/30 bg-white/5 px-8 text-base text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
-                >
-                  {dict.hero.ctaSecondary}
-                </Button>
+                <Magnetic>
+                  <Button
+                    render={<Link href={`/${locale}/catalog`} />}
+                    size="lg"
+                    className="h-12 rounded-full px-8 text-base shadow-[0_0_30px_-8px_theme(colors.red.600)]"
+                  >
+                    {dict.hero.ctaPrimary}
+                  </Button>
+                </Magnetic>
+                <Magnetic>
+                  <Button
+                    render={<Link href={`/${locale}/catalog`} />}
+                    size="lg"
+                    variant="outline"
+                    className="h-12 rounded-full border-white/30 bg-white/5 px-8 text-base text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
+                  >
+                    {dict.hero.ctaSecondary}
+                  </Button>
+                </Magnetic>
               </div>
             </FadeIn>
           </div>
@@ -169,6 +175,16 @@ export default async function Home({
         locale={locale}
         wishlistIds={wishlist}
         dict={dict}
+      />
+
+      {/* ====== BOTTLE RUSH — the awe scene: 220vh scroll-scrubbed stage.
+            The real product photo scales 0.5→1.15, rotates and un-blurs
+            while "ADDICTION" (metallic) splits sideways and the red aura
+            ramps. Sticky stage + scroll-linked framer transforms ====== */}
+      <BottleRush
+        image={heroProduct?.image}
+        title={dict.home.rushTitle}
+        subtitle={dict.home.rushSubtitle}
       />
 
       {/* ====== Most wanted ====== */}
@@ -313,15 +329,17 @@ export default async function Home({
           </p>
         </FadeIn>
         <FadeIn delay={0.3}>
-          <span className="btn-conic-ring inline-flex">
-            <Button
-              render={<Link href={`/${locale}/catalog`} />}
-              size="lg"
-              className="h-12 rounded-full px-10 text-base"
-            >
-              {dict.home.ctaButton}
-            </Button>
-          </span>
+          <Magnetic strength={0.25}>
+            <span className="btn-conic-ring inline-flex">
+              <Button
+                render={<Link href={`/${locale}/catalog`} />}
+                size="lg"
+                className="h-12 rounded-full px-10 text-base"
+              >
+                {dict.home.ctaButton}
+              </Button>
+            </span>
+          </Magnetic>
         </FadeIn>
       </CtaScene>
     </main>

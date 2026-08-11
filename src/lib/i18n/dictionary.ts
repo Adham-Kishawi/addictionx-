@@ -52,6 +52,8 @@ export const dictionary = {
       experienceTitle: "تجربة تُشعل كل الحواس",
       experienceText:
         "لأن العطر ليس مجرد رائحة — إنه الحالة التي تخلقها. في ADDICTIONX نختار كل عطر ليروي قصة ويترك أثرًا.",
+      rushTitle: "الزجاجة",
+      rushSubtitle: "اسحب للأسفل — العطر يقرّب منك، وكل تفصيلة تتكشف لحظتها.",
       ctaTitle: "جاهز تشعر بالإحساس؟",
       ctaText: "انضم لآلاف الذين اختاروا أن يعيشوا اللحظة.",
       ctaButton: "ابدأ التسوق",
@@ -542,6 +544,9 @@ export const dictionary = {
       experienceTitle: "An experience that ignites every sense",
       experienceText:
         "Because a fragrance is more than a scent — it's the state it creates. At ADDICTIONX we choose every scent to tell a story and leave a mark.",
+      rushTitle: "The Bottle",
+      rushSubtitle:
+        "Keep scrolling — the bottle comes closer, every detail reveals itself.",
       ctaTitle: "Ready to Feel the Rush?",
       ctaText: "Join thousands who chose to live the moment.",
       ctaButton: "Start Shopping",

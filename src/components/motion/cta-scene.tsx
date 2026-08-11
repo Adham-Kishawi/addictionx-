@@ -8,6 +8,7 @@ import {
 } from "framer-motion";
 import { useRef } from "react";
 import { ParticleField } from "@/components/motion/particle-field";
+import { Spotlight } from "@/components/motion/spotlight";
 
 // ============================================================
 // Closing CTA — a LAYERED depth scene (ui-skill z-ladder).
@@ -75,11 +76,12 @@ export function CtaScene({
         <ParticleField count={14} blend="screen" opacityScale={0.25} />
       </div>
 
-      {/* L10 — glass card with gradient-only border, stacked over the previous section */}
+      {/* L10 — glass card with gradient-only border, stacked over the previous section.
+            A cursor-tracking spotlight (Neon Dark Tech) lives on the glass */}
       <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="glass-card relative -mt-20 rounded-2xl px-6 py-16 text-center sm:-mt-28 sm:rounded-3xl sm:px-10 sm:py-20">
+        <Spotlight className="glass-card relative -mt-20 rounded-2xl px-6 py-16 text-center sm:-mt-28 sm:rounded-3xl sm:px-10 sm:py-20">
           {children}
-        </div>
+        </Spotlight>
       </div>
 
       {/* L20 — melt into the footer */}
