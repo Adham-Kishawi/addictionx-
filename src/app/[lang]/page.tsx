@@ -66,6 +66,10 @@ export default async function Home({
       return slider ? { ...first, image: slider } : first;
     })
     .filter((p): p is Product => p !== null);
+  // Collection identity for the carousel backdrop + showcase strip (wave 8)
+  const collectionNames = Object.fromEntries(
+    collections.map((c) => [c.slug, { nameAr: c.nameAr, nameEn: c.nameEn }]),
+  );
   const totalReviews = allProducts.reduce((s, p) => s + p.reviewsCount, 0);
   const topRating = allProducts.reduce(
     (top, p) => (p.rating > top ? p.rating : top),
@@ -164,7 +168,11 @@ export default async function Home({
             its axis bound to scroll, note panels slide through per quarter, the
             backdrop hue drifts red → gold → silver, price+CTA take the last turn ====== */}
       {heroProduct ? (
-        <RotatingShowcase product={heroProduct} locale={locale} />
+        <RotatingShowcase
+          product={heroProduct}
+          locale={locale}
+          collectionNames={collectionNames}
+        />
       ) : null}
 
       {/* ====== Moving words strip — pinned under the header while the next sections
@@ -201,6 +209,7 @@ export default async function Home({
         locale={locale}
         wishlistIds={wishlist}
         dict={dict}
+        collectionNames={collectionNames}
       />
 
       {/* ====== BOTTLE RUSH — the awe scene: 220vh scroll-scrubbed stage.

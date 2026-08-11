@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   motion,
+  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -16,19 +17,20 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 // ROTATING SHOWCASE — the centerpiece (wave plan #2). A 300vh
 // pinned stage right after the hero: the hero product turns on
 // its axis (-36°→36° rotateY, perspective 1400) bound to scroll,
-// a light sheen sweeps the bottle, three note panels slide in
-// and out through clip-mask style reveals (one per quarter),
-// the background hue drifts red → gold → silver, and the last
-// quarter hands over price + CTA. True 360° needs an 8-angle
+// a light sheen sweeps the bottle, the background hue drifts
+// red → gold → silver, and a persistent details strip under the
+// bottle hands over top/heart/base → price+CTA across the four
+// quarters. The photo layer swaps front → real gallery → side →
+// back → front (wave 8: real product.images[] first, classic 4-view
+// fallback when the DB has no photos). True 360° needs an 8-angle
 // photo set (requested from walid) — this is the single-image
 // "presentation turn" illusion, honest about the flatness.
 // ============================================================
 
-type Panel = {
+type Slot = {
+  key: string;
   label: string;
   notes: string[];
-  side: "start" | "end";
-  span: [number, number];
 };
 
 function TurnView({
@@ -56,60 +58,62 @@ function TurnView({
   );
 }
 
-function NotePanel({
-  panel,
-  progress,
-  isAr,
+// A single detail slot inside the strip — notes chips or price; the active
+// quarter owns it via CSS opacity/translate (children animate, the glass never).
+function StripSlot({
+  slot,
+  active,
+  priceSlot,
 }: {
-  panel: Panel;
-  progress: ReturnType<typeof useScroll>["scrollYProgress"];
-  isAr: boolean;
+  slot: Slot | null;
+  active: boolean;
+  priceSlot: React.ReactNode;
 }) {
-  const [a, b] = panel.span;
-  const in0 = a + 0.02;
-  const in1 = a + 0.14;
-  const out0 = b - 0.12;
-  const out1 = b;
-  const dir = panel.side === "start" ? (isAr ? 1 : -1) : isAr ? -1 : 1;
-  const opacity = useTransform(progress, [in0, in1, out0, out1], [0, 1, 1, 0]);
-  const x = useTransform(
-    progress,
-    [in0, in1, out0, out1],
-    [dir * 90, 0, 0, -dir * 90],
-  );
-
+  const transition =
+    "opacity 650ms cubic-bezier(0.4,0,0.2,1), transform 650ms cubic-bezier(0.4,0,0.2,1)";
   return (
-    <motion.div
-      className={`absolute top-1/2 z-[5] hidden w-72 max-w-[24vw] md:block ${
-        panel.side === "start" ? "start-6 lg:start-16" : "end-6 lg:end-16"
-      }`}
-      style={{ opacity, x }}
+    <div
+      className="absolute inset-0 flex items-center justify-center"
+      style={{
+        opacity: active ? 1 : 0,
+        transform: active ? "translateY(0)" : "translateY(14px)",
+        transition,
+        pointerEvents: active ? "auto" : "none",
+      }}
     >
-      <div className="-translate-y-1/2 rounded-2xl border border-white/10 bg-card/60 p-5 shadow-[0_24px_70px_-24px_rgba(0,0,0,0.8)] backdrop-blur-md">
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.25em] text-primary">
-          {panel.label}
-        </span>
-        <ul className="flex flex-wrap gap-1.5">
-          {panel.notes.map((note) => (
-            <li
-              key={note}
-              className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs"
-            >
-              {note}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </motion.div>
+      {slot ? (
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">
+            {slot.label}
+          </span>
+          {slot.notes.length > 0 ? (
+            <ul className="flex flex-wrap items-center justify-center gap-1.5">
+              {slot.notes.map((note) => (
+                <li
+                  key={note}
+                  className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs"
+                >
+                  {note}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : (
+        priceSlot
+      )}
+    </div>
   );
 }
 
 export function RotatingShowcase({
   product,
   locale,
+  collectionNames,
 }: {
   product: Product;
   locale: Locale;
+  collectionNames?: Record<string, { nameAr: string; nameEn: string }>;
 }) {
   const ref = useRef<HTMLElement | null>(null);
   const reduce = useReducedMotion();
@@ -128,16 +132,76 @@ export function RotatingShowcase({
   const sheenX = useTransform(scrollYProgress, [0, 1], ["-180%", "180%"]);
   const watermarkOpacity = useTransform(scrollYProgress, [0, 0.3], [0.45, 0.1]);
 
-  // Multi-angle turn: the visible photo swaps front → side → back → front
-  // across the scroll (walid's back.png + side.png turn this into a real
-  // spin). Four crossfaded views, each handed off to the next.
+  // ============ The turn (wave 8): real product.images[] first, then the
+  // side/back photo set, always ending back on the front view. Products with
+  // a real gallery spin through their own photos; the classic 4-view
+  // front→side→back→front remains the fallback for DB products with no photos.
   const frontView = product.image ?? "/uploads/prodact.png";
-  const turnViews = [
-    { src: frontView, i: [0.02, 0.24, 0.24, 0.26], o: [0, 1, 1, 0] },
-    { src: "/uploads/side.png", i: [0.24, 0.26, 0.49, 0.51], o: [0, 1, 1, 0] },
-    { src: "/uploads/back.png", i: [0.49, 0.51, 0.74, 0.76], o: [0, 1, 1, 0] },
-    { src: frontView, i: [0.74, 0.76, 1, 1], o: [0, 1, 1, 1] },
+  const extras = (product.images ?? []).filter(
+    (src) =>
+      src !== frontView &&
+      src !== "/uploads/back.png" &&
+      src !== "/uploads/side.png",
+  );
+  const mid: string[] = [...extras.slice(0, 4)];
+  if (!mid.includes("/uploads/side.png")) mid.push("/uploads/side.png");
+  if (!mid.includes("/uploads/back.png")) mid.push("/uploads/back.png");
+  const start = mid.lastIndexOf(frontView);
+  if (start !== -1) mid.splice(start, 1);
+  const views = [frontView, ...mid, frontView].slice(0, 6);
+  const n = views.length;
+
+  const turnPoints = views.map((_, i) => {
+    const k = i;
+    const i0 = k === 0 ? 0.02 : k / n + 0.015;
+    const i1 = Math.min(k / n + 0.09, 1);
+    const i2 = Math.max((k + 1) / n - 0.09, 0);
+    const i3 = k === n - 1 ? 1 : (k + 1) / n - 0.015;
+    return {
+      src: views[k],
+      i: [i0, i1, i2, i3],
+      o: k === n - 1 ? [0, 1, 1, 1] : [0, 1, 1, 0],
+    };
+  });
+
+  // ============ Details strip (wave 8): a persistent glass bar under the
+  // bottle — collection chip + name always on, the middle slot hands over
+  // top → heart → base → price across the four quarters, and the CTA slides
+  // in for the last quarter. Children animate, the glass itself never does.
+  const [quarter, setQuarter] = useState(reduce ? 3 : 0);
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    if (reduce) return;
+    const q = v < 0.31 ? 0 : v < 0.56 ? 1 : v < 0.81 ? 2 : 3;
+    setQuarter((prev) => (prev === q ? prev : q));
+  });
+
+  const slots: (Slot | null)[] = [
+    {
+      key: "top",
+      label: dict.product.topNotes,
+      notes: product.notes?.top ?? [],
+    },
+    {
+      key: "heart",
+      label: dict.product.heartNotes,
+      notes: product.notes?.heart ?? [],
+    },
+    {
+      key: "base",
+      label: dict.product.baseNotes,
+      notes: product.notes?.base ?? [],
+    },
+    null, // quarter 3 = price slot
   ];
+  const collectionName = collectionNames?.[product.collection]
+    ? isAr
+      ? collectionNames[product.collection].nameAr
+      : collectionNames[product.collection].nameEn
+    : product.collection;
+  const glow = product.art?.glow ?? "#ef4444";
+
+  const ctaOpacity = useTransform(scrollYProgress, [0.78, 0.9], [0, 1]);
+  const ctaY = useTransform(scrollYProgress, [0.78, 0.92], [40, 0]);
   const floorScale = useTransform(
     scrollYProgress,
     [0, 0.5, 1],
@@ -148,30 +212,6 @@ export function RotatingShowcase({
   const redO = useTransform(scrollYProgress, [0, 0.3, 0.5], [0.75, 1, 0]);
   const goldO = useTransform(scrollYProgress, [0.28, 0.5, 0.72], [0, 1, 0]);
   const silverO = useTransform(scrollYProgress, [0.55, 0.78, 1], [0, 1, 0.85]);
-
-  const panels: Panel[] = [
-    {
-      label: dict.product.topNotes,
-      notes: product.notes?.top ?? [],
-      side: "start",
-      span: [0.06, 0.3],
-    },
-    {
-      label: dict.product.heartNotes,
-      notes: product.notes?.heart ?? [],
-      side: "end",
-      span: [0.32, 0.55],
-    },
-    {
-      label: dict.product.baseNotes,
-      notes: product.notes?.base ?? [],
-      side: "start",
-      span: [0.57, 0.8],
-    },
-  ];
-
-  const ctaOpacity = useTransform(scrollYProgress, [0.78, 0.9], [0, 1]);
-  const ctaY = useTransform(scrollYProgress, [0.78, 0.92], [40, 0]);
 
   return (
     <section ref={ref} className="relative h-[300vh]" aria-label={name}>
@@ -231,7 +271,7 @@ export function RotatingShowcase({
               className="max-h-[56vh] w-auto max-w-[74vw] select-none object-contain [filter:drop-shadow(0_0_80px_oklch(0.6_0.22_22/0.4))_drop-shadow(0_40px_80px_rgba(0,0,0,0.6))]"
             />
           ) : (
-            turnViews.map((view, i) => (
+            turnPoints.map((view, i) => (
               <TurnView
                 key={`${view.src}-${i}`}
                 src={view.src}
@@ -260,42 +300,67 @@ export function RotatingShowcase({
           style={reduce ? undefined : { scaleX: floorScale }}
         />
 
-        {/* Note panels — one per quarter of the turn */}
-        {!reduce &&
-          panels.map((panel) => (
-            <NotePanel
-              key={panel.label}
-              panel={panel}
-              progress={scrollYProgress}
-              isAr={isAr}
-            />
-          ))}
+        {/* Details strip — persistent identity + quarterly hand-off (wave 8) */}
+        <div className="absolute bottom-[4vh] left-1/2 z-[6] w-[min(94vw,880px)] -translate-x-1/2 px-4">
+          <div className="rounded-2xl border border-white/10 bg-card/60 px-5 py-4 shadow-[0_24px_70px_-24px_rgba(0,0,0,0.8)] backdrop-blur-md">
+            <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-center">
+              {/* Zone A — collection chip + product name (always on) */}
+              <div className="flex min-w-0 flex-col items-center gap-1 sm:items-start">
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span
+                    className="size-2 rounded-full"
+                    style={{
+                      background: glow,
+                      boxShadow: `0 0 10px ${glow}`,
+                    }}
+                  />
+                  {collectionName}
+                </span>
+                <h2 className="max-w-[78vw] truncate font-display text-lg font-bold sm:max-w-xs sm:text-2xl">
+                  {name}
+                </h2>
+              </div>
 
-        {/* Final quarter: price + CTA handed over */}
-        <motion.div
-          className="absolute bottom-[8vh] z-[5] flex flex-col items-center gap-3 px-6 text-center"
-          style={reduce ? undefined : { opacity: ctaOpacity, y: ctaY }}
-        >
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-bold">
-              {formatPrice(product.price)}
-            </span>
-            <span className="text-muted-foreground">
-              {dict.product.currency}
-            </span>
-            <span className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Star className="size-4 fill-primary text-primary" />
-              {product.rating}
-            </span>
+              {/* Zone B — quarterly slot: top → heart → base → price */}
+              <div className="relative flex min-h-10 w-full flex-1 items-center justify-center sm:w-auto">
+                {slots.map((slot, i) => (
+                  <StripSlot
+                    key={slot ? slot.key : "price"}
+                    slot={slot}
+                    active={quarter === i}
+                    priceSlot={
+                      <div className="flex flex-wrap items-baseline justify-center gap-2">
+                        <span className="font-display text-2xl font-bold">
+                          {formatPrice(product.price)}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {dict.product.currency}
+                        </span>
+                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Star className="size-4 fill-primary text-primary" />
+                          {product.rating}
+                        </span>
+                      </div>
+                    }
+                  />
+                ))}
+              </div>
+
+              {/* Zone C — add-to-cart slides in for the last quarter */}
+              <motion.div
+                style={reduce ? undefined : { opacity: ctaOpacity, y: ctaY }}
+              >
+                <Link
+                  href={href}
+                  className="group/btn flex h-12 items-center gap-2 rounded-full bg-primary px-8 text-base font-semibold text-primary-foreground shadow-[0_0_35px_-8px_theme(colors.red.600)] transition-shadow hover:shadow-[0_0_50px_-6px_theme(colors.red.500)]"
+                >
+                  {dict.product.addToCart}
+                  <ArrowRight className="size-4 transition-transform group-hover/btn:translate-x-0.5 rtl:rotate-180 rtl:group-hover/btn:-translate-x-0.5" />
+                </Link>
+              </motion.div>
+            </div>
           </div>
-          <Link
-            href={href}
-            className="group/btn flex h-12 items-center gap-2 rounded-full bg-primary px-8 text-base font-semibold text-primary-foreground shadow-[0_0_35px_-8px_theme(colors.red.600)] transition-shadow hover:shadow-[0_0_50px_-6px_theme(colors.red.500)]"
-          >
-            {dict.product.addToCart}
-            <ArrowRight className="size-4 transition-transform group-hover/btn:translate-x-0.5 rtl:rotate-180 rtl:group-hover/btn:-translate-x-0.5" />
-          </Link>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

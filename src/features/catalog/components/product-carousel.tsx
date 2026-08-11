@@ -38,10 +38,12 @@ const ROLE_STYLES: Record<
     height: number;
   }
 > = {
+  // Wave 8: the stage is bigger (max-w-xl) so the side roles spread wider
+  // and hold more scale — the center reads as a real hero, not a small card.
   center: { scale: 1, blur: 0, opacity: 1, z: 20, left: 50, height: 100 },
-  left: { scale: 0.58, blur: 2, opacity: 0.8, z: 10, left: 22, height: 62 },
-  right: { scale: 0.58, blur: 2, opacity: 0.8, z: 10, left: 78, height: 62 },
-  back: { scale: 0.5, blur: 4, opacity: 0.55, z: 5, left: 50, height: 54 },
+  left: { scale: 0.62, blur: 2, opacity: 0.8, z: 10, left: 15, height: 64 },
+  right: { scale: 0.62, blur: 2, opacity: 0.8, z: 10, left: 85, height: 64 },
+  back: { scale: 0.5, blur: 4, opacity: 0.55, z: 5, left: 50, height: 52 },
 };
 
 const ANIM_MS = 650;
@@ -57,11 +59,13 @@ export function ProductCarousel({
   locale,
   wishlistIds,
   dict,
+  collectionNames,
 }: {
   products: Product[];
   locale: Locale;
   wishlistIds: string[] | null;
   dict: Dictionary;
+  collectionNames?: Record<string, { nameAr: string; nameEn: string }>;
 }) {
   const reduce = useReducedMotion();
 
@@ -165,7 +169,6 @@ export function ProductCarousel({
 
   const activeProduct = products[active];
   if (!activeProduct) return null;
-  const glow = activeProduct.art.glow ?? "#ef4444";
 
   const transition = reduce
     ? "none"
@@ -173,15 +176,50 @@ export function ProductCarousel({
 
   return (
     <section className="relative overflow-hidden border-y border-border bg-card/40 py-14">
-      {/* Glow whose color follows the active product — the background stays fixed */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: `radial-gradient(60% 50% at 50% 55%, ${glow}26, transparent 70%)`,
-          transition: "background 650ms cubic-bezier(0.4,0,0.2,1)",
-        }}
-      />
+      {/* ===== Per-collection identity background (wave 8) =====
+            One layer per product, each carrying the collection's glow tint +
+            giant collection name behind the stage. Active index crossfades
+            via CSS opacity — the whole backdrop changes identity when the
+            carousel turns. */}
+      {products.map((product, i) => {
+        const isActive = active === i;
+        const cn = collectionNames?.[product.collection];
+        const wordmark = isRtl
+          ? (cn?.nameAr ?? product.nameAr)
+          : (cn?.nameEn ?? product.nameEn);
+        return (
+          <div
+            key={`identity-${product.id}`}
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-[1]"
+            style={{
+              opacity: isActive ? 1 : 0,
+              transition: "opacity 650ms cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+          >
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `radial-gradient(60% 50% at 50% 55%, ${product.art.glow}2e, transparent 70%)`,
+              }}
+            />
+            <div
+              dir={isRtl ? "rtl" : "ltr"}
+              className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 select-none justify-center overflow-hidden whitespace-nowrap"
+            >
+              <span
+                className="font-display text-[19vw] font-bold leading-none lg:text-[13vw]"
+                style={{
+                  color: "transparent",
+                  WebkitTextStroke: `1px ${product.art.glow}40`,
+                }}
+              >
+                {wordmark}
+              </span>
+            </div>
+          </div>
+        );
+      })}
 
       {/* Giant text — always Latin, not read from the dictionary */}
       <div
@@ -221,7 +259,7 @@ export function ProductCarousel({
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerLeave={onPointerUp}
-              className="relative aspect-[0.7/1] w-full max-w-sm touch-pan-y select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              className="relative aspect-[0.72/1] w-full max-w-sm touch-pan-y select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:max-w-xl"
             >
               {products.map((product, i) => {
                 const role = roleOf(i);
@@ -234,7 +272,7 @@ export function ProductCarousel({
                     style={{
                       bottom: 0,
                       left: `${s.left}%`,
-                      width: "62%",
+                      width: "56%",
                       aspectRatio: "0.6 / 1",
                       transform: `translateX(-50%) scale(${s.scale})`,
                       opacity: s.opacity,
@@ -273,6 +311,23 @@ export function ProductCarousel({
 
             {/* ===== Active product info ===== */}
             <div className="flex flex-col items-center gap-1.5 text-center">
+              {/* Collection identity chip (wave 8) */}
+              {(() => {
+                const cn = collectionNames?.[activeProduct.collection];
+                if (!cn) return null;
+                return (
+                  <span className="mb-1 inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1 text-xs text-muted-foreground">
+                    <span
+                      className="size-2 rounded-full"
+                      style={{
+                        background: activeProduct.art.glow,
+                        boxShadow: `0 0 10px ${activeProduct.art.glow}`,
+                      }}
+                    />
+                    {isRtl ? cn.nameAr : cn.nameEn}
+                  </span>
+                );
+              })()}
               <h3 className="font-display text-xl font-bold sm:text-2xl">
                 {locale === "ar" ? activeProduct.nameAr : activeProduct.nameEn}
               </h3>
@@ -352,7 +407,7 @@ function SlideImage({
         src={product.image}
         alt=""
         fill
-        sizes="(min-width:1024px) 420px, (min-width:640px) 320px, 260px"
+        sizes="(min-width:1024px) 560px, (min-width:640px) 500px, 320px"
         className="object-contain object-bottom"
         priority={priority}
         draggable={false}
