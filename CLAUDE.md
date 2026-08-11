@@ -475,6 +475,7 @@ src/
   - **Catalog (shop) depth:** title → `ScrollWordReveal` (justify-start); product cards → `TiltCard` inside the existing `RepulsionGrid`.
   - **Home extra awe:** hero content wrapped in `MouseDrift` (slow cursor parallax ±8) + **twin marquee** below the pinned one (`reverse` prop on Marquee, speed 48, opacity-70 — coparadiso multi-speed pattern).
   - New components: `tilt-card.tsx` (rotateX/Y springs 180/18, perspective 900, `--glare-x/y` highlight, group-hover) + `mouse-drift.tsx` (stiffness 55 drift) + `marquee reverse` prop.
+  - **Gallery fallback completed:** DB products carry NO images (production Neon differs from local dev seed — `my-icon-eau-de-parfum` does NOT exist on Neon, it 404s silently with HTTP 200 + `NEXT_HTTP_ERROR_FALLBACK;404`; real slugs = red-rush, oud-mystique, midnight-noir, golden-hour, mystic-pearl, velvet-rose, citrus-dream, smoke-signals). ProductGallery now builds `views = dedupe([...product.images, product.image ?? prodact.png, back.png, side.png]).slice(0,3)` so EVERY product shows front/back/side. Verified live on /en/product/red-rush (4 imgs).
   - Verified: clean tsc + lint + build + live 200.
 - [ ] Set `RESEND_API_KEY` in `.env` — **needed from walid**
 - [ ] Google OAuth keys (`AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET`) — **needed from walid**
