@@ -134,8 +134,16 @@ export function TurntableVideo({
   // Best-fit line over the full SSD matrix (every 2nd frame, 640×360,
   // both directions): `fTarget = 1 − fSelf + Δ` — mean SSD 5.98 vs 7.09
   // for the old formula (in-phase model: 6.47; the 320×180 fit agreed:
-  // scale≈1.1, Δ≈+10). Clamp to [0, 1] — on the front arc the mate lands
-  // on the target's own front (its loop end, same view).
+  // scale≈1.1, Δ≈+10).
+  // Wave 24 — the freeze (walid: «الفيديو بيعلق»): clamping (not wrapping)
+  // parked the hidden copy at EXACTLY `td` whenever the source is on the
+  // front arc (f < Δ) — a video seeking to its end and then `play()`ed
+  // RESTARTS from 0 (browser spec, `ended` fires → `playNext`) = the
+  // visible jump/freeze. Fix: the mapping is a LOOP — wrap mod 1 (`the
+  // view repeats every full turn`), so the mate stays inside the clip, the
+  // fraction is continuous everywhere (the wrap at f = Δ passes through
+  // the loop point = the SAME view), and the end zone is unreachable
+  // (g ≤ Δ < 0.95 by construction).
   const mirrorTimeFor = useCallback(
     (source: HTMLVideoElement, target: HTMLVideoElement) => {
       const sd = source.duration;
@@ -148,7 +156,9 @@ export function TurntableVideo({
         target === videoLeftRef.current
           ? MIRROR_DELTA_INTO_LEFT
           : MIRROR_DELTA_INTO_RIGHT;
-      return td * Math.min(1, Math.max(0, 1 - f + delta));
+      let g = (1 - f + delta) % 1;
+      if (g < 0.005) g = 0.005; // loop junction — park just past the front, never exactly 0
+      return td * g;
     },
     [],
   );
@@ -240,7 +250,11 @@ export function TurntableVideo({
     let next = active === l ? r : l;
     if (desired === "right") next = r;
     else if (desired === "left") next = l;
-    next.currentTime = 0;
+    // Wave 24: play from the PRE-SEEKED park position (the rAF loop keeps
+    // the hidden copy at the mirrored angle) — `currentTime = 0` snapped
+    // the bottle to the front view whenever the actively-steered clip
+    // reached its `ended` (~1s at rate 3): another freeze/jump source.
+    // The park is always angle-continuous, in every mode.
     setActive(next);
     void next.play().catch(() => {});
   }, [setActive]);
