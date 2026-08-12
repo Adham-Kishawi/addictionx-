@@ -101,6 +101,7 @@ export function TurntableVideo({
   const routeAnimRef = useRef<{ target: number; lastT: number } | null>(null);
   const targetNRef = useRef<number | null>(null); // the drag's position target (null = hold/route)
   const catchTRef = useRef(0); // timer of the far-target catch ease («مرن» tracking)
+  const lastSeekAtRef = useRef(0); // when the last seek was issued (stall watchdog)
   const rafRef = useRef<number | null>(null);
 
   const markReady = useCallback(() => setReady(true), []);
@@ -238,16 +239,17 @@ export function TurntableVideo({
     [enterScrub],
   );
 
-  // Always-on rAF while interactive (wave 28b — walid: «الفيديو يتتبع
-  // حركة الماوس بشكل مرن»): the bottle converges on the drag target the
-  // SKILL-ish way — when the target is far (entry snap, a flying hand)
-  // the turn CATCHES UP with a fast ease (no jump-cut «مرن»); when it is
-  // ~a video frame away it picks the exact frame directly (frame-gated,
-  // no seek churn). The videos stay PAUSED, so the clip end (and its
-  // restart/glitch zone) is unreachable: right.mp4 forward drives the
-  // turn rightward, left.mp4 (the recorded REVERSED footage) backward —
-  // «الفيديو يتعكس في الراجعة» is real, silent and seamless. The
-  // vertical routing ease runs here too.
+  // Always-on rAF while interactive (wave 28c): the bottle converges on
+  // the drag target the SKILL-ish way — far targets (entry snap, a flying
+  // hand) are CATCHED UP with a fast ease (no jump-cut «مرن»), near ones
+  // picked directly. Every seek is FRAME-GATED (≥ 1 video frame of
+  // travel) — no 60Hz seek storm on two paused videos (the very cause of
+  // the «الفيديو بيعلق» stutter), plus a 600ms stall watchdog. The
+  // videos stay PAUSED, so the clip end (and its restart/glitch zone) is
+  // unreachable: right.mp4 forward drives the turn rightward, left.mp4
+  // (the recorded REVERSED footage) backward — «الفيديو يتعكس في
+  // الراجعة» is real, silent and seamless. The vertical routing ease
+  // runs here too.
   useEffect(() => {
     if (!interactive || reduce) return;
     const tick = () => {
@@ -267,25 +269,38 @@ export function TurntableVideo({
         }
       } else if (targetNRef.current !== null && scrubbingRef.current) {
         const active = activeRef.current;
-        // The skill's jitter guard: skip a video that is mid-seek — the
-        // very next tick (16ms) re-targets it on the fresh frame.
-        if (active && !active.seeking) {
+        const now = performance.now();
+        if (active && active.seeking && now - lastSeekAtRef.current > 600) {
+          // Watchdog — a paused video CAN hang mid-seek (walid: «الفيديو
+          // نفسو بيعلق»): re-issue the target seek to break the stall.
+          displayAt(targetNRef.current);
+          lastSeekAtRef.current = now;
+        } else if (active && !active.seeking) {
           const n = fracOf(active); // the ACTUAL displayed angle
           scrubNRef.current = n;
           const d = ((targetNRef.current - n + 1.5) % 1) - 0.5;
+          // Effective target: eased glide (far) or the exact drag target
+          // (near). Either way ONE frame-gated seek below.
+          let targetN = targetNRef.current;
           if (Math.abs(d) > CATCH_TOL) {
             // FAR — glide toward the target (no snap; the entry jump and
             // a flying hand both arrive softly).
-            const now = performance.now();
             const dt = Math.min(0.05, (now - catchTRef.current) / 1000);
             catchTRef.current = now;
-            const step = d * (1 - Math.exp(-CATCH_RATE * dt));
-            displayAt((n + step + 1) % 1);
-          } else if (
-            Math.abs(d) >
+            targetN = (n + d * (1 - Math.exp(-CATCH_RATE * dt)) + 1) % 1;
+          }
+          // Seek only when ≥ 1 video frame of travel separates us from
+          // the target — a 60Hz seek storm on two paused videos is what
+          // makes the playback STUTTER and hang; the video's own decode
+          // rate (~24fps) then does the rest, so tracking stays «مرن»
+          // and SILK. Inside a frame → hold the exact frame (no churn).
+          const step = ((targetN - n + 1.5) % 1) - 0.5;
+          if (
+            Math.abs(step) >
             SCRUB_SEEK_STEP / Math.max(0.01, active.duration)
           ) {
-            displayAt(targetNRef.current); // direct pick — hold otherwise
+            displayAt(targetN);
+            lastSeekAtRef.current = now;
           }
         }
       }
