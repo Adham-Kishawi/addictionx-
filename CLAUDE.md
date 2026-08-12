@@ -41,6 +41,7 @@ Required level: **production-ready startup**, not a demo or temporary solution.
 | Language        | TypeScript (strict)                                            |
 | Styling         | Tailwind CSS v4 + shadcn/ui (Base UI)                          |
 | Animation       | Framer Motion (framer-motion) + GSAP (dynamic import only)     |
+| 3D / WebGL      | three.js + @react-three/fiber (+ drei) — **wave 11**           |
 | Icons           | Lucide React                                                   |
 | Forms           | React Hook Form + Zod                                          |
 | Auth            | Auth.js v5 (beta) — Credentials + PrismaAdapter + JWT sessions |
@@ -270,14 +271,26 @@ walid's request: **the customer must be visually amazed** — every storefront s
 - **Product images:** every product renders the real transparent bottle PNG at `/uploads/prodact.png` (seeded into `ProductImage` — primary per product; `ProductArt` shows it on all product cards). The carousel keeps its own `/slider/*.png` visuals (walid's decision — slider left untouched).
 - Dictionary keys: `dict.home.carousel*` (title/subtitle/explore/prev/next/item/of).
 
-### 18d. Sprite (filmstrip) generation — tools and regeneration
+### 18d. Hero footage — WAVE 12 (final): direct video playback, no strips
 
-- **Tool:** `ffmpeg-static` (devDependency) — the exe is at `node_modules/ffmpeg-static/ffmpeg.exe`. No system install needed.
-- **Generated strips:** `public/sprites/left.jpg` (0.38MB) and `right.jpg` (0.41MB) — 6400×2160, 10 columns × 6 rows, each cell 640×360.
-- **Source videos:** `public/left.mp4` / `right.mp4` — 1280×720 · 24fps · **only 59 frames (0..58)** — never fall into cell 59 (empty).
-- **Reference generation command (video to grid):**
-  `ffmpeg -i right.mp4 -vf "fps=24,scale=640:360,tile=10x6" sprites/right.jpg`
-  (when regenerating the videos, rerun this command for both sides.)
+- **Wave 12 (walid's decision):** the hero no longer scrubs a sprite filmstrip at all — it **plays the footage directly** as a cinematic video. `src/components/motion/hero-video.tsx` (`HeroVideo`, renamed from `hero-video-scrub.tsx`): `right.mp4` (forward turn) and `left.mp4` (reversed turn) **alternate on `ended`** so the bottle rotates right→left→right forever with no seam. The old canvas + `background-position` plates are deleted. All viewports use the same playback (no desktop/mobile split).
+- **Why strips were abandoned (from the code comments):** `public/360/perfume-360.mp4` is NOT a perfectly closed 360° loop (first/last frames differ → the left↔right mirror `frame 59 ≈ frame 0` would visibly snap at the screen center), and its first frame is a bright flash (~luma 136 vs ~12) that would blink white on loops. Both `right.mp4`/`left.mp4` are generated from `perfume-360.mp4` **with the bright first frame trimmed**.
+- **Source:** `public/360/perfume-360.mp4` (1280×720 · 24fps · ~10s, full turn) → derived `public/right.mp4` (forward) + `public/left.mp4` (reversed).
+- **Regeneration (video → reversed/normal copies, trimming the first frame):**
+  - forward: `ffmpeg -i perfume-360.mp4 -vf "trim=start_frame=1" right.mp4`
+  - reversed: `ffmpeg -i perfume-360.mp4 -vf "trim=start_frame=1,reverse" left.mp4`
+
+### 18e. Product 360° turntable — three.js / R3F (wave 11)
+
+- **Stack:** `three` + `@react-three/fiber` + `@react-three/drei` added to dependencies (wave 11, walid's direction). The showcase bottle is no longer 12 crossfading `<img>`s — it is a **WebGL canvas**.
+- **Asset:** `public/uploads/360/strip.jpg` — one 6×6 grid (36 cells of a full rotation, `fps=3.6` from the turntable video). Loaded **once** as a single GPU texture.
+- **Component:** `src/components/motion/product-360.tsx` — a plane with a custom `ShaderMaterial`:
+  - `NearestFilter`, no mipmaps → the shader samples the CURRENT cell and crossfades to the NEXT inside the fragment shader (fractional `uCell`) — buttery turn, zero DOM img swapping.
+  - Drive: scroll story (`progressRef`, a plain ref mirrored from `scrollYProgress` every change — **no React re-render per frame**) walks the base angle 0→35, plus a **persistent pointer-drag offset** (`dragRef`, one full turn per container width, `touch-action:none`, grab/grabbing cursor) — the customer can spin the bottle by hand.
+  - `mix-blend-screen` on the container makes the dark studio backdrop vanish (same visual language as the old img turn).
+  - **`prefers-reduced-motion` or no WebGL → static poster image** (`frame-01.png`).
+- **Wiring:** `rotating-showcase.tsx` imports it via **`dynamic(..., { ssr: false })`** so three.js stays **out of the initial home bundle** (loaded only when the LazyMount showcase mounts). The old `TurnView`/`TURN_360`/`turnPoints` machinery was deleted.
+- **Shader transparency trick:** frames are dark-studio shots; the black bg is removed by screen-blending the canvas, not by alpha keying — red stays red (no cyan flip, consistent with the mix-blend rule).
 
 ### 19. Email notifications (Resend) — for every update
 
@@ -330,7 +343,7 @@ src/
 │
 ├─ components/
 │  ├─ ui/                    # shadcn primitives
-│  ├─ motion/                # animated-title · aurora-background · particle-field · heartbeat-line · fade-in · reveal (Reveal/Stagger) · marquee · fly-to-cart · page-transition (opacity-only!) · cursor-glow · count-up · stats-band · hero-video-scrub
+│  ├─ motion/                # animated-title · aurora-background · particle-field · heartbeat-line · fade-in · reveal (Reveal/Stagger) · marquee · fly-to-cart · page-transition (opacity-only!) · cursor-glow · count-up · stats-band · hero-video (wave 12 playback) · product-360 (wave 11 R3F)
 │  ├─ theme/                 # ThemeProvider · ThemeToggle
 │  ├─ layout/                # header (+ header-scroll for the transparent hero state) · footer (collections from DB + Insta/TikTok links only) · newsletter-section (above the footer) · newsletter-form · section-heading · language-switcher
 │  ├─ wishlist-button.tsx    # wishlist button (client) — product cards + product page
@@ -494,7 +507,12 @@ src/
     - `ParticleField` halves particle count on mobile (`useSyncExternalStore` on `max-width:768px` — SSR/hydration safe).
     - `content-visibility:auto` + `contain-intrinsic-size` on the two safe below-fold sections (Most wanted grid, Experience strip — no sticky children, so nothing breaks).
   - Verified: clean tsc + lint + build + live 200.
-- [ ] **Assets needed from walid (wave 9 ask — the visual «execution» gap):** (1) real transparent PNG of the bottle (no background, no shadow, ~1200-2000px, <1MB) · (2) 360° set = 8 photos × 45° of the SAME bottle (or a GLB) for a true turn in the showcase · (3) per-collection ambient backdrops for rush/noir/gold (2400×1350) for the carousel identity background + DepthStack · (4) 4-6 voyeur-style lifestyle shots + OG images (1200×630) per collection · (5) 4K hero video loop (the current hero still scrubs a sprite filmstrip from the old 6400×2160 video).
+- [x] **Home update — walid's new assets (waves 10–12):** walid dropped new footage + backdrops into `public/` and said «استخدم كل اللي بعتو — من folder hero»:
+  - **Hero — direct video playback (wave 12, FINAL):** the sprite-scrub hero was **abandoned entirely**. `perfume-360.mp4` is not a closed loop (first/last frames differ + a bright first frame), so the strip mirror would snap. Instead `HeroVideo` (`hero-video.tsx`) **plays `right.mp4` (forward) ↔ `left.mp4` (reversed) alternating on `ended`** — seamless continuous rotation, all viewports, no strips/canvas. `page.tsx` imports `HeroVideo`, dropped the scroll indicator.
+  - **Product — REAL 360° turntable (wave 11, R3F):** `three` + `@react-three/fiber` + `@react-three/drei` installed. New `src/components/motion/product-360.tsx` — a WebGL canvas where a `ShaderMaterial` samples `public/uploads/360/strip.jpg` (6×6 grid = 36 cells from the turntable video, `fps=3.6`) with in-shader crossfade. Scroll walks the base turn (progressRef mirrored from `scrollYProgress`, no re-render per frame) + **pointer drag spins the bottle by hand** (one full turn per container width, persists as an offset). `mix-blend-screen` removes the dark studio bg; reduce-motion / no-WebGL → static poster `frame-01.png`. Wired into `RotatingShowcase` via `dynamic(..., { ssr: false })` so three.js stays out of the initial home bundle; the old `TurnView`/`TURN_360`/`turnPoints` `<img>` crossfade machinery was deleted.
+  - **Collection backdrops (wave 10):** `public/collections/{rush,noir,gold}.jpg` wired via `src/features/catalog/data/collection-assets.ts` (`collectionBackdrop(slug)`) — used by the carousel identity layer, the DepthStack covers (`page.tsx` fallback `cover.image ?? collectionBackdrop(...)`) and the collections hub.
+  - Verified: clean tsc + lint + successful build (all routes compiled).
+- [ ] **Assets needed from walid (wave 9 ask — the visual «execution» gap):** (1) real transparent PNG of the bottle (no background, no shadow, ~1200-2000px, <1MB) · (2) 360° set = 8 photos × 45° of the SAME bottle (or a GLB) for a true turn in the showcase — **done differently:** walid's turntable video → 36-cell strip + R3F scrub (wave 11) · (3) per-collection ambient backdrops for rush/noir/gold (2400×1350) for the carousel identity background + DepthStack — **done** (wave 10, `public/collections/*.jpg`) · (4) 4-6 voyeur-style lifestyle shots + OG images (1200×630) per collection · (5) 4K hero video loop (the current hero still scrubs a sprite filmstrip from the old 6400×2160 video) — **updated** to `hero.mp4` (wave 10/11).
 - [ ] Google OAuth keys (`AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET`) — **needed from walid**
 - [ ] Wire Cloudinary images instead of `ProductArt` — **needs walid's account data** (cloud name + API key/secret) + uploading the images to Cloudinary (CLAUDE.md workflow #4)
 

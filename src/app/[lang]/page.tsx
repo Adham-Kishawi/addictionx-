@@ -3,7 +3,7 @@ import { ArrowRight, Truck, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedTitle } from "@/components/motion/animated-title";
 import { ParticleField } from "@/components/motion/particle-field";
-import { HeroVideoScrub } from "@/components/motion/hero-video-scrub";
+import { HeroVideo } from "@/components/motion/hero-video";
 import { HeroParallax } from "@/components/motion/hero-parallax";
 import { HeartbeatLine } from "@/components/motion/heartbeat-line";
 import { FadeIn } from "@/components/motion/fade-in";
@@ -28,6 +28,7 @@ import {
   getProducts,
   getCollections,
 } from "@/features/catalog/data/products-db";
+import { collectionBackdrop } from "@/features/catalog/data/collection-assets";
 import { getWishlistIds } from "@/features/account/data";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 
@@ -85,7 +86,7 @@ export default async function Home({
             (backdrop slow + zoom, veil mid, content fast fade) — the depth that makes the
             next sections feel like they're rolling OVER the hero ====== */}
       <HeroParallax
-        backdrop={<HeroVideoScrub />}
+        backdrop={<HeroVideo />}
         mid={
           <>
             {/* Theme-aware contrast veil — solves readability without mix-blend */}
@@ -151,17 +152,6 @@ export default async function Home({
               </FadeIn>
             </div>
           </MouseDrift>
-        }
-        indicator={
-          <FadeIn
-            delay={1.2}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
-          >
-            <span className="flex flex-col items-center gap-1 text-xs text-white/70 [text-shadow:0_1px_2px_rgba(0,0,0,0.6)]">
-              {dict.hero.scroll}
-              <span className="block size-4 animate-bounce border-b-2 border-r-2 border-primary rotate-45" />
-            </span>
-          </FadeIn>
         }
       />
 
@@ -286,7 +276,7 @@ export default async function Home({
               key: collection.slug,
               href: `/${locale}/collections/${collection.slug}`,
               name: locale === "ar" ? collection.nameAr : collection.nameEn,
-              image: cover.image,
+              image: cover.image ?? collectionBackdrop(collection.slug),
               art: cover.art,
             };
           })}

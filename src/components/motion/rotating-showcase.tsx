@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   motion,
   useMotionValueEvent,
@@ -13,18 +14,24 @@ import { ArrowRight, Star } from "lucide-react";
 import { formatPrice, type Product } from "@/features/catalog/data/products";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 
+// Wave 11: the photo turn is now a real 360° turntable — a WebGL canvas
+// (three.js via R3F) samples a 36-cell strip extracted from walid's
+// rotation video, driven by scroll + pointer drag. Loaded with ssr:false
+// (dynamic) so three.js stays OUT of the initial home bundle.
+const Product360 = dynamic(
+  () => import("./product-360").then((m) => m.Product360),
+  { ssr: false },
+);
+
 // ============================================================
-// ROTATING SHOWCASE — the centerpiece (wave plan #2). A 300vh
-// pinned stage right after the hero: the hero product turns on
-// its axis (-36°→36° rotateY, perspective 1400) bound to scroll,
+// ROTATING SHOWCASE — the centerpiece. A 300vh pinned stage right
+// after the hero: the hero product spins on a REAL 360° turntable
+// (wave 11 — WebGL via R3F, one 36-cell strip, scroll + drag),
 // a light sheen sweeps the bottle, the background hue drifts
 // red → gold → silver, and a persistent details strip under the
 // bottle hands over top/heart/base → price+CTA across the four
-// quarters. The photo layer swaps front → real gallery → side →
-// back → front (wave 8: real product.images[] first, classic 4-view
-// fallback when the DB has no photos). True 360° needs an 8-angle
-// photo set (requested from walid) — this is the single-image
-// "presentation turn" illusion, honest about the flatness.
+// quarters. `Product360` is loaded dynamically (ssr:false) so
+// three.js stays out of the initial bundle.
 // ============================================================
 
 type Slot = {
@@ -33,32 +40,8 @@ type Slot = {
   notes: string[];
 };
 
-function TurnView({
-  src,
-  alt,
-  progress,
-  points,
-  className,
-}: {
-  src: string;
-  alt: string;
-  progress: ReturnType<typeof useScroll>["scrollYProgress"];
-  points: { i: number[]; o: number[] };
-  className: string;
-}) {
-  const opacity = useTransform(progress, points.i, points.o);
-  return (
-    <motion.img
-      src={src}
-      alt={alt}
-      draggable={false}
-      decoding="async"
-      fetchPriority={points.i[0] === 0 ? "high" : "low"}
-      className={`${className} will-change-opacity`}
-      style={{ opacity }}
-    />
-  );
-}
+// Poster = the static front frame of the 360° strip (reduce-motion / no-WebGL fallback).
+const FRONT_FRAME = "/uploads/360/frame-01.png";
 
 // A single detail slot inside the strip — notes chips or price; the active
 // quarter owns it via CSS opacity/translate (children animate, the glass never).
@@ -129,48 +112,19 @@ export function RotatingShowcase({
     offset: ["start start", "end end"],
   });
 
+  // Mirror the scroll progress into a plain ref for the R3F canvas
+  // (WebGL reads it every frame — no React re-render per pixel).
+  const progressRef = useRef(0);
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    progressRef.current = v;
+  });
+
   // Full-range animation transformed into silk: the bottle holds the whole
   // scale arc but the motion is front-loaded (ease-out), so it settles.
   const rotateY = useTransform(scrollYProgress, [0, 1], [-36, 36]);
   const scale = useTransform(scrollYProgress, [0, 0.45, 1], [0.72, 0.98, 0.9]);
   const sheenX = useTransform(scrollYProgress, [0, 1], ["-180%", "180%"]);
   const watermarkOpacity = useTransform(scrollYProgress, [0, 0.3], [0.45, 0.1]);
-
-  // ============ The turn (wave 8): real product.images[] first, then the
-  // side/back photo set, always ending back on the front view. Products with
-  // a real gallery spin through their own photos; the classic 4-view
-  // front→side→back→front remains the fallback for DB products with no photos.
-  const frontView = product.image ?? "/uploads/prodact.png";
-  const extras = (product.images ?? []).filter(
-    (src) =>
-      src !== frontView &&
-      src !== "/uploads/back.png" &&
-      src !== "/uploads/side.png",
-  );
-  const mid: string[] = [...extras.slice(0, 4)];
-  if (!mid.includes("/uploads/side.png")) mid.push("/uploads/side.png");
-  if (!mid.includes("/uploads/back.png")) mid.push("/uploads/back.png");
-  const start = mid.lastIndexOf(frontView);
-  if (start !== -1) mid.splice(start, 1);
-  const views = [frontView, ...mid, frontView].slice(0, 6);
-  const n = views.length;
-
-  // Each view is FULLY opaque for most of its segment: a quick 6% ramp-in,
-  // a long hold, a 6% hand-off where the next view crosses over. The photo
-  // layer reads as one continuous rotation instead of a shimmering ghost
-  // (the old long fade-ins left the bottle half-transparent).
-  const turnPoints = views.map((_, i) => {
-    const k = i;
-    const i0 = k === 0 ? 0 : Math.max(0, k / n - 0.02);
-    const i1 = Math.min(k / n + 0.06, 1);
-    const i2 = Math.max((k + 1) / n - 0.06, 0);
-    const i3 = k === n - 1 ? 1 : Math.min((k + 1) / n - 0.02, 1);
-    return {
-      src: views[k],
-      i: [i0, i1, i2, i3],
-      o: k === n - 1 ? [0, 1, 1, 1] : [0, 1, 1, 0],
-    };
-  });
 
   // ============ Details strip (wave 8): a persistent glass bar under the
   // bottle — collection chip + name always on, the middle slot hands over
@@ -263,33 +217,29 @@ export function RotatingShowcase({
           ADDICTIONX
         </motion.span>
 
-        {/* The turning bottle — photo swaps across front/side/back/front */}
+        {/* The turning bottle — real 360° turntable (WebGL canvas, wave 11).
+            Scroll walks the base turn; drag spins it by hand. mix-blend-screen
+            makes the dark studio backdrop vanish over the page. */}
         <motion.div
-          className="relative z-10 flex w-full items-center justify-center px-6"
+          className="relative z-10 flex h-[52vh] w-full items-center justify-center px-6"
           style={
             reduce ? undefined : { rotateY, scale, transformPerspective: 1400 }
           }
         >
-          {reduce ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={frontView}
-              alt={name}
-              draggable={false}
-              className="max-h-[56vh] w-auto max-w-[74vw] select-none object-contain [filter:drop-shadow(0_0_80px_oklch(0.6_0.22_22/0.4))_drop-shadow(0_40px_80px_rgba(0,0,0,0.6))]"
+          <div
+            className={`relative aspect-video h-full w-auto max-w-[74vw] ${
+              reduce
+                ? ""
+                : "mix-blend-screen [filter:drop-shadow(0_0_60px_oklch(0.6_0.22_22/0.22))]"
+            }`}
+          >
+            <Product360
+              progressRef={progressRef}
+              poster={FRONT_FRAME}
+              name={name}
+              className={reduce ? "mix-blend-screen" : undefined}
             />
-          ) : (
-            turnPoints.map((view, i) => (
-              <TurnView
-                key={`${view.src}-${i}`}
-                src={view.src}
-                alt={name}
-                progress={scrollYProgress}
-                points={view}
-                className="absolute inset-0 m-auto max-h-[56vh] w-auto max-w-[74vw] select-none object-contain [filter:drop-shadow(0_0_80px_oklch(0.6_0.22_22/0.4))_drop-shadow(0_40px_80px_rgba(0,0,0,0.6))]"
-              />
-            ))
-          )}
+          </div>
 
           {/* Sweeping sheen over the glass */}
           {!reduce && (

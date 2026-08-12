@@ -12,6 +12,7 @@ import { Reveal, RevealStagger, RevealItem } from "@/components/motion/reveal";
 import { SectionGlow } from "@/components/motion/section-glow";
 import { ScrollWordReveal } from "@/components/motion/scroll-word-reveal";
 import { TiltCard } from "@/components/motion/tilt-card";
+import { collectionBackdrop } from "@/features/catalog/data/collection-assets";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -73,7 +74,19 @@ export default async function CollectionsPage({
                         className="h-full w-full transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="h-full w-full bg-card" />
+                      (() => {
+                        const bg = collectionBackdrop(collection.slug);
+                        return bg ? (
+                          <img
+                            src={bg}
+                            alt=""
+                            draggable={false}
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-card" />
+                        );
+                      })()
                     )}
 
                     {/* Floating glow orb from the collection's own accent */}

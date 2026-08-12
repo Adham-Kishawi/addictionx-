@@ -12,6 +12,7 @@ import { ProductArt } from "@/features/catalog/components/product-art";
 import { WishlistButton } from "@/components/wishlist-button";
 import { cn } from "@/lib/utils";
 import { formatPrice, type Product } from "@/features/catalog/data/products";
+import { collectionBackdrop } from "@/features/catalog/data/collection-assets";
 import type { Locale, Dictionary } from "@/lib/i18n/dictionary";
 
 // ============================================================
@@ -204,6 +205,20 @@ export function ProductCarousel({
                 background: `radial-gradient(60% 50% at 50% 55%, ${product.art.glow}2e, transparent 70%)`,
               }}
             />
+            {/* The collection's ambient backdrop (wave 10) — masked so it
+                  melts into the dark page instead of sitting as a box */}
+            {(() => {
+              const bg = collectionBackdrop(product.collection);
+              if (!bg) return null;
+              return (
+                <img
+                  src={bg}
+                  alt=""
+                  draggable={false}
+                  className="absolute inset-0 h-full w-full object-cover opacity-40 [mask-image:radial-gradient(80%_70%_at_50%_45%,black_30%,transparent_75%)]"
+                />
+              );
+            })()}
             <div
               dir={isRtl ? "rtl" : "ltr"}
               className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 select-none justify-center overflow-hidden whitespace-nowrap"
