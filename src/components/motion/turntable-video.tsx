@@ -22,14 +22,14 @@ import { useReducedMotion } from "framer-motion";
 //    frame (black letterbox is removed by the parent mix-blend-screen).
 //  · `interactive`   — hero only: the bottle follows the mouse FLEXIBLY.
 //    The turn SPEED tracks the cursor velocity (fast mouse = fast turn,
-//    slow mouse = slow turn, stopped mouse = the turn eases out and
-//    stops), and the DIRECTION follows it — moving RIGHT plays `hero.mp4`
-//    (the NORMAL copy = rightward turn), moving LEFT plays `hero-left.mp4`
-//    (the REVERSED copy = leftward turn) via a mirrored-time switch (same
-//    angle, opposite direction, no snap). When the cursor is outside the
-//    hero (or still ~1.2s) it returns to the auto 360° spin: the two
-//    copies alternate on `ended`, so the bottle keeps rotating with no
-//    seam. The showcase stays non-interactive.
+//    slow mouse = slow turn), and the DIRECTION follows it — moving RIGHT
+//    plays `hero.mp4` (the NORMAL copy = rightward turn), moving LEFT
+//    plays `hero-left.mp4` (the REVERSED copy = leftward turn) via a
+//    mirrored-time switch (same angle, opposite direction, no snap).
+//    While the cursor hovers and stops, the bottle STANDS at its angle;
+//    only when the cursor is OUTSIDE the hero does the auto 360° spin
+//    run (the two copies alternate on `ended`, no seam). The showcase
+//    stays non-interactive.
 //  · `poster`        — static bottle frame shown before/during load and
 //    for reduced motion, so the hero is never a blank black void.
 //  · reduced motion  — static first/poster frame, no playback.
@@ -45,11 +45,12 @@ interface TurntableVideoProps {
 
 // Mouse-velocity → playbackRate mapping (hero only). The rotation speed
 // mirrors the cursor: `rate = velocity(px/ms) × RATE_PER_VEL`, clamped.
+// While hovering, a stopped mouse makes the bottle STAND at its angle —
+// the auto 360° spin runs ONLY when the cursor leaves the hero.
 const MAX_RATE = 2.2; // fastest turn (quick mouse flick)
 const MIN_RATE = 0.1; // slowest creep (barely-moving mouse)
 const RATE_PER_VEL = 1.6; // ≈1× at a normal deliberate drag (~0.6px/ms)
-const IDLE_STOP_MS = 250; // no move → ease the turn out to a stop
-const IDLE_AUTO_MS = 1200; // then resume the auto 360° spin
+const IDLE_STOP_MS = 250; // no move while hovering → ease the turn out to a standstill
 
 export function TurntableVideo({
   className = "",
@@ -67,12 +68,13 @@ export function TurntableVideo({
 
   const [ready, setReady] = useState(false);
 
-  // Mouse-follow state: null = auto spin, otherwise the steered direction.
+  // Mouse-follow state: null = auto spin (cursor outside), otherwise the
+  // steered direction.
   const desiredDirRef = useRef<"left" | "right" | null>(null);
   const lastXRef = useRef<number | null>(null);
   const lastMoveTimeRef = useRef<number | null>(null);
+  const accDxRef = useRef(0); // accumulated movement since the last steer
   const idleStopTimerRef = useRef<number | null>(null);
-  const autoTimerRef = useRef<number | null>(null);
 
   // playbackRate easing (rAF loop): `curRate` drifts toward `targetRate`.
   const targetRateRef = useRef(1);
@@ -195,13 +197,14 @@ export function TurntableVideo({
 
   // Always-on rate loop (hero only): eases the active video's playbackRate
   // toward `targetRate`, so speed changes are silky instead of snapping.
+  // Stop is fast (0.3/frame — the hand takes over), start is smooth (0.18).
   useEffect(() => {
     if (!interactive || reduce) return;
     const tick = () => {
       const active = activeRef.current;
       if (active) {
-        curRateRef.current +=
-          (targetRateRef.current - curRateRef.current) * 0.18;
+        const k = targetRateRef.current === 0 ? 0.3 : 0.18;
+        curRateRef.current += (targetRateRef.current - curRateRef.current) * k;
         if (Math.abs(curRateRef.current - targetRateRef.current) < 0.01) {
           curRateRef.current = targetRateRef.current;
         }
@@ -215,19 +218,15 @@ export function TurntableVideo({
     };
   }, [interactive, reduce]);
 
-  // Mouse-follow (hero only): the turn SPEED follows the cursor velocity
-  // and the direction follows the movement. ~250ms without movement eases
-  // the rotation to a stop; ~1.2s later the auto 360° spin resumes.
+  // Mouse-follow (hero only): while the cursor is OVER the hero the turn
+  // is bound to the hand — direction follows the movement, speed follows
+  // the velocity, and ~250ms without movement eases the turn out so the
+  // bottle STANDS at its angle (no auto-rotation under the cursor).
+  // Only when the cursor LEAVES the hero does the auto 360° spin resume.
   useEffect(() => {
     if (!interactive || reduce) return;
     const root = rootRef.current;
     if (!root) return;
-
-    const resetTimers = () => {
-      if (idleStopTimerRef.current)
-        window.clearTimeout(idleStopTimerRef.current);
-      if (autoTimerRef.current) window.clearTimeout(autoTimerRef.current);
-    };
 
     const onMouseMove = (e: MouseEvent) => {
       const rect = root.getBoundingClientRect();
@@ -236,18 +235,22 @@ export function TurntableVideo({
         e.clientX <= rect.right &&
         e.clientY >= rect.top &&
         e.clientY <= rect.bottom;
-      const now = performance.now();
       if (!inside) {
-        // Cursor left the hero → return to the auto spin immediately.
+        // No hover → back to the auto 360° spin (continuous ping-pong).
         lastXRef.current = null;
         lastMoveTimeRef.current = null;
+        accDxRef.current = 0;
         desiredDirRef.current = null;
         targetRateRef.current = 1;
-        resetTimers();
+        if (idleStopTimerRef.current) {
+          window.clearTimeout(idleStopTimerRef.current);
+        }
         const active = activeRef.current;
         if (active) void active.play().catch(() => {});
         return;
       }
+
+      const now = performance.now();
       const x = e.clientX;
       const dt =
         lastMoveTimeRef.current !== null
@@ -257,34 +260,39 @@ export function TurntableVideo({
       lastXRef.current = x;
       lastMoveTimeRef.current = now;
 
-      if (Math.abs(dx) <= 2) return; // ignore jitter (timers keep running)
+      accDxRef.current += dx;
+      if (Math.abs(accDxRef.current) < 3) {
+        // Micro-jitter → the bottle stands at its angle.
+        targetRateRef.current = 0;
+        return;
+      }
 
-      const dir = dx > 0 ? "right" : "left";
+      const dir = accDxRef.current > 0 ? "right" : "left";
       desiredDirRef.current = dir;
-      const vel = Math.abs(dx) / dt; // px/ms
+      const vel = Math.abs(accDxRef.current) / dt; // px/ms
       targetRateRef.current = Math.min(
         MAX_RATE,
         Math.max(MIN_RATE, vel * RATE_PER_VEL),
       );
+      accDxRef.current = 0;
       switchTo(dir);
 
-      resetTimers();
+      // Mouse stopped over the hero → ease the turn out to a standstill
+      // (the auto spin does NOT resume while the cursor is inside).
+      if (idleStopTimerRef.current) {
+        window.clearTimeout(idleStopTimerRef.current);
+      }
       idleStopTimerRef.current = window.setTimeout(() => {
-        if (desiredDirRef.current === null) return;
-        targetRateRef.current = 0; // mouse stopped → the turn eases out
+        targetRateRef.current = 0;
       }, IDLE_STOP_MS);
-      autoTimerRef.current = window.setTimeout(() => {
-        desiredDirRef.current = null;
-        targetRateRef.current = 1; // back to the auto 360° spin
-        const active = activeRef.current;
-        if (active) void active.play().catch(() => {});
-      }, IDLE_AUTO_MS);
     };
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
-      resetTimers();
+      if (idleStopTimerRef.current) {
+        window.clearTimeout(idleStopTimerRef.current);
+      }
     };
   }, [interactive, reduce, switchTo]);
 
