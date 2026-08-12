@@ -25,22 +25,26 @@ import { useReducedMotion } from "framer-motion";
 //    scrolls past the first screen.
 //  · `fit="contain"` — showcase: show the whole bottle inside its 16:9
 //    frame (black letterbox is removed by the parent mix-blend-screen).
-//  · `interactive`   — hero only: the bottle moves WITH the hand in THREE
-//    gestures — RIGHT/LEFT steer the 360° turn (SPEED tracks the cursor
-//    velocity: fast mouse = fast turn, slow = slow; direction follows it:
-//    RIGHT plays `right.mp4` = RIGHTWARD turn, LEFT plays `left.mp4` =
-//    LEFTWARD turn via a mirrored-time switch: same angle, opposite
-//    direction, no snap — durations scaled: 3.04s vs 3.00s), and
-//    قدام/ورا (mouse down/up) ROUTE the bottle to its FRONT view (faces
-//    the viewer) or BACK with an approach rate ∝ remaining angle (silk
-//    hand-off back to the glide — the 360° spin NEVER stops).
-//    The hidden copy stays PRE-SEEKED to the mirrored angle every frame,
-//    so reversing direction is instant at ANY moment (no seek delay).
-//    The 360° spin ALWAYS runs: when the hand rests over the hero the
-//    turn eases down to a gentle glide (never frozen), and outside the
-//    hero it runs at the full auto pace and COMPLETES the 360 turn again
-//    (the two copies alternate on `ended`, no seam). The showcase stays
-//    non-interactive.
+//  · `interactive`   — hero only (walid's spec, wave 25): the bottle is
+//    POSITION-LOCKED to the mouse — scrub, not speed:
+//      · mouse X across the window = the turn: 0→1 maps the full 360°
+//        (mouse at the left edge = front view, at the right edge = the
+//        LAST second of the clip — it STOPS there: «الماوس وصل اخر
+//        الصفحة الفيديو يقف عن اخر ثانية»).
+//      · moving right = `right.mp4` scrubs FORWARD through its turn
+//        («كل ما الماوس يتحرك يمين اكتر الفيديو يتحرك اكتر»); moving
+//        left = `left.mp4` scrubs forward THROUGH IT (the bottle goes
+//        back with the hand — «الفيديو يرجع معاه»). Videos PAUSED, the
+//        frames follow the seek 1:1 — nothing runs on its own inside.
+//      · mouse still → the bottle HOLDS its exact frame.
+//      · قدام/ورا (mouse down/up) still ROUTES to the FRONT (0) or BACK
+//        (0.5) with a short ease (rAF), then the hand owns the angle
+//        again. VERTICAL wins over horizontal (discrete gesture).
+//      · cursor leaves the hero → back to the AUTO 360° ping-pong from
+//        the held angle (the rotation never dies on the page).
+//    The hidden copy is always kept at the mirrored angle (wave 23/24
+//    measured Δ, wrapped mod 1 — the loop), so any direction hand-off is
+//    instant, and the end-of-video restart zone is unreachable.
 //  · `poster`        — static bottle frame shown before/during load and
 //    for reduced motion, so the hero is never a blank black void.
 //  · reduced motion  — static first/poster frame, no playback.
@@ -54,33 +58,14 @@ interface TurntableVideoProps {
   interactive?: boolean;
 }
 
-// Mouse-velocity → playbackRate mapping (hero only). The rotation speed
-// mirrors the cursor: `rate = velocity(px/ms) × RATE_PER_VEL`, clamped.
-// The 360° spin ALWAYS runs: a still hand over the hero eases the turn
-// down to a gentle glide rate (never frozen — the hand only adds speed
-// and direction on top), and outside the hero it runs at the full pace.
-const MAX_RATE = 3; // fastest turn (quick mouse flick — responsive)
-const MIN_RATE = 0.1; // slowest creep (barely-moving mouse)
-const RATE_PER_VEL = 1.8; // ≈1× at a normal deliberate drag (~0.6px/ms)
-const IDLE_GLIDE_MS = 300; // stillness over the hero → ease down to the glide
-const IDLE_GLIDE_RATE = 0.55; // graceful continuous 360° while the hand rests
-// Asymmetric rate easing (walid: «مرن ويستجيب بسرعة»): ACCELERATION is
-// fast (the turn follows the hand almost immediately), DECELERATION is
-// slow (releases settle silkily). One lerp for both was too laggy.
-const RATE_ACCEL = 0.4; // per-rAF lerp when the target rate rises
-const RATE_DECEL = 0.1; // per-rAF lerp when the target rate falls
-// Vertical routing (قدام → front, ورا → back): the bottle turns to
-// face the viewer (or show its back) with an APPROACH RATE proportional
-// to the remaining turn fraction — it slows down as it gets there and
-// hands back to the continuous glide: the 360° spin NEVER stops
-// (walid: «لازم يلف ويفضل شغال»).
-const VERT_ARRIVE = 0.02; // |Δturn fraction| below this → hand back to the glide
-const RATE_PER_ANGLE = 4; // approach rate = |Δ| × this (cap MAX_RATE)
-const POSE_HOLD_MS = 500; // grace window before the routing hands back to the glide
 // Measured mirror lag (wave 23): left's content sits ~12 sampled frames
-// behind right's in the reversed pairing — see mirrorTimeFor below.
-const MIRROR_DELTA_INTO_LEFT = 12 / 71; // left.mp4 sampled every 2nd of 71 frames
-const MIRROR_DELTA_INTO_RIGHT = 12 / 72; // right.mp4 sampled every 2nd of 72 frames
+// behind right's in the reversed pairing — `fTarget = 1 − fSelf + Δ`,
+// wrapped mod 1 (both clips are full-turn loops: view repeats per turn).
+const MIRROR_DELTA = 12 / 71; // 71 sampled frames of left.mp4 (≈0.169)
+const SCRUB_END_MARGIN = 0.01; // park just before the final instant («آخر ثانية»)
+const SCRUB_DEADBAND = 3; // px of micro-jitter ignored (the frame holds)
+const ROUTE_ARRIVE = 0.004; // |Δfraction| below this → the routing is done
+const ROUTE_EASE = 7; // per-second ease factor toward the front/back view
 
 export function TurntableVideo({
   className = "",
@@ -98,21 +83,14 @@ export function TurntableVideo({
 
   const [ready, setReady] = useState(false);
 
-  // Mouse-follow state: null = auto spin (cursor outside), otherwise the
-  // steered direction.
-  const desiredDirRef = useRef<"left" | "right" | null>(null);
+  // Scrub state (hero only): `scrubN` = the canonical turn fraction
+  // (0 = FRONT view, 0.5 = BACK) the bottle currently shows. Everything
+  // in the hero is driven by it 1:1 while the cursor rests on the hero.
+  const scrubbingRef = useRef(false);
+  const scrubNRef = useRef(0);
   const lastXRef = useRef<number | null>(null);
   const lastYRef = useRef<number | null>(null);
-  const lastMoveTimeRef = useRef<number | null>(null);
-  const accDxRef = useRef(0); // accumulated movement since the last steer
-  const accDyRef = useRef(0); // accumulated vertical movement (قدام/ورا routing)
-  const vertDirRef = useRef<1 | -1 | null>(null); // 1 = front (قدام) · −1 = back (ورا)
-  const vertHoldTimerRef = useRef<number | null>(null);
-  const idleGlideTimerRef = useRef<number | null>(null);
-
-  // playbackRate easing (rAF loop): `curRate` drifts toward `targetRate`.
-  const targetRateRef = useRef(1);
-  const curRateRef = useRef(1);
+  const routeAnimRef = useRef<{ target: number; lastT: number } | null>(null);
   const rafRef = useRef<number | null>(null);
 
   const markReady = useCallback(() => setReady(true), []);
@@ -127,134 +105,138 @@ export function TurntableVideo({
     activeRef.current = next;
   }, []);
 
-  // The time in `target` that shows the SAME bottle angle as `source` at
-  // its current time. MEASURED (wave 23): the raw `td · (1 − f)` assumption
-  // is up to ~62° off mid-turn — walid's pair IS reversed but NOT
-  // time-aligned (left's content lags right's by ~12 sampled frames ≈ 61°).
-  // Best-fit line over the full SSD matrix (every 2nd frame, 640×360,
-  // both directions): `fTarget = 1 − fSelf + Δ` — mean SSD 5.98 vs 7.09
-  // for the old formula (in-phase model: 6.47; the 320×180 fit agreed:
-  // scale≈1.1, Δ≈+10).
-  // Wave 24 — the freeze (walid: «الفيديو بيعلق»): clamping (not wrapping)
-  // parked the hidden copy at EXACTLY `td` whenever the source is on the
-  // front arc (f < Δ) — a video seeking to its end and then `play()`ed
-  // RESTARTS from 0 (browser spec, `ended` fires → `playNext`) = the
-  // visible jump/freeze. Fix: the mapping is a LOOP — wrap mod 1 (`the
-  // view repeats every full turn`), so the mate stays inside the clip, the
-  // fraction is continuous everywhere (the wrap at f = Δ passes through
-  // the loop point = the SAME view), and the end zone is unreachable
-  // (g ≤ Δ < 0.95 by construction).
-  const mirrorTimeFor = useCallback(
-    (source: HTMLVideoElement, target: HTMLVideoElement) => {
-      const sd = source.duration;
-      const td = target.duration;
-      if (!Number.isFinite(sd) || !Number.isFinite(td) || sd <= 0 || td <= 0) {
-        return 0;
+  // The clip time that shows bottle angle `n` (0 = front, 1 = end of the
+  // turn = front again). `right.mp4` advances n with its own time; the
+  // measured pair relation gives left's time: `(1 − n + Δ) mod 1` — same
+  // wrapped loop, so both stay inside the clip (never the end-zone that
+  // restarts a `play()`ed video — wave 24).
+  const timeForN = useCallback(
+    (dir: "left" | "right", n: number, video: HTMLVideoElement) => {
+      const dur = video.duration;
+      if (!Number.isFinite(dur) || dur <= 0) return 0;
+      const safe = dur - SCRUB_END_MARGIN;
+      if (dir === "right") {
+        return Math.min(Math.max(0, n), 1) * safe;
       }
-      const f = Math.min(1, Math.max(0, source.currentTime / sd));
-      const delta =
-        target === videoLeftRef.current
-          ? MIRROR_DELTA_INTO_LEFT
-          : MIRROR_DELTA_INTO_RIGHT;
-      let g = (1 - f + delta) % 1;
-      if (g < 0.005) g = 0.005; // loop junction — park just past the front, never exactly 0
-      return td * g;
+      let g = (1 - n + MIRROR_DELTA) % 1;
+      if (g < 0) g += 1;
+      if (g < 0.004) g = 0.004; // loop junction — just past the front, never exactly 0
+      return g * safe;
     },
     [],
   );
 
-  // Reverses the turn mid-playback with NO angle snap: the target video's
-  // time is mirrored (duration − current) so the bottle holds its current
-  // angle and simply starts turning the other way.
-  const switchTo = useCallback(
-    (dir: "left" | "right") => {
-      const l = videoLeftRef.current;
-      const r = videoRightRef.current;
-      const active = activeRef.current;
-      if (!l || !r || !active) return null;
-      const target = dir === "right" ? r : l;
-      if (target === active) return target;
-      const mirror = mirrorTimeFor(active, target);
-      let nextTime = mirror > 0 ? mirror : 0;
-      const targetDur = target.duration;
-      if (Number.isFinite(targetDur) && nextTime > targetDur - 0.05) {
-        nextTime = Math.max(0, targetDur - 0.05);
-      }
-      target.currentTime = nextTime;
-      setActive(target);
-      void target.play().catch(() => {});
-      return target;
-    },
-    [setActive, mirrorTimeFor],
-  );
-
-  // Current turn fraction `n` of the shown clip (0 = FRONT view, 0.5 = BACK:
-  // the back faces the camera halfway through either clip). `right.mp4`
-  // advances n with its time, `left.mp4` counts backwards.
-  const navFraction = useCallback((): number => {
-    const l = videoLeftRef.current;
-    const r = videoRightRef.current;
-    const active = activeRef.current;
-    if (!l || !r || !active) return 0;
-    if (active === r) {
-      return r.duration > 0
-        ? Math.min(1, Math.max(0, active.currentTime / r.duration))
-        : 0;
-    }
-    if (l.duration > 0) {
-      const f = Math.min(1, Math.max(0, active.currentTime / l.duration));
-      const n = (1 - f) % 1;
-      return n < 0 ? n + 1 : n;
-    }
-    return 0;
+  // Inverse of timeForN: the bottle angle currently shown by `video`.
+  const fracOf = useCallback((video: HTMLVideoElement): number => {
+    const dur = video.duration;
+    if (!Number.isFinite(dur) || dur <= 0) return 0;
+    const f = Math.min(1, Math.max(0, video.currentTime / dur));
+    return video === videoLeftRef.current ? (1 - f + MIRROR_DELTA) % 1 : f;
   }, []);
 
-  // Route the bottle to a view — FRONT (faces the viewer, قدام) or BACK
-  // (ظهرها) — taking the SHORTEST arc with an approach rate ∝ remaining
-  // distance: fast first, then a silk hand-off back to the continuous
-  // glide. The rotation NEVER stops (rate 0 is never a target here).
-  const routeToView = useCallback(
-    (dir: 1 | -1) => {
+  const pauseBoth = useCallback(() => {
+    videoRightRef.current?.pause();
+    videoLeftRef.current?.pause();
+  }, []);
+
+  // Show bottle angle `n`: pick the clip by the SHORTEST signed arc from
+  // the current angle (right.mp4 for forward scrubbing, left.mp4 for
+  // backward), seek BOTH copies (the hidden one stays mirrored — instant
+  // reversal at ANY moment), and show the chosen one. Everything stays
+  // PAUSED: the frames follow the hand 1:1 and hold when it rests.
+  const displayAt = useCallback(
+    (nArg: number) => {
       const l = videoLeftRef.current;
       const r = videoRightRef.current;
-      const active = activeRef.current;
-      if (!l || !r || !active) return;
-      const target = dir === 1 ? 0 : 0.5;
-      const d = ((target - navFraction() + 1.5) % 1) - 0.5; // shortest signed Δ
-      if (Number.isNaN(d)) return;
-      if (Math.abs(d) < VERT_ARRIVE) {
-        // Arrived at the view → ease to the gentle glide (still turning).
-        desiredDirRef.current = null;
-        targetRateRef.current = IDLE_GLIDE_RATE;
-        return;
-      }
-      const turnDir = d > 0 ? "right" : "left";
-      desiredDirRef.current = turnDir;
-      switchTo(turnDir);
-      targetRateRef.current = Math.min(
-        MAX_RATE,
-        Math.max(MIN_RATE, Math.abs(d) * RATE_PER_ANGLE),
+      if (!l || !r) return;
+      let n = nArg % 1;
+      if (n < 0) n += 1;
+      const prev = scrubNRef.current;
+      const d = ((n - prev + 1.5) % 1) - 0.5; // shortest signed Δ
+      const dir = Math.abs(d) < 1e-4 ? "right" : d > 0 ? "right" : "left";
+      const target = dir === "right" ? r : l;
+      const other = target === r ? l : r;
+      target.currentTime = timeForN(dir, n, target);
+      other.currentTime = timeForN(
+        dir === "right" ? "left" : "right",
+        n,
+        other,
       );
+      setActive(target);
+      scrubNRef.current = n;
     },
-    [navFraction, switchTo],
+    [setActive, timeForN],
   );
+
+  // Enter the scrub from the auto ping-pong at the CURRENT bottle angle,
+  // both videos paused (the frame holds exactly where it was).
+  const enterScrub = useCallback(() => {
+    const active = activeRef.current;
+    if (!active) return;
+    if (!scrubbingRef.current) {
+      scrubNRef.current = fracOf(active);
+      pauseBoth();
+      scrubbingRef.current = true;
+    }
+  }, [fracOf, pauseBoth]);
+
+  // Cursor left the hero → the auto 360° spin resumes from the held
+  // angle (plays to the clip end, then the ping-pong alternates).
+  const exitScrub = useCallback(() => {
+    const active = activeRef.current;
+    if (!scrubbingRef.current) return;
+    scrubbingRef.current = false;
+    routeAnimRef.current = null;
+    if (active) void active.play().catch(() => {});
+  }, []);
+
+  // The direction (left/right) to ROUTE to the front (0) or back (0.5)
+  // takes the SHORTEST arc from the current angle, animated with a short
+  // ease in the rAF loop (the hand keeps owning the angle afterwards).
+  const routeToView = useCallback(
+    (target: 0 | 0.5) => {
+      enterScrub();
+      routeAnimRef.current = { target, lastT: performance.now() };
+    },
+    [enterScrub],
+  );
+
+  // Always-on rAF while interactive: drives the front/back routing ease
+  // (the only animated motion inside the hero — everything else is a
+  // direct mouse-position seek).
+  useEffect(() => {
+    if (!interactive || reduce) return;
+    const tick = () => {
+      const anim = routeAnimRef.current;
+      if (anim) {
+        const now = performance.now();
+        const dt = Math.min(0.05, (now - anim.lastT) / 1000);
+        anim.lastT = now;
+        const adj = scrubNRef.current + 1;
+        const rem = ((anim.target - scrubNRef.current + 1.5) % 1) - 0.5;
+        if (Math.abs(rem) < ROUTE_ARRIVE) {
+          displayAt(anim.target);
+          routeAnimRef.current = null;
+        } else {
+          const step = rem * (1 - Math.exp(-ROUTE_EASE * dt));
+          displayAt((scrubNRef.current + step + adj) % 1);
+        }
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [interactive, reduce, displayAt]);
 
   const playNext = useCallback(() => {
     const l = videoLeftRef.current;
     const r = videoRightRef.current;
     if (!l || !r) return;
     const active = activeRef.current ?? r;
-    const desired = desiredDirRef.current;
-    // Steering overrides the ping-pong: keep re-playing the video that
-    // matches the steered direction (right → normal copy, left → reversed).
-    let next = active === l ? r : l;
-    if (desired === "right") next = r;
-    else if (desired === "left") next = l;
-    // Wave 24: play from the PRE-SEEKED park position (the rAF loop keeps
-    // the hidden copy at the mirrored angle) — `currentTime = 0` snapped
-    // the bottle to the front view whenever the actively-steered clip
-    // reached its `ended` (~1s at rate 3): another freeze/jump source.
-    // The park is always angle-continuous, in every mode.
+    const next = active === l ? r : l;
+    next.currentTime = 0; // AUTO ping-pong: each clip plays its full 360° turn
     setActive(next);
     void next.play().catch(() => {});
   }, [setActive]);
@@ -323,50 +305,13 @@ export function TurntableVideo({
     };
   }, [reduce, playNext, fadeOnScroll, markReady, setActive]);
 
-  // Always-on rate loop (hero only): eases the active video's playbackRate
-  // toward `targetRate` (silky speed changes) AND keeps the hidden copy
-  // pre-seeked to the mirrored position (`duration − current`), so a
-  // direction reversal at ANY moment is instant — the exact angle is
-  // already decoded, no seek at switch time.
-  useEffect(() => {
-    if (!interactive || reduce) return;
-    const tick = () => {
-      const active = activeRef.current;
-      const l = videoLeftRef.current;
-      const r = videoRightRef.current;
-      if (active && l && r) {
-        const diff = targetRateRef.current - curRateRef.current;
-        curRateRef.current += diff * (diff > 0 ? RATE_ACCEL : RATE_DECEL);
-        if (Math.abs(curRateRef.current - targetRateRef.current) < 0.01) {
-          curRateRef.current = targetRateRef.current;
-        }
-        active.playbackRate = curRateRef.current;
-
-        // Reverse-readiness: mirror the active position into the hidden
-        // copy in coarse hops (0.35s) — cheap, and the swap is instant.
-        const inactive = active === l ? r : l;
-        const mirror = mirrorTimeFor(active, inactive);
-        if (mirror > 0) {
-          if (Math.abs(inactive.currentTime - mirror) > 0.35) {
-            inactive.currentTime = mirror;
-          }
-        }
-      }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    };
-  }, [interactive, reduce, mirrorTimeFor]);
-
-  // Mouse-follow (hero only) — the bottle moves WITH the hand in all three
-  // directions: RIGHT/LEFT = steering the 360° turn (velocity-based speed),
-  // قدام (mouse forward/down) = the bottle smoothly ROUTES to its FRONT
-  // view (faces the viewer), ورا (up) = routes to its BACK — approach rate
-  // ∝ remaining distance, silk hand-off, and the rotation NEVER stops
-  // (the glide is always the floor — walid: «لازم يلف ويفضل شغال»).
-  // Outside the hero the turn runs at the full auto pace (rate 1).
+  // Mouse-follow (hero only, walid's wave-25 SCRUB spec): inside the hero
+  // the bottle angle = mouse X / window width (0 = left edge → front,
+  // 1 = right edge → the clip's LAST second, held). Moving right scrubs
+  // `right.mp4` forward, moving left scrubs `left.mp4` forward (the
+  // bottle turns back with the hand), stillness holds the exact frame.
+  // قدام/ورا (mouse down/up) route to the FRONT/BACK view — the frame
+  // holds at the target. Outside the hero: auto 360° ping-pong resumes.
   useEffect(() => {
     if (!interactive || reduce) return;
     const root = rootRef.current;
@@ -380,109 +325,40 @@ export function TurntableVideo({
         e.clientY >= rect.top &&
         e.clientY <= rect.bottom;
       if (!inside) {
-        // No hover → full auto 360° spin (continuous ping-pong).
+        // No hover → auto 360° spin resumes from the held angle.
         lastXRef.current = null;
         lastYRef.current = null;
-        lastMoveTimeRef.current = null;
-        accDxRef.current = 0;
-        accDyRef.current = 0;
-        desiredDirRef.current = null;
-        vertDirRef.current = null;
-        targetRateRef.current = 1;
-        if (vertHoldTimerRef.current) {
-          window.clearTimeout(vertHoldTimerRef.current);
-        }
-        if (idleGlideTimerRef.current) {
-          window.clearTimeout(idleGlideTimerRef.current);
-        }
-        const active = activeRef.current;
-        if (active) void active.play().catch(() => {});
+        exitScrub();
         return;
       }
 
-      const now = performance.now();
-      const x = e.clientX;
-      const y = e.clientY;
-      const dt =
-        lastMoveTimeRef.current !== null
-          ? Math.max(8, now - lastMoveTimeRef.current)
-          : 16;
-      const dx = lastXRef.current !== null ? x - lastXRef.current : 0;
-      const dy = lastYRef.current !== null ? y - lastYRef.current : 0;
-      lastXRef.current = x;
-      lastYRef.current = y;
-      lastMoveTimeRef.current = now;
+      enterScrub();
+      const dx = lastXRef.current !== null ? e.clientX - lastXRef.current : 0;
+      const dy = lastYRef.current !== null ? e.clientY - lastYRef.current : 0;
+      lastXRef.current = e.clientX;
+      lastYRef.current = e.clientY;
 
-      accDxRef.current += dx;
-      accDyRef.current += dy;
-      const ax = Math.abs(accDxRef.current);
-      const ay = Math.abs(accDyRef.current);
-
-      if (ax < 3 && ay < 3) {
-        // Micro-jitter → ease back to the gentle glide (unless a vertical
-        // routing gesture is still alive — that wins for its window).
-        if (vertDirRef.current === null) {
-          targetRateRef.current = IDLE_GLIDE_RATE;
-        }
-        return;
+      if (Math.abs(dx) < SCRUB_DEADBAND && Math.abs(dy) < SCRUB_DEADBAND) {
+        return; // micro-jitter → the bottle holds its exact frame
       }
 
-      // ======== HORIZONTAL: steer the 360° turn ========
-      if (ax > ay) {
-        accDyRef.current = 0;
-        const dir = accDxRef.current > 0 ? "right" : "left";
-        desiredDirRef.current = dir;
-        const vel = ax / dt; // px/ms
-        targetRateRef.current = Math.min(
-          MAX_RATE,
-          Math.max(MIN_RATE, vel * RATE_PER_VEL),
-        );
-        accDxRef.current = 0;
-        switchTo(dir);
+      // Horizontal wins unless the move is CLEARLY a vertical push
+      // (dy exceeds dx by a margin) — so diagonal dragging scrubs.
+      if (Math.abs(dy) > Math.abs(dx) + 8) {
+        // VERTICAL — route to FRONT (mouse down, قدام) / BACK (up, ورا).
+        routeToView(dy > 0 ? 0 : 0.5);
       } else {
-        // ======== VERTICAL: route to the FRONT (قدام) / BACK (ورا) ========
-        accDxRef.current = 0;
-        vertDirRef.current = accDyRef.current > 0 ? 1 : -1; // down = toward the viewer
-        routeToView(vertDirRef.current);
-        accDyRef.current = 0;
+        // HORIZONTAL — the scrub: mouse X across the window = the turn.
+        routeAnimRef.current = null;
+        displayAt(e.clientX / window.innerWidth);
       }
-
-      // The gesture's grace window: while the hand keeps pushing (or
-      // ≤ POSE_HOLD_MS after it stops) the routing stays alive, then
-      // the turn hands back to the continuous glide.
-      if (vertHoldTimerRef.current) {
-        window.clearTimeout(vertHoldTimerRef.current);
-      }
-      vertHoldTimerRef.current = window.setTimeout(() => {
-        vertDirRef.current = null;
-        desiredDirRef.current = null;
-        targetRateRef.current = IDLE_GLIDE_RATE;
-      }, POSE_HOLD_MS);
-
-      // Hand still over the hero → the turn eases down to the glide
-      // (continuous rotation, never a frozen frame).
-      if (idleGlideTimerRef.current) {
-        window.clearTimeout(idleGlideTimerRef.current);
-      }
-      idleGlideTimerRef.current = window.setTimeout(() => {
-        if (vertDirRef.current === null) {
-          desiredDirRef.current = null;
-          targetRateRef.current = IDLE_GLIDE_RATE;
-        }
-      }, IDLE_GLIDE_MS);
     };
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
-      if (vertHoldTimerRef.current) {
-        window.clearTimeout(vertHoldTimerRef.current);
-      }
-      if (idleGlideTimerRef.current) {
-        window.clearTimeout(idleGlideTimerRef.current);
-      }
     };
-  }, [interactive, reduce, switchTo, routeToView]);
+  }, [interactive, reduce, enterScrub, exitScrub, displayAt, routeToView]);
 
   const videoClass = `absolute inset-0 hidden h-full w-full ${
     fit === "cover" ? "object-cover" : "object-contain"
