@@ -26,10 +26,12 @@ import { useReducedMotion } from "framer-motion";
 //    plays `hero.mp4` (the NORMAL copy = rightward turn), moving LEFT
 //    plays `hero-left.mp4` (the REVERSED copy = leftward turn) via a
 //    mirrored-time switch (same angle, opposite direction, no snap).
+//    The hidden copy stays PRE-SEEKED to the mirrored angle every frame,
+//    so reversing direction is instant at ANY moment (no seek delay).
 //    The 360° spin ALWAYS runs: when the hand rests over the hero the
-//    turn eases down to a gentle glide (never frozen, never a static
-//    frame), and outside the hero it runs at the full auto pace (the two
-//    copies alternate on `ended`, no seam). The showcase stays
+//    turn eases down to a gentle glide (never frozen), and outside the
+//    hero it runs at the full auto pace and COMPLETES the 360 turn again
+//    (the two copies alternate on `ended`, no seam). The showcase stays
 //    non-interactive.
 //  · `poster`        — static bottle frame shown before/during load and
 //    for reduced motion, so the hero is never a blank black void.
@@ -88,7 +90,10 @@ export function TurntableVideo({
 
   const setActive = useCallback((next: HTMLVideoElement) => {
     const prev = activeRef.current;
-    if (prev && prev !== next) prev.style.display = "none";
+    if (prev && prev !== next) {
+      prev.style.display = "none";
+      prev.pause(); // the hidden copy must never advance on its own
+    }
     next.style.display = "block";
     activeRef.current = next;
   }, []);
@@ -199,18 +204,33 @@ export function TurntableVideo({
   }, [reduce, playNext, fadeOnScroll, markReady, setActive]);
 
   // Always-on rate loop (hero only): eases the active video's playbackRate
-  // toward `targetRate`, so speed changes are silky instead of snapping.
+  // toward `targetRate` (silky speed changes) AND keeps the hidden copy
+  // pre-seeked to the mirrored position (`duration − current`), so a
+  // direction reversal at ANY moment is instant — the exact angle is
+  // already decoded, no seek at switch time.
   useEffect(() => {
     if (!interactive || reduce) return;
     const tick = () => {
       const active = activeRef.current;
-      if (active) {
+      const l = videoLeftRef.current;
+      const r = videoRightRef.current;
+      if (active && l && r) {
         curRateRef.current +=
           (targetRateRef.current - curRateRef.current) * 0.18;
         if (Math.abs(curRateRef.current - targetRateRef.current) < 0.01) {
           curRateRef.current = targetRateRef.current;
         }
         active.playbackRate = curRateRef.current;
+
+        // Reverse-readiness: mirror the active position into the hidden
+        // copy in coarse hops (0.35s) — cheap, and the swap is instant.
+        const mirror = active.duration - active.currentTime;
+        const inactive = active === l ? r : l;
+        if (Number.isFinite(mirror) && mirror > 0) {
+          if (Math.abs(inactive.currentTime - mirror) > 0.35) {
+            inactive.currentTime = mirror;
+          }
+        }
       }
       rafRef.current = requestAnimationFrame(tick);
     };
