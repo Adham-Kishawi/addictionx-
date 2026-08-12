@@ -57,11 +57,16 @@ interface TurntableVideoProps {
 // The 360° spin ALWAYS runs: a still hand over the hero eases the turn
 // down to a gentle glide rate (never frozen — the hand only adds speed
 // and direction on top), and outside the hero it runs at the full pace.
-const MAX_RATE = 2.2; // fastest turn (quick mouse flick)
+const MAX_RATE = 3; // fastest turn (quick mouse flick — responsive)
 const MIN_RATE = 0.1; // slowest creep (barely-moving mouse)
-const RATE_PER_VEL = 1.6; // ≈1× at a normal deliberate drag (~0.6px/ms)
+const RATE_PER_VEL = 1.8; // ≈1× at a normal deliberate drag (~0.6px/ms)
 const IDLE_GLIDE_MS = 300; // stillness over the hero → ease down to the glide
 const IDLE_GLIDE_RATE = 0.55; // graceful continuous 360° while the hand rests
+// Asymmetric rate easing (walid: «مرن ويستجيب بسرعة»): ACCELERATION is
+// fast (the turn follows the hand almost immediately), DECELERATION is
+// slow (releases settle silkily). One lerp for both was too laggy.
+const RATE_ACCEL = 0.4; // per-rAF lerp when the target rate rises
+const RATE_DECEL = 0.1; // per-rAF lerp when the target rate falls
 // Vertical routing (قدام → front, ورا → back): the bottle turns to
 // face the viewer (or show its back) with an APPROACH RATE proportional
 // to the remaining turn fraction — it slows down as it gets there and
@@ -70,7 +75,6 @@ const IDLE_GLIDE_RATE = 0.55; // graceful continuous 360° while the hand rests
 const VERT_ARRIVE = 0.02; // |Δturn fraction| below this → hand back to the glide
 const RATE_PER_ANGLE = 4; // approach rate = |Δ| × this (cap MAX_RATE)
 const POSE_HOLD_MS = 500; // grace window before the routing hands back to the glide
-const RATE_LERP = 0.12; // playbackRate easing per rAF frame (low = silkier)
 
 export function TurntableVideo({
   className = "",
@@ -303,8 +307,8 @@ export function TurntableVideo({
       const l = videoLeftRef.current;
       const r = videoRightRef.current;
       if (active && l && r) {
-        curRateRef.current +=
-          (targetRateRef.current - curRateRef.current) * RATE_LERP;
+        const diff = targetRateRef.current - curRateRef.current;
+        curRateRef.current += diff * (diff > 0 ? RATE_ACCEL : RATE_DECEL);
         if (Math.abs(curRateRef.current - targetRateRef.current) < 0.01) {
           curRateRef.current = targetRateRef.current;
         }
