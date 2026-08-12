@@ -28,8 +28,8 @@ export function TiltCard({
   const reduce = useReducedMotion();
   const rx = useMotionValue(0);
   const ry = useMotionValue(0);
-  const srx = useSpring(rx, { stiffness: 180, damping: 18 });
-  const sry = useSpring(ry, { stiffness: 180, damping: 18 });
+  const srx = useSpring(rx, { stiffness: 150, damping: 24 });
+  const sry = useSpring(ry, { stiffness: 150, damping: 24 });
 
   const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (reduce) return;

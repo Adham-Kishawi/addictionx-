@@ -29,8 +29,8 @@ const RepulsionItem = forwardRef<
   const reduce = useReducedMotion();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const sx = useSpring(x, { stiffness: 160, damping: 20 });
-  const sy = useSpring(y, { stiffness: 160, damping: 20 });
+  const sx = useSpring(x, { stiffness: 130, damping: 26 });
+  const sy = useSpring(y, { stiffness: 130, damping: 26 });
 
   useImperativeHandle(ref, () => ({
     setPointer(px: number, py: number) {

@@ -46,9 +46,10 @@ const ROLE_STYLES: Record<
   back: { scale: 0.5, blur: 4, opacity: 0.55, z: 5, left: 50, height: 52 },
 };
 
-const ANIM_MS = 650;
+const ANIM_MS = 700;
 const SWIPE_THRESHOLD = 50;
-const EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
+// Ease-out: roles glide into place and settle — no mechanical snap
+const EASE = "cubic-bezier(0.22, 0.61, 0.36, 1)";
 
 function slideLabel(product: Product) {
   return `${product.nameAr} — ${product.nameEn}`;
@@ -194,7 +195,7 @@ export function ProductCarousel({
             className="pointer-events-none absolute inset-0 z-[1]"
             style={{
               opacity: isActive ? 1 : 0,
-              transition: "opacity 650ms cubic-bezier(0.4, 0, 0.2, 1)",
+              transition: `opacity ${ANIM_MS}ms ${EASE}`,
             }}
           >
             <div

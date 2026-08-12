@@ -52,7 +52,9 @@ function TurnView({
       src={src}
       alt={alt}
       draggable={false}
-      className={className}
+      decoding="async"
+      fetchPriority={points.i[0] === 0 ? "high" : "low"}
+      className={`${className} will-change-opacity`}
       style={{ opacity }}
     />
   );
@@ -70,7 +72,7 @@ function StripSlot({
   priceSlot: React.ReactNode;
 }) {
   const transition =
-    "opacity 650ms cubic-bezier(0.4,0,0.2,1), transform 650ms cubic-bezier(0.4,0,0.2,1)";
+    "opacity 700ms cubic-bezier(0.22,0.61,0.36,1), transform 700ms cubic-bezier(0.22,0.61,0.36,1)";
   return (
     <div
       className="absolute inset-0 flex items-center justify-center"
@@ -127,8 +129,10 @@ export function RotatingShowcase({
     offset: ["start start", "end end"],
   });
 
+  // Full-range animation transformed into silk: the bottle holds the whole
+  // scale arc but the motion is front-loaded (ease-out), so it settles.
   const rotateY = useTransform(scrollYProgress, [0, 1], [-36, 36]);
-  const scale = useTransform(scrollYProgress, [0, 0.45, 1], [0.72, 1, 0.9]);
+  const scale = useTransform(scrollYProgress, [0, 0.45, 1], [0.72, 0.98, 0.9]);
   const sheenX = useTransform(scrollYProgress, [0, 1], ["-180%", "180%"]);
   const watermarkOpacity = useTransform(scrollYProgress, [0, 0.3], [0.45, 0.1]);
 
@@ -151,12 +155,16 @@ export function RotatingShowcase({
   const views = [frontView, ...mid, frontView].slice(0, 6);
   const n = views.length;
 
+  // Each view is FULLY opaque for most of its segment: a quick 6% ramp-in,
+  // a long hold, a 6% hand-off where the next view crosses over. The photo
+  // layer reads as one continuous rotation instead of a shimmering ghost
+  // (the old long fade-ins left the bottle half-transparent).
   const turnPoints = views.map((_, i) => {
     const k = i;
-    const i0 = k === 0 ? 0.02 : k / n + 0.015;
-    const i1 = Math.min(k / n + 0.09, 1);
-    const i2 = Math.max((k + 1) / n - 0.09, 0);
-    const i3 = k === n - 1 ? 1 : (k + 1) / n - 0.015;
+    const i0 = k === 0 ? 0 : Math.max(0, k / n - 0.02);
+    const i1 = Math.min(k / n + 0.06, 1);
+    const i2 = Math.max((k + 1) / n - 0.06, 0);
+    const i3 = k === n - 1 ? 1 : Math.min((k + 1) / n - 0.02, 1);
     return {
       src: views[k],
       i: [i0, i1, i2, i3],
@@ -204,8 +212,8 @@ export function RotatingShowcase({
   const ctaY = useTransform(scrollYProgress, [0.78, 0.92], [40, 0]);
   const floorScale = useTransform(
     scrollYProgress,
-    [0, 0.5, 1],
-    [0.7, 1.15, 0.9],
+    [0, 0.35, 0.55, 1],
+    [0.7, 1.14, 1.15, 0.9],
   );
 
   // Background hue drift across the turn: red → gold → silver

@@ -17,6 +17,8 @@ import { ParticleField } from "@/components/motion/particle-field";
 //   glow ramps up, the giant metallic "ADDICTION" splits away.
 // Layer ladder: z-0 watermark / z-1 glow / z-2 bottle / z-5 text.
 // Scroll-linked via useScroll stuck to prefers-reduced-motion.
+// The scrub ranges keep their full drama; mid-point easing points
+// turn the linear saw into an ease-out arc (fast start, silk finish).
 // ============================================================
 
 export function BottleRush({
@@ -36,15 +38,23 @@ export function BottleRush({
     offset: ["start start", "end end"],
   });
 
-  const scale = useTransform(scrollYProgress, [0, 0.75], [0.5, 1.15]);
-  const rotate = useTransform(scrollYProgress, [0, 1], [-12, 10]);
-  const blur = useTransform(scrollYProgress, [0, 0.25], [18, 0]);
+  const scale = useTransform(
+    scrollYProgress,
+    [0, 0.45, 0.75],
+    [0.5, 1.13, 1.15],
+  );
+  const rotate = useTransform(scrollYProgress, [0, 0.45, 1], [-12, -1, 10]);
+  const blur = useTransform(scrollYProgress, [0, 0.12, 0.25], [18, 3, 0]);
   const bottleOpacity = useTransform(
     scrollYProgress,
     [0, 0.15, 0.9],
     [0, 1, 1],
   );
-  const glowOpacity = useTransform(scrollYProgress, [0.1, 0.7], [0, 0.85]);
+  const glowOpacity = useTransform(
+    scrollYProgress,
+    [0.1, 0.45, 0.7],
+    [0, 0.72, 0.85],
+  );
   const wordX = useTransform(scrollYProgress, [0, 1], ["16vw", "-16vw"]);
   const fade = useTransform(scrollYProgress, [0.92, 1], [1, 0]);
   const src = image ?? "/uploads/prodact.png";

@@ -16,6 +16,7 @@ import { BottleRush } from "@/components/motion/bottle-rush";
 import { StatsBand } from "@/components/motion/stats-band";
 import { SectionGlow } from "@/components/motion/section-glow";
 import { RotatingShowcase } from "@/components/motion/rotating-showcase";
+import { LazyMount } from "@/components/motion/lazy-mount";
 import { ExplodedProduct } from "@/components/motion/exploded-product";
 import { DepthStack } from "@/components/motion/depth-stack";
 import { ScrollWordReveal } from "@/components/motion/scroll-word-reveal";
@@ -166,13 +167,17 @@ export default async function Home({
 
       {/* ====== ROTATING SHOWCASE — 300vh pinned stage: the hero product turns on
             its axis bound to scroll, note panels slide through per quarter, the
-            backdrop hue drifts red → gold → silver, price+CTA take the last turn ====== */}
+            backdrop hue drifts red → gold → silver, price+CTA take the last turn ======
+            (wave 9: LazyMount keeps the 300vh scene + its scroll listeners out of
+            the DOM until the user actually reaches it — the hero stays fast) ====== */}
       {heroProduct ? (
-        <RotatingShowcase
-          product={heroProduct}
-          locale={locale}
-          collectionNames={collectionNames}
-        />
+        <LazyMount fallbackHeight="300vh">
+          <RotatingShowcase
+            product={heroProduct}
+            locale={locale}
+            collectionNames={collectionNames}
+          />
+        </LazyMount>
       ) : null}
 
       {/* ====== Moving words strip — pinned under the header while the next sections
@@ -215,15 +220,18 @@ export default async function Home({
       {/* ====== BOTTLE RUSH — the awe scene: 220vh scroll-scrubbed stage.
             The real product photo scales 0.5→1.15, rotates and un-blurs
             while "ADDICTION" (metallic) splits sideways and the red aura
-            ramps. Sticky stage + scroll-linked framer transforms ====== */}
-      <BottleRush
-        image={heroProduct?.image}
-        title={dict.home.rushTitle}
-        subtitle={dict.home.rushSubtitle}
-      />
+            ramps. Sticky stage + scroll-linked framer transforms ======
+            (wave 9: LazyMount defers the whole scene off-page) ====== */}
+      <LazyMount fallbackHeight="220vh">
+        <BottleRush
+          image={heroProduct?.image}
+          title={dict.home.rushTitle}
+          subtitle={dict.home.rushSubtitle}
+        />
+      </LazyMount>
 
       {/* ====== Most wanted ====== */}
-      <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 [content-visibility:auto] [contain-intrinsic-size:auto_640px]">
         <div className="mb-10 flex items-end justify-between gap-4">
           <SectionHeading
             eyebrow="ADDICTIONX"
@@ -286,7 +294,7 @@ export default async function Home({
       </section>
 
       {/* ====== Experience strip — glow drifts on its own scroll layer ====== */}
-      <section className="relative overflow-hidden border-y border-border bg-card/40 py-20">
+      <section className="relative overflow-hidden border-y border-border bg-card/40 py-20 [content-visibility:auto] [contain-intrinsic-size:auto_520px]">
         <SectionGlow background="radial-gradient(60% 80% at 50% 0%, oklch(0.6 0.22 22 / 0.12), transparent 70%)" />
         <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 text-center sm:px-6">
           <ScrollWordReveal

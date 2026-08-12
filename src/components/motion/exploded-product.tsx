@@ -47,7 +47,7 @@ export function ExplodedProduct({
       initial={reduce ? false : { opacity: 0, y: 60 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
-      transition={{ type: "spring", stiffness: 90, damping: 18 }}
+      transition={{ type: "spring", stiffness: 80, damping: 22 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{ perspective: 1200 }}
@@ -70,7 +70,7 @@ export function ExplodedProduct({
                       rotateY: layer.kind === "bottle" ? 18 : 0,
                     }
               }
-              transition={{ type: "spring", stiffness: 220, damping: 26 }}
+              transition={{ type: "spring", stiffness: 170, damping: 30 }}
             >
               {layer.kind === "pattern" && (
                 <div

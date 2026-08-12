@@ -26,8 +26,8 @@ export function MouseDrift({
   const reduce = useReducedMotion();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const sx = useSpring(x, { stiffness: 55, damping: 20 });
-  const sy = useSpring(y, { stiffness: 55, damping: 20 });
+  const sx = useSpring(x, { stiffness: 45, damping: 26 });
+  const sy = useSpring(y, { stiffness: 45, damping: 26 });
 
   const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (reduce) return;

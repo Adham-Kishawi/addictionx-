@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 // Rising particle field — used in the hero and the rest of the page.
@@ -18,8 +19,20 @@ export function ParticleField({
   opacityScale?: number;
 }) {
   const reduce = useReducedMotion();
+  // Wave 9 (weight): phones render half the particles — same look, half the
+  // compositing budget. useSyncExternalStore keeps SSR/hydration clean.
+  const isMobile = useSyncExternalStore(
+    (onChange) => {
+      const mql = window.matchMedia("(max-width: 768px)");
+      mql.addEventListener("change", onChange);
+      return () => mql.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia("(max-width: 768px)").matches,
+    () => false,
+  );
+  const particleCount = isMobile ? Math.max(6, Math.ceil(count / 2)) : count;
 
-  const particles = Array.from({ length: count }, (_, i) => ({
+  const particles = Array.from({ length: particleCount }, (_, i) => ({
     id: i,
     left: `${(i * 41) % 100}%`,
     size: 2 + ((i * 7) % 4),
