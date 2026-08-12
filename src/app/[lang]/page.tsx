@@ -121,11 +121,12 @@ export default async function Home({
                 <HeartbeatLine className="h-10 w-56 text-red-500 [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))_drop-shadow(0_4px_24px_rgba(0,0,0,0.45))]" />
               </FadeIn>
 
-              <FadeIn delay={0.6}>
-                <p className="max-w-xl text-base leading-relaxed text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)] sm:text-lg">
-                  {dict.hero.subtitle}
-                </p>
-              </FadeIn>
+              <WordReveal
+                as="p"
+                text={dict.hero.subtitle}
+                delay={0.55}
+                className="max-w-xl text-base leading-relaxed text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)] sm:text-lg"
+              />
 
               <FadeIn delay={0.75}>
                 <div className="flex flex-col gap-3 sm:flex-row">

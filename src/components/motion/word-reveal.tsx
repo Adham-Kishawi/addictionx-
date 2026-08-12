@@ -19,7 +19,7 @@ export function WordReveal({
   delay = 0,
 }: {
   text: string;
-  as?: "h1" | "h2" | "h3";
+  as?: "h1" | "h2" | "h3" | "p";
   className?: string;
   delay?: number;
 }) {
