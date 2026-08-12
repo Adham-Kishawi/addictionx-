@@ -26,10 +26,11 @@ import { useReducedMotion } from "framer-motion";
 //    plays `hero.mp4` (the NORMAL copy = rightward turn), moving LEFT
 //    plays `hero-left.mp4` (the REVERSED copy = leftward turn) via a
 //    mirrored-time switch (same angle, opposite direction, no snap).
-//    While the cursor hovers and stops, the bottle STANDS at its angle;
-//    only when the cursor is OUTSIDE the hero does the auto 360° spin
-//    run (the two copies alternate on `ended`, no seam). The showcase
-//    stays non-interactive.
+//    The 360° spin ALWAYS runs: when the hand rests over the hero the
+//    turn eases down to a gentle glide (never frozen, never a static
+//    frame), and outside the hero it runs at the full auto pace (the two
+//    copies alternate on `ended`, no seam). The showcase stays
+//    non-interactive.
 //  · `poster`        — static bottle frame shown before/during load and
 //    for reduced motion, so the hero is never a blank black void.
 //  · reduced motion  — static first/poster frame, no playback.
@@ -45,12 +46,14 @@ interface TurntableVideoProps {
 
 // Mouse-velocity → playbackRate mapping (hero only). The rotation speed
 // mirrors the cursor: `rate = velocity(px/ms) × RATE_PER_VEL`, clamped.
-// While hovering, a stopped mouse makes the bottle STAND at its angle —
-// the auto 360° spin runs ONLY when the cursor leaves the hero.
+// The 360° spin ALWAYS runs: a still hand over the hero eases the turn
+// down to a gentle glide rate (never frozen — the hand only adds speed
+// and direction on top), and outside the hero it runs at the full pace.
 const MAX_RATE = 2.2; // fastest turn (quick mouse flick)
 const MIN_RATE = 0.1; // slowest creep (barely-moving mouse)
 const RATE_PER_VEL = 1.6; // ≈1× at a normal deliberate drag (~0.6px/ms)
-const IDLE_STOP_MS = 250; // no move while hovering → ease the turn out to a standstill
+const IDLE_GLIDE_MS = 300; // stillness over the hero → ease down to the glide
+const IDLE_GLIDE_RATE = 0.55; // graceful continuous 360° while the hand rests
 
 export function TurntableVideo({
   className = "",
@@ -74,7 +77,7 @@ export function TurntableVideo({
   const lastXRef = useRef<number | null>(null);
   const lastMoveTimeRef = useRef<number | null>(null);
   const accDxRef = useRef(0); // accumulated movement since the last steer
-  const idleStopTimerRef = useRef<number | null>(null);
+  const idleGlideTimerRef = useRef<number | null>(null);
 
   // playbackRate easing (rAF loop): `curRate` drifts toward `targetRate`.
   const targetRateRef = useRef(1);
@@ -197,14 +200,13 @@ export function TurntableVideo({
 
   // Always-on rate loop (hero only): eases the active video's playbackRate
   // toward `targetRate`, so speed changes are silky instead of snapping.
-  // Stop is fast (0.3/frame — the hand takes over), start is smooth (0.18).
   useEffect(() => {
     if (!interactive || reduce) return;
     const tick = () => {
       const active = activeRef.current;
       if (active) {
-        const k = targetRateRef.current === 0 ? 0.3 : 0.18;
-        curRateRef.current += (targetRateRef.current - curRateRef.current) * k;
+        curRateRef.current +=
+          (targetRateRef.current - curRateRef.current) * 0.18;
         if (Math.abs(curRateRef.current - targetRateRef.current) < 0.01) {
           curRateRef.current = targetRateRef.current;
         }
@@ -218,11 +220,11 @@ export function TurntableVideo({
     };
   }, [interactive, reduce]);
 
-  // Mouse-follow (hero only): while the cursor is OVER the hero the turn
-  // is bound to the hand — direction follows the movement, speed follows
-  // the velocity, and ~250ms without movement eases the turn out so the
-  // bottle STANDS at its angle (no auto-rotation under the cursor).
-  // Only when the cursor LEAVES the hero does the auto 360° spin resume.
+  // Mouse-follow (hero only): the 360° spin ALWAYS runs — while the cursor
+  // is OVER the hero the turn follows the hand (direction + velocity-based
+  // speed), and ~300ms of stillness eases it down to a gentle GLIDE (rate
+  // `IDLE_GLIDE_RATE`, never 0 → no frozen frames). Outside the hero it
+  // runs at the full auto pace (rate 1).
   useEffect(() => {
     if (!interactive || reduce) return;
     const root = rootRef.current;
@@ -236,14 +238,14 @@ export function TurntableVideo({
         e.clientY >= rect.top &&
         e.clientY <= rect.bottom;
       if (!inside) {
-        // No hover → back to the auto 360° spin (continuous ping-pong).
+        // No hover → full auto 360° spin (continuous ping-pong).
         lastXRef.current = null;
         lastMoveTimeRef.current = null;
         accDxRef.current = 0;
         desiredDirRef.current = null;
         targetRateRef.current = 1;
-        if (idleStopTimerRef.current) {
-          window.clearTimeout(idleStopTimerRef.current);
+        if (idleGlideTimerRef.current) {
+          window.clearTimeout(idleGlideTimerRef.current);
         }
         const active = activeRef.current;
         if (active) void active.play().catch(() => {});
@@ -262,8 +264,8 @@ export function TurntableVideo({
 
       accDxRef.current += dx;
       if (Math.abs(accDxRef.current) < 3) {
-        // Micro-jitter → the bottle stands at its angle.
-        targetRateRef.current = 0;
+        // Micro-jitter → ease back to the gentle glide.
+        targetRateRef.current = IDLE_GLIDE_RATE;
         return;
       }
 
@@ -277,21 +279,22 @@ export function TurntableVideo({
       accDxRef.current = 0;
       switchTo(dir);
 
-      // Mouse stopped over the hero → ease the turn out to a standstill
-      // (the auto spin does NOT resume while the cursor is inside).
-      if (idleStopTimerRef.current) {
-        window.clearTimeout(idleStopTimerRef.current);
+      // Hand still over the hero → the turn eases down to the glide
+      // (continuous rotation, never a frozen frame).
+      if (idleGlideTimerRef.current) {
+        window.clearTimeout(idleGlideTimerRef.current);
       }
-      idleStopTimerRef.current = window.setTimeout(() => {
-        targetRateRef.current = 0;
-      }, IDLE_STOP_MS);
+      idleGlideTimerRef.current = window.setTimeout(() => {
+        desiredDirRef.current = null;
+        targetRateRef.current = IDLE_GLIDE_RATE;
+      }, IDLE_GLIDE_MS);
     };
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
-      if (idleStopTimerRef.current) {
-        window.clearTimeout(idleStopTimerRef.current);
+      if (idleGlideTimerRef.current) {
+        window.clearTimeout(idleGlideTimerRef.current);
       }
     };
   }, [interactive, reduce, switchTo]);
