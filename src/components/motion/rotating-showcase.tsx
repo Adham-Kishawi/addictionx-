@@ -31,7 +31,7 @@ type Slot = {
 };
 
 // Poster = the static front frame of the turntable (reduce-motion fallback).
-const FRONT_FRAME = "/uploads/360/frame-01.png";
+const FRONT_FRAME = "/hero/frame-01.png";
 
 // A single detail slot inside the strip — notes chips or price; the active
 // quarter owns it via CSS opacity/translate (children animate, the glass never).
