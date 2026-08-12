@@ -23,6 +23,7 @@ export function HeroVideo() {
     <TurntableVideo
       className="absolute inset-0 h-full w-full bg-[#0a0a0a]"
       fit="cover"
+      poster="/hero/frame-01.png"
       fadeOnScroll
       interactive
     />

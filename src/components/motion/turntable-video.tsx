@@ -6,14 +6,13 @@ import { useReducedMotion } from "framer-motion";
 // ============================================================
 // TurntableVideo — the reusable 360° turntable footage.
 //
-// `hero.mp4` (forward turn, right→left) and `hero-left.mp4` (reversed
-// turn, left→right) alternate on `ended`, so the bottle rotates
-// continuously with no seam — the same technique the old mobile hero
-// used, now shared by the hero backdrop and the rotating showcase (the
-// wave 11 WebGL turntable was removed — the real video is lighter,
-// simpler and works everywhere).
-// Source: `public/hero/hero.mp4` (the new 360° right-to-left turntable
-// footage) → forward copy + reversed `public/hero/hero-left.mp4`
+// `hero.mp4` (normal forward playback) and `hero-left.mp4` (the REVERSED
+// copy) alternate on `ended`, so the bottle rotates continuously with no
+// seam — the same technique the old mobile hero used, now shared by the
+// hero backdrop and the rotating showcase (the wave 11 WebGL turntable
+// was removed — the real video is lighter, simpler and works everywhere).
+// Source: `public/hero/hero.mp4` (the new 360° turntable footage, natural
+// turn) → forward copy + reversed `public/hero/hero-left.mp4`
 // (ffmpeg: `-vf "trim=start_frame=1,reverse"`), bright first frame
 // trimmed.
 //
@@ -23,13 +22,16 @@ import { useReducedMotion } from "framer-motion";
 //    frame (black letterbox is removed by the parent mix-blend-screen).
 //  · `interactive`   — hero only: the bottle follows the mouse. While the
 //    cursor is OUTSIDE the hero it keeps spinning its own 360° ping-pong
-//    (hero.mp4 right→left ↔ hero-left.mp4 left→right, no seam). When the
-//    mouse moves OVER the hero, the turn follows it — moving right plays
-//    hero-left.mp4 (bottle turns right), moving left plays hero.mp4 (the
-//    reverse, bottle turns left) via a mirrored-time switch (same angle,
-//    opposite direction). ~1.2s after the mouse stops it eases back to
-//    the auto spin. The showcase stays non-interactive.
-//  · reduced motion   — static first frame, no playback.
+//    (auto = the footage's natural rotation, alternating with the
+//    reversed copy, no seam). When the mouse moves OVER the hero the turn
+//    follows it — moving RIGHT plays `hero-left.mp4` (the REVERSE of the
+//    video), moving LEFT plays `hero.mp4` (normal) via a mirrored-time
+//    switch (same angle, opposite direction, no snap). ~1.2s after the
+//    mouse stops it eases back to the auto spin. The showcase stays
+//    non-interactive.
+//  · `poster`        — static bottle frame shown before/during load and
+//    for reduced motion, so the hero is never a blank black void.
+//  · reduced motion  — static first/poster frame, no playback.
 // ============================================================
 
 interface TurntableVideoProps {
@@ -55,11 +57,14 @@ export function TurntableVideo({
 
   const [ready, setReady] = useState(false);
 
-  // Mouse-follow state: null = auto spin, otherwise the turn the bottle
-  // is being steered into ("right" = hero-left.mp4, "left" = hero.mp4).
+  // Mouse-follow state: null = auto spin, otherwise the video the bottle
+  // is being steered into — moving RIGHT = the REVERSED copy (hero-left),
+  // moving LEFT = the normal copy (hero.mp4).
   const desiredDirRef = useRef<"left" | "right" | null>(null);
   const lastXRef = useRef<number | null>(null);
   const idleTimerRef = useRef<number | null>(null);
+
+  const markReady = useCallback(() => setReady(true), []);
 
   const playNext = useCallback(() => {
     const l = videoLeftRef.current;
@@ -68,7 +73,7 @@ export function TurntableVideo({
     const nowActive = l.style.display !== "none" ? l : r;
     const desired = desiredDirRef.current;
     // Steering overrides the ping-pong: keep re-playing the video that
-    // turns the steered direction (right → hero-left, left → hero.mp4).
+    // matches the steered direction (right → reversed copy, left → normal).
     let next = nowActive === l ? r : l;
     if (desired === "right") next = l;
     else if (desired === "left") next = r;
@@ -119,8 +124,13 @@ export function TurntableVideo({
     r.style.display = "block";
     const t = window.setTimeout(() => {
       void r.play().catch(() => {});
-      setReady(true);
+      markReady();
     }, 250);
+
+    // Reveal as soon as the footage is actually playable (never a blind
+    // timer) — the 250ms fallback above stays as a safety net.
+    r.addEventListener("loadeddata", markReady);
+    r.addEventListener("playing", markReady);
 
     l.addEventListener("ended", playNext);
     r.addEventListener("ended", playNext);
@@ -150,13 +160,15 @@ export function TurntableVideo({
 
     return () => {
       window.clearTimeout(t);
+      r.removeEventListener("loadeddata", markReady);
+      r.removeEventListener("playing", markReady);
       l.removeEventListener("ended", playNext);
       r.removeEventListener("ended", playNext);
       l.pause();
       r.pause();
       if (onScroll) window.removeEventListener("scroll", onScroll);
     };
-  }, [reduce, playNext, fadeOnScroll]);
+  }, [reduce, playNext, fadeOnScroll, markReady]);
 
   // Mouse-follow (hero only): track the cursor while it's over the hero and
   // steer the turn; fall back to the auto spin once it stops or leaves.
