@@ -24,11 +24,12 @@ import { useReducedMotion } from "framer-motion";
 //    cursor is OUTSIDE the hero it keeps spinning its own 360° ping-pong
 //    (auto = the footage's natural rotation, alternating with the
 //    reversed copy, no seam). When the mouse moves OVER the hero the turn
-//    follows it — moving RIGHT plays `hero-left.mp4` (the REVERSE of the
-//    video), moving LEFT plays `hero.mp4` (normal) via a mirrored-time
-//    switch (same angle, opposite direction, no snap). ~1.2s after the
-//    mouse stops it eases back to the auto spin. The showcase stays
-//    non-interactive.
+//    follows it — moving RIGHT plays `hero.mp4` (the NORMAL copy, so the
+//    bottle turns right), moving LEFT plays `hero-left.mp4` (the REVERSED
+//    copy, so the bottle turns left) via a mirrored-time switch (same
+//    angle, opposite direction, no snap). The steered direction persists
+//    while the cursor stays over the hero; leaving the hero returns to
+//    the auto spin. The showcase stays non-interactive.
 //  · `poster`        — static bottle frame shown before/during load and
 //    for reduced motion, so the hero is never a blank black void.
 //  · reduced motion  — static first/poster frame, no playback.
@@ -58,8 +59,9 @@ export function TurntableVideo({
   const [ready, setReady] = useState(false);
 
   // Mouse-follow state: null = auto spin, otherwise the video the bottle
-  // is being steered into — moving RIGHT = the REVERSED copy (hero-left),
-  // moving LEFT = the normal copy (hero.mp4).
+  // is being steered into — moving RIGHT = the NORMAL copy (hero.mp4,
+  // which turns the bottle rightward), moving LEFT = the REVERSED copy
+  // (hero-left.mp4, which turns the bottle leftward).
   const desiredDirRef = useRef<"left" | "right" | null>(null);
   const lastXRef = useRef<number | null>(null);
   const idleTimerRef = useRef<number | null>(null);
@@ -73,10 +75,10 @@ export function TurntableVideo({
     const nowActive = l.style.display !== "none" ? l : r;
     const desired = desiredDirRef.current;
     // Steering overrides the ping-pong: keep re-playing the video that
-    // matches the steered direction (right → reversed copy, left → normal).
+    // matches the steered direction (right → normal copy, left → reversed).
     let next = nowActive === l ? r : l;
-    if (desired === "right") next = l;
-    else if (desired === "left") next = r;
+    if (desired === "right") next = r;
+    else if (desired === "left") next = l;
     nowActive.style.display = "none";
     next.style.display = "block";
     next.currentTime = 0;
@@ -91,7 +93,7 @@ export function TurntableVideo({
     const r = videoRightRef.current;
     if (!l || !r) return;
     const nowActive = l.style.display !== "none" ? l : r;
-    const target = dir === "right" ? l : r;
+    const target = dir === "right" ? r : l;
     if (target === nowActive) return;
     const mirror = nowActive.duration - nowActive.currentTime;
     let nextTime = Number.isFinite(mirror) && mirror > 0 ? mirror : 0;
