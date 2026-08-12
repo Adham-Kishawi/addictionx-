@@ -23,13 +23,15 @@ import { useReducedMotion } from "framer-motion";
 //    scrolls past the first screen.
 //  · `fit="contain"` — showcase: show the whole bottle inside its 16:9
 //    frame (black letterbox is removed by the parent mix-blend-screen).
-//  · `interactive`   — hero only: the bottle follows the mouse FLEXIBLY.
-//    The turn SPEED tracks the cursor velocity (fast mouse = fast turn,
-//    slow mouse = slow turn), and the DIRECTION follows it — moving RIGHT
-//    plays `right.mp4` (the RIGHTWARD-turning copy), moving LEFT plays
-//    `left.mp4` (the LEFTWARD-turning copy) via a mirrored-time switch
-//    (same angle, opposite direction, no snap — durations scaled: the
-//    two clips are 3.04s vs 3.00s).
+//  · `interactive`   — hero only: the bottle moves WITH the hand in THREE
+//    gestures — RIGHT/LEFT steer the 360° turn (SPEED tracks the cursor
+//    velocity: fast mouse = fast turn, slow = slow; direction follows it:
+//    RIGHT plays `right.mp4` = RIGHTWARD turn, LEFT plays `left.mp4` =
+//    LEFTWARD turn via a mirrored-time switch: same angle, opposite
+//    direction, no snap — durations scaled: 3.04s vs 3.00s), and
+//    قدام/ورا (mouse down/up) ROUTE the bottle to its FRONT view (faces
+//    the viewer) or BACK with an approach rate ∝ remaining angle (silk
+//    landing into a brief pose, then back to the glide).
 //    The hidden copy stays PRE-SEEKED to the mirrored angle every frame,
 //    so reversing direction is instant at ANY moment (no seek delay).
 //    The 360° spin ALWAYS runs: when the hand rests over the hero the
@@ -60,6 +62,14 @@ const MIN_RATE = 0.1; // slowest creep (barely-moving mouse)
 const RATE_PER_VEL = 1.6; // ≈1× at a normal deliberate drag (~0.6px/ms)
 const IDLE_GLIDE_MS = 300; // stillness over the hero → ease down to the glide
 const IDLE_GLIDE_RATE = 0.55; // graceful continuous 360° while the hand rests
+// Vertical routing (قدام قدام → front, ورا → back): the bottle turns to
+// face the viewer (or show its back) with an APPROACH RATE proportional
+// to the remaining turn fraction — it slows down as it gets there and
+// poses (rate 0) for a grace window, then hands back to the glide.
+const VERT_ARRIVE = 0.02; // |Δturn fraction| below this → pose achieved
+const RATE_PER_ANGLE = 4; // approach rate = |Δ| × this (cap MAX_RATE)
+const POSE_HOLD_MS = 500; // grace window before the pose eases back to the glide
+const RATE_LERP = 0.12; // playbackRate easing per rAF frame (low = silkier)
 
 export function TurntableVideo({
   className = "",
@@ -81,8 +91,12 @@ export function TurntableVideo({
   // steered direction.
   const desiredDirRef = useRef<"left" | "right" | null>(null);
   const lastXRef = useRef<number | null>(null);
+  const lastYRef = useRef<number | null>(null);
   const lastMoveTimeRef = useRef<number | null>(null);
   const accDxRef = useRef(0); // accumulated movement since the last steer
+  const accDyRef = useRef(0); // accumulated vertical movement (قدام/ورا routing)
+  const vertDirRef = useRef<1 | -1 | null>(null); // 1 = front (قدام) · −1 = back (ورا)
+  const vertHoldTimerRef = useRef<number | null>(null);
   const idleGlideTimerRef = useRef<number | null>(null);
 
   // playbackRate easing (rAF loop): `curRate` drifts toward `targetRate`.
@@ -143,6 +157,56 @@ export function TurntableVideo({
       return target;
     },
     [setActive, mirrorTimeFor],
+  );
+
+  // Current turn fraction `n` of the shown clip (0 = FRONT view, 0.5 = BACK:
+  // the back faces the camera halfway through either clip). `right.mp4`
+  // advances n with its time, `left.mp4` counts backwards.
+  const navFraction = useCallback((): number => {
+    const l = videoLeftRef.current;
+    const r = videoRightRef.current;
+    const active = activeRef.current;
+    if (!l || !r || !active) return 0;
+    if (active === r) {
+      return r.duration > 0
+        ? Math.min(1, Math.max(0, active.currentTime / r.duration))
+        : 0;
+    }
+    if (l.duration > 0) {
+      const f = Math.min(1, Math.max(0, active.currentTime / l.duration));
+      const n = (1 - f) % 1;
+      return n < 0 ? n + 1 : n;
+    }
+    return 0;
+  }, []);
+
+  // Route the bottle to a pose — FRONT (faces the viewer, قدام) or BACK
+  // (ظهرها) — taking the SHORTEST arc with an approach rate ∝ remaining
+  // distance: fast first, then a silk landing into a brief pose (rate 0),
+  // then the turn hands back to the continuous glide (never frozen for
+  // long — the pose is only the gesture's landing moment).
+  const routeToView = useCallback(
+    (dir: 1 | -1) => {
+      const l = videoLeftRef.current;
+      const r = videoRightRef.current;
+      const active = activeRef.current;
+      if (!l || !r || !active) return;
+      const target = dir === 1 ? 0 : 0.5;
+      const d = ((target - navFraction() + 1.5) % 1) - 0.5; // shortest signed Δ
+      if (Number.isNaN(d)) return;
+      if (Math.abs(d) < VERT_ARRIVE) {
+        targetRateRef.current = 0; // pose achieved (front/back facing)
+        return;
+      }
+      const turnDir = d > 0 ? "right" : "left";
+      desiredDirRef.current = turnDir;
+      switchTo(turnDir);
+      targetRateRef.current = Math.min(
+        MAX_RATE,
+        Math.max(MIN_RATE, Math.abs(d) * RATE_PER_ANGLE),
+      );
+    },
+    [navFraction, switchTo],
   );
 
   const playNext = useCallback(() => {
@@ -238,7 +302,7 @@ export function TurntableVideo({
       const r = videoRightRef.current;
       if (active && l && r) {
         curRateRef.current +=
-          (targetRateRef.current - curRateRef.current) * 0.18;
+          (targetRateRef.current - curRateRef.current) * RATE_LERP;
         if (Math.abs(curRateRef.current - targetRateRef.current) < 0.01) {
           curRateRef.current = targetRateRef.current;
         }
@@ -262,11 +326,14 @@ export function TurntableVideo({
     };
   }, [interactive, reduce, mirrorTimeFor]);
 
-  // Mouse-follow (hero only): the 360° spin ALWAYS runs — while the cursor
-  // is OVER the hero the turn follows the hand (direction + velocity-based
-  // speed), and ~300ms of stillness eases it down to a gentle GLIDE (rate
-  // `IDLE_GLIDE_RATE`, never 0 → no frozen frames). Outside the hero it
-  // runs at the full auto pace (rate 1).
+  // Mouse-follow (hero only) — the bottle moves WITH the hand in all three
+  // directions: RIGHT/LEFT = steering the 360° turn (velocity-based speed),
+  // قدام (mouse forward/down) = the bottle smoothly ROUTES to its FRONT
+  // view (faces the viewer), ورا (up) = routes to its BACK — approach rate
+  // ∝ remaining distance, silk landing into a brief pose, then hands back
+  // to the continuous glide (which still never freezes for long: the pose
+  // is the gesture's landing moment only). Outside the hero the turn runs
+  // at the full auto pace (rate 1).
   useEffect(() => {
     if (!interactive || reduce) return;
     const root = rootRef.current;
@@ -282,10 +349,16 @@ export function TurntableVideo({
       if (!inside) {
         // No hover → full auto 360° spin (continuous ping-pong).
         lastXRef.current = null;
+        lastYRef.current = null;
         lastMoveTimeRef.current = null;
         accDxRef.current = 0;
+        accDyRef.current = 0;
         desiredDirRef.current = null;
+        vertDirRef.current = null;
         targetRateRef.current = 1;
+        if (vertHoldTimerRef.current) {
+          window.clearTimeout(vertHoldTimerRef.current);
+        }
         if (idleGlideTimerRef.current) {
           window.clearTimeout(idleGlideTimerRef.current);
         }
@@ -296,30 +369,62 @@ export function TurntableVideo({
 
       const now = performance.now();
       const x = e.clientX;
+      const y = e.clientY;
       const dt =
         lastMoveTimeRef.current !== null
           ? Math.max(8, now - lastMoveTimeRef.current)
           : 16;
       const dx = lastXRef.current !== null ? x - lastXRef.current : 0;
+      const dy = lastYRef.current !== null ? y - lastYRef.current : 0;
       lastXRef.current = x;
+      lastYRef.current = y;
       lastMoveTimeRef.current = now;
 
       accDxRef.current += dx;
-      if (Math.abs(accDxRef.current) < 3) {
-        // Micro-jitter → ease back to the gentle glide.
-        targetRateRef.current = IDLE_GLIDE_RATE;
+      accDyRef.current += dy;
+      const ax = Math.abs(accDxRef.current);
+      const ay = Math.abs(accDyRef.current);
+
+      if (ax < 3 && ay < 3) {
+        // Micro-jitter → ease back to the gentle glide (unless a vertical
+        // pose/routing gesture is still alive — that wins for its window).
+        if (vertDirRef.current === null) {
+          targetRateRef.current = IDLE_GLIDE_RATE;
+        }
         return;
       }
 
-      const dir = accDxRef.current > 0 ? "right" : "left";
-      desiredDirRef.current = dir;
-      const vel = Math.abs(accDxRef.current) / dt; // px/ms
-      targetRateRef.current = Math.min(
-        MAX_RATE,
-        Math.max(MIN_RATE, vel * RATE_PER_VEL),
-      );
-      accDxRef.current = 0;
-      switchTo(dir);
+      // ======== HORIZONTAL: steer the 360° turn ========
+      if (ax > ay) {
+        accDyRef.current = 0;
+        const dir = accDxRef.current > 0 ? "right" : "left";
+        desiredDirRef.current = dir;
+        const vel = ax / dt; // px/ms
+        targetRateRef.current = Math.min(
+          MAX_RATE,
+          Math.max(MIN_RATE, vel * RATE_PER_VEL),
+        );
+        accDxRef.current = 0;
+        switchTo(dir);
+      } else {
+        // ======== VERTICAL: route to the FRONT (قدام) / BACK (ورا) ========
+        accDxRef.current = 0;
+        vertDirRef.current = accDyRef.current > 0 ? 1 : -1; // down = toward the viewer
+        routeToView(vertDirRef.current);
+        accDyRef.current = 0;
+      }
+
+      // The gesture's grace window: while the hand keeps pushing (or
+      // ≤ POSE_HOLD_MS after it stops) the pose/routing stays alive, then
+      // the turn hands back to the continuous glide. Never a long freeze.
+      if (vertHoldTimerRef.current) {
+        window.clearTimeout(vertHoldTimerRef.current);
+      }
+      vertHoldTimerRef.current = window.setTimeout(() => {
+        vertDirRef.current = null;
+        desiredDirRef.current = null;
+        targetRateRef.current = IDLE_GLIDE_RATE;
+      }, POSE_HOLD_MS);
 
       // Hand still over the hero → the turn eases down to the glide
       // (continuous rotation, never a frozen frame).
@@ -327,19 +432,24 @@ export function TurntableVideo({
         window.clearTimeout(idleGlideTimerRef.current);
       }
       idleGlideTimerRef.current = window.setTimeout(() => {
-        desiredDirRef.current = null;
-        targetRateRef.current = IDLE_GLIDE_RATE;
+        if (vertDirRef.current === null) {
+          desiredDirRef.current = null;
+          targetRateRef.current = IDLE_GLIDE_RATE;
+        }
       }, IDLE_GLIDE_MS);
     };
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
+      if (vertHoldTimerRef.current) {
+        window.clearTimeout(vertHoldTimerRef.current);
+      }
       if (idleGlideTimerRef.current) {
         window.clearTimeout(idleGlideTimerRef.current);
       }
     };
-  }, [interactive, reduce, switchTo]);
+  }, [interactive, reduce, switchTo, routeToView]);
 
   const videoClass = `absolute inset-0 hidden h-full w-full ${
     fit === "cover" ? "object-cover" : "object-contain"
