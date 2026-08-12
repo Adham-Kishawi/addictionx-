@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import {
   motion,
   useMotionValueEvent,
@@ -13,25 +12,16 @@ import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
 import { formatPrice, type Product } from "@/features/catalog/data/products";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
-
-// Wave 11: the photo turn is now a real 360° turntable — a WebGL canvas
-// (three.js via R3F) samples a 36-cell strip extracted from walid's
-// rotation video, driven by scroll + pointer drag. Loaded with ssr:false
-// (dynamic) so three.js stays OUT of the initial home bundle.
-const Product360 = dynamic(
-  () => import("./product-360").then((m) => m.Product360),
-  { ssr: false },
-);
+import { TurntableVideo } from "./turntable-video";
 
 // ============================================================
 // ROTATING SHOWCASE — the centerpiece. A 300vh pinned stage right
-// after the hero: the hero product spins on a REAL 360° turntable
-// (wave 11 — WebGL via R3F, one 36-cell strip, scroll + drag),
-// a light sheen sweeps the bottle, the background hue drifts
-// red → gold → silver, and a persistent details strip under the
-// bottle hands over top/heart/base → price+CTA across the four
-// quarters. `Product360` is loaded dynamically (ssr:false) so
-// three.js stays out of the initial bundle.
+// after the hero: the REAL 360° turntable video spins the bottle
+// continuously (wave 12 — the wave 11 WebGL/R3F turntable was removed;
+// the actual footage is lighter, simpler and works everywhere), a light
+// sheen sweeps the glass, the background hue drifts red → gold → silver,
+// and a persistent details strip under the bottle hands over
+// top/heart/base → price+CTA across the four quarters.
 // ============================================================
 
 type Slot = {
@@ -40,7 +30,7 @@ type Slot = {
   notes: string[];
 };
 
-// Poster = the static front frame of the 360° strip (reduce-motion / no-WebGL fallback).
+// Poster = the static front frame of the turntable (reduce-motion fallback).
 const FRONT_FRAME = "/uploads/360/frame-01.png";
 
 // A single detail slot inside the strip — notes chips or price; the active
@@ -112,16 +102,8 @@ export function RotatingShowcase({
     offset: ["start start", "end end"],
   });
 
-  // Mirror the scroll progress into a plain ref for the R3F canvas
-  // (WebGL reads it every frame — no React re-render per pixel).
-  const progressRef = useRef(0);
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    progressRef.current = v;
-  });
-
   // Full-range animation transformed into silk: the bottle holds the whole
   // scale arc but the motion is front-loaded (ease-out), so it settles.
-  const rotateY = useTransform(scrollYProgress, [0, 1], [-36, 36]);
   const scale = useTransform(scrollYProgress, [0, 0.45, 1], [0.72, 0.98, 0.9]);
   const sheenX = useTransform(scrollYProgress, [0, 1], ["-180%", "180%"]);
   const watermarkOpacity = useTransform(scrollYProgress, [0, 0.3], [0.45, 0.1]);
@@ -217,14 +199,11 @@ export function RotatingShowcase({
           ADDICTIONX
         </motion.span>
 
-        {/* The turning bottle — real 360° turntable (WebGL canvas, wave 11).
-            Scroll walks the base turn; drag spins it by hand. mix-blend-screen
-            makes the dark studio backdrop vanish over the page. */}
+        {/* The turning bottle — the real 360° turntable video (wave 12).
+            mix-blend-screen makes the dark studio backdrop vanish over the page. */}
         <motion.div
           className="relative z-10 flex h-[52vh] w-full items-center justify-center px-6"
-          style={
-            reduce ? undefined : { rotateY, scale, transformPerspective: 1400 }
-          }
+          style={reduce ? undefined : { scale }}
         >
           <div
             className={`relative aspect-video h-full w-auto max-w-[74vw] ${
@@ -233,11 +212,10 @@ export function RotatingShowcase({
                 : "mix-blend-screen [filter:drop-shadow(0_0_60px_oklch(0.6_0.22_22/0.22))]"
             }`}
           >
-            <Product360
-              progressRef={progressRef}
+            <TurntableVideo
+              fit="contain"
               poster={FRONT_FRAME}
-              name={name}
-              className={reduce ? "mix-blend-screen" : undefined}
+              className="absolute inset-0"
             />
           </div>
 

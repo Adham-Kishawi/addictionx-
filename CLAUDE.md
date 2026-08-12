@@ -35,24 +35,24 @@ Required level: **production-ready startup**, not a demo or temporary solution.
 
 ## Installed Stack
 
-| Layer           | Tool                                                           |
-| --------------- | -------------------------------------------------------------- |
-| Framework       | Next.js 16 App Router (Turbopack default)                      |
-| Language        | TypeScript (strict)                                            |
-| Styling         | Tailwind CSS v4 + shadcn/ui (Base UI)                          |
-| Animation       | Framer Motion (framer-motion) + GSAP (dynamic import only)     |
-| 3D / WebGL      | three.js + @react-three/fiber (+ drei) — **wave 11**           |
-| Icons           | Lucide React                                                   |
-| Forms           | React Hook Form + Zod                                          |
-| Auth            | Auth.js v5 (beta) — Credentials + PrismaAdapter + JWT sessions |
-| DB              | PostgreSQL (local `luxury_perfume`) + Prisma                   |
-| Password        | bcryptjs (CJS)                                                 |
-| State           | Zustand                                                        |
-| Images          | Cloudinary                                                     |
-| Email           | Resend                                                         |
-| Package Manager | npm (registry: npmmirror)                                      |
-| Quality         | ESLint (flat config) · Prettier · Husky                        |
-| Deploy          | Vercel                                                         |
+| Layer           | Tool                                                                         |
+| --------------- | ---------------------------------------------------------------------------- |
+| Framework       | Next.js 16 App Router (Turbopack default)                                    |
+| Language        | TypeScript (strict)                                                          |
+| Styling         | Tailwind CSS v4 + shadcn/ui (Base UI)                                        |
+| Animation       | Framer Motion (framer-motion) + GSAP (dynamic import only)                   |
+| 3D / WebGL      | ~~three.js + R3F~~ **removed (wave 12b)** — replaced by real turntable video |
+| Icons           | Lucide React                                                                 |
+| Forms           | React Hook Form + Zod                                                        |
+| Auth            | Auth.js v5 (beta) — Credentials + PrismaAdapter + JWT sessions               |
+| DB              | PostgreSQL (local `luxury_perfume`) + Prisma                                 |
+| Password        | bcryptjs (CJS)                                                               |
+| State           | Zustand                                                                      |
+| Images          | Cloudinary                                                                   |
+| Email           | Resend                                                                       |
+| Package Manager | npm (registry: npmmirror)                                                    |
+| Quality         | ESLint (flat config) · Prettier · Husky                                      |
+| Deploy          | Vercel                                                                       |
 
 ---
 
@@ -282,6 +282,8 @@ walid's request: **the customer must be visually amazed** — every storefront s
 
 ### 18e. Product 360° turntable — three.js / R3F (wave 11)
 
+> **RETIRED (wave 12b):** walid's direction = NO 3D. The WebGL turntable below was removed (component + `three`/R3F deps + `strip.jpg`). The showcase now plays the real turntable video via the shared `TurntableVideo`. Kept as reference:
+
 - **Stack:** `three` + `@react-three/fiber` + `@react-three/drei` added to dependencies (wave 11, walid's direction). The showcase bottle is no longer 12 crossfading `<img>`s — it is a **WebGL canvas**.
 - **Asset:** `public/uploads/360/strip.jpg` — one 6×6 grid (36 cells of a full rotation, `fps=3.6` from the turntable video). Loaded **once** as a single GPU texture.
 - **Component:** `src/components/motion/product-360.tsx` — a plane with a custom `ShaderMaterial`:
@@ -508,11 +510,11 @@ src/
     - `content-visibility:auto` + `contain-intrinsic-size` on the two safe below-fold sections (Most wanted grid, Experience strip — no sticky children, so nothing breaks).
   - Verified: clean tsc + lint + build + live 200.
 - [x] **Home update — walid's new assets (waves 10–12):** walid dropped new footage + backdrops into `public/` and said «استخدم كل اللي بعتو — من folder hero»:
-  - **Hero — direct video playback (wave 12, FINAL):** the sprite-scrub hero was **abandoned entirely**. `perfume-360.mp4` is not a closed loop (first/last frames differ + a bright first frame), so the strip mirror would snap. Instead `HeroVideo` (`hero-video.tsx`) **plays `right.mp4` (forward) ↔ `left.mp4` (reversed) alternating on `ended`** — seamless continuous rotation, all viewports, no strips/canvas. `page.tsx` imports `HeroVideo`, dropped the scroll indicator.
-  - **Product — REAL 360° turntable (wave 11, R3F):** `three` + `@react-three/fiber` + `@react-three/drei` installed. New `src/components/motion/product-360.tsx` — a WebGL canvas where a `ShaderMaterial` samples `public/uploads/360/strip.jpg` (6×6 grid = 36 cells from the turntable video, `fps=3.6`) with in-shader crossfade. Scroll walks the base turn (progressRef mirrored from `scrollYProgress`, no re-render per frame) + **pointer drag spins the bottle by hand** (one full turn per container width, persists as an offset). `mix-blend-screen` removes the dark studio bg; reduce-motion / no-WebGL → static poster `frame-01.png`. Wired into `RotatingShowcase` via `dynamic(..., { ssr: false })` so three.js stays out of the initial home bundle; the old `TurnView`/`TURN_360`/`turnPoints` `<img>` crossfade machinery was deleted.
+  - **Hero — direct video playback (wave 12, FINAL):** the sprite-scrub hero was **abandoned entirely**. `perfume-360.mp4` is not a closed loop (first/last frames differ + a bright first frame), so the strip mirror would snap. Instead the shared **`TurntableVideo`** (`turntable-video.tsx`) **plays `right.mp4` (forward) ↔ `left.mp4` (reversed) alternating on `ended`** — seamless continuous rotation, all viewports, no strips/canvas. `HeroVideo` (`hero-video.tsx`) wraps it with `fadeOnScroll` (hero melts away) + `bg-[#0a0a0a]`. `page.tsx` imports `HeroVideo`, dropped the scroll indicator.
+  - **Product showcase — 360° turntable VIDEO (wave 12b, NO 3D):** walid's direction = «**NO 3D** — remove the 3D-oriented direction, use high-quality/360° product videos». The wave 11 WebGL turntable (`product-360.tsx` + `three`/`@react-three/fiber`/`@react-three/drei` + `/uploads/360/strip.jpg`) was **removed entirely** — `RotatingShowcase` now renders the same shared `TurntableVideo` (`fit="contain"` + parent `mix-blend-screen` so the dark studio bg vanishes) inside the 300vh pinned stage; the scroll story (scale arc, sheen sweep, red→gold→silver hue drift, details-strip quarter hand-off top/heart/base→price+CTA) is unchanged. Video is **not scroll-scrubbed by seek** (the old hero lesson: `video.currentTime` seeks feel unnatural — the bottle just rotates continuously while scroll drives the story around it). Reduced motion → static poster `/uploads/360/frame-01.png` (the only file kept from the strip folder). Deleted: `product-360.tsx`, strip.jpg, frames 02–12, and the three/R3F deps from package.json.
   - **Collection backdrops (wave 10):** `public/collections/{rush,noir,gold}.jpg` wired via `src/features/catalog/data/collection-assets.ts` (`collectionBackdrop(slug)`) — used by the carousel identity layer, the DepthStack covers (`page.tsx` fallback `cover.image ?? collectionBackdrop(...)`) and the collections hub.
   - Verified: clean tsc + lint + successful build (all routes compiled).
-- [ ] **Assets needed from walid (wave 9 ask — the visual «execution» gap):** (1) real transparent PNG of the bottle (no background, no shadow, ~1200-2000px, <1MB) · (2) 360° set = 8 photos × 45° of the SAME bottle (or a GLB) for a true turn in the showcase — **done differently:** walid's turntable video → 36-cell strip + R3F scrub (wave 11) · (3) per-collection ambient backdrops for rush/noir/gold (2400×1350) for the carousel identity background + DepthStack — **done** (wave 10, `public/collections/*.jpg`) · (4) 4-6 voyeur-style lifestyle shots + OG images (1200×630) per collection · (5) 4K hero video loop (the current hero still scrubs a sprite filmstrip from the old 6400×2160 video) — **updated** to `hero.mp4` (wave 10/11).
+- [ ] **Assets needed from walid (wave 9 ask — the visual «execution» gap):** (1) real transparent PNG of the bottle (no background, no shadow, ~1200-2000px, <1MB) · (2) 360° set = 8 photos × 45° of the SAME bottle (or a GLB) for a true turn in the showcase — **done differently (wave 12b):** walid's turntable video → `public/360/perfume-360.mp4` plays directly in the showcase (the R3F 36-cell strip was removed) · (3) per-collection ambient backdrops for rush/noir/gold (2400×1350) for the carousel identity background + DepthStack — **done** (wave 10, `public/collections/*.jpg`) · (4) 4-6 voyeur-style lifestyle shots + OG images (1200×630) per collection · (5) 4K hero video loop (the current hero still scrubs a sprite filmstrip from the old 6400×2160 video) — **replaced** by direct video playback (wave 12, `right.mp4`↔`left.mp4`).
 - [ ] Google OAuth keys (`AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET`) — **needed from walid**
 - [ ] Wire Cloudinary images instead of `ProductArt` — **needs walid's account data** (cloud name + API key/secret) + uploading the images to Cloudinary (CLAUDE.md workflow #4)
 
