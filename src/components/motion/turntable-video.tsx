@@ -6,15 +6,18 @@ import { useReducedMotion } from "framer-motion";
 // ============================================================
 // TurntableVideo — the reusable 360° turntable footage.
 //
-// `hero.mp4` (normal forward playback) and `hero-left.mp4` (the REVERSED
-// copy) alternate on `ended`, so the bottle rotates continuously with no
-// seam — the same technique the old mobile hero used, now shared by the
-// hero backdrop and the rotating showcase (the wave 11 WebGL turntable
-// was removed — the real video is lighter, simpler and works everywhere).
-// Source: `public/hero/hero.mp4` (the new 360° turntable footage, natural
-// turn) → forward copy + reversed `public/hero/hero-left.mp4`
-// (ffmpeg: `-vf "trim=start_frame=1,reverse"`), bright first frame
-// trimmed.
+// `right.mp4` (turns RIGHT) and `left.mp4` (turns LEFT) alternate on
+// `ended`, so the bottle rotates continuously with no seam — the same
+// technique the old mobile hero used, now shared by the hero backdrop and
+// the rotating showcase (the wave 11 WebGL turntable was removed — the
+// real video is lighter, simpler and works everywhere).
+// Source: walid's hand-made pair `public/hero/right.mp4` + `public/hero/left.mp4`
+// (~3s full 360° turns each, 1280×720@24fps, start ≈ end so the loop has
+// no seam). Directions VERIFIED with ffmpeg (gradient-flow metric,
+// control-tested on hero.mp4): `right.mp4` = RIGHTWARD, `left.mp4` =
+// LEFTWARD — names match. Both open with the same front view, so the
+// mirrored-time switch maps angles exactly (duration-scaled: 3.04 vs 3.00s).
+// The old pair `hero.mp4`/`hero-left.mp4` (10s versions) was deleted.
 //
 //  · `fadeOnScroll`  — hero only: melts the layer away as the page
 //    scrolls past the first screen.
@@ -23,9 +26,10 @@ import { useReducedMotion } from "framer-motion";
 //  · `interactive`   — hero only: the bottle follows the mouse FLEXIBLY.
 //    The turn SPEED tracks the cursor velocity (fast mouse = fast turn,
 //    slow mouse = slow turn), and the DIRECTION follows it — moving RIGHT
-//    plays `hero.mp4` (the NORMAL copy = rightward turn), moving LEFT
-//    plays `hero-left.mp4` (the REVERSED copy = leftward turn) via a
-//    mirrored-time switch (same angle, opposite direction, no snap).
+//    plays `right.mp4` (the RIGHTWARD-turning copy), moving LEFT plays
+//    `left.mp4` (the LEFTWARD-turning copy) via a mirrored-time switch
+//    (same angle, opposite direction, no snap — durations scaled: the
+//    two clips are 3.04s vs 3.00s).
 //    The hidden copy stays PRE-SEEKED to the mirrored angle every frame,
 //    so reversing direction is instant at ANY moment (no seek delay).
 //    The 360° spin ALWAYS runs: when the hand rests over the hero the
@@ -67,8 +71,8 @@ export function TurntableVideo({
   const reduce = useReducedMotion();
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const videoRightRef = useRef<HTMLVideoElement>(null); // hero.mp4 — turns RIGHT
-  const videoLeftRef = useRef<HTMLVideoElement>(null); // hero-left.mp4 — turns LEFT
+  const videoRightRef = useRef<HTMLVideoElement>(null); // right.mp4 — turns RIGHT
+  const videoLeftRef = useRef<HTMLVideoElement>(null); // left.mp4 — turns LEFT
   const activeRef = useRef<HTMLVideoElement | null>(null); // the currently shown video
 
   const [ready, setReady] = useState(false);
@@ -98,6 +102,24 @@ export function TurntableVideo({
     activeRef.current = next;
   }, []);
 
+  // The time in `target` that shows the SAME bottle angle as `source` at
+  // its current time. Both clips are full 360° turns opening at the same
+  // front view — the target plays the turn BACKWARDS, so it must sit at
+  // the matching fraction from its own end (`td · (1 − f)`), scaled by
+  // each clip's real duration (3.04 vs 3.00s, they are NOT equal).
+  const mirrorTimeFor = useCallback(
+    (source: HTMLVideoElement, target: HTMLVideoElement) => {
+      const sd = source.duration;
+      const td = target.duration;
+      if (!Number.isFinite(sd) || !Number.isFinite(td) || sd <= 0 || td <= 0) {
+        return 0;
+      }
+      const f = Math.min(1, Math.max(0, source.currentTime / sd));
+      return td * (1 - f);
+    },
+    [],
+  );
+
   // Reverses the turn mid-playback with NO angle snap: the target video's
   // time is mirrored (duration − current) so the bottle holds its current
   // angle and simply starts turning the other way.
@@ -109,8 +131,8 @@ export function TurntableVideo({
       if (!l || !r || !active) return null;
       const target = dir === "right" ? r : l;
       if (target === active) return target;
-      const mirror = active.duration - active.currentTime;
-      let nextTime = Number.isFinite(mirror) && mirror > 0 ? mirror : 0;
+      const mirror = mirrorTimeFor(active, target);
+      let nextTime = mirror > 0 ? mirror : 0;
       const targetDur = target.duration;
       if (Number.isFinite(targetDur) && nextTime > targetDur - 0.05) {
         nextTime = Math.max(0, targetDur - 0.05);
@@ -120,7 +142,7 @@ export function TurntableVideo({
       void target.play().catch(() => {});
       return target;
     },
-    [setActive],
+    [setActive, mirrorTimeFor],
   );
 
   const playNext = useCallback(() => {
@@ -224,9 +246,9 @@ export function TurntableVideo({
 
         // Reverse-readiness: mirror the active position into the hidden
         // copy in coarse hops (0.35s) — cheap, and the swap is instant.
-        const mirror = active.duration - active.currentTime;
         const inactive = active === l ? r : l;
-        if (Number.isFinite(mirror) && mirror > 0) {
+        const mirror = mirrorTimeFor(active, inactive);
+        if (mirror > 0) {
           if (Math.abs(inactive.currentTime - mirror) > 0.35) {
             inactive.currentTime = mirror;
           }
@@ -238,7 +260,7 @@ export function TurntableVideo({
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [interactive, reduce]);
+  }, [interactive, reduce, mirrorTimeFor]);
 
   // Mouse-follow (hero only): the 360° spin ALWAYS runs — while the cursor
   // is OVER the hero the turn follows the hand (direction + velocity-based
@@ -335,7 +357,7 @@ export function TurntableVideo({
     >
       <video
         ref={videoRightRef}
-        src="/hero/hero.mp4"
+        src="/hero/right.mp4"
         muted
         playsInline
         preload="auto"
@@ -344,7 +366,7 @@ export function TurntableVideo({
       />
       <video
         ref={videoLeftRef}
-        src="/hero/hero-left.mp4"
+        src="/hero/left.mp4"
         muted
         playsInline
         preload="auto"

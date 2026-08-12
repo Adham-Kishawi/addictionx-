@@ -3,19 +3,13 @@
 import { TurntableVideo } from "./turntable-video";
 
 // ============================================================
-// Cinematic hero backdrop — the new 360° turntable footage.
+// Cinematic hero backdrop — the 360° turntable footage.
 //
-// Wave 12: walid replaced the old sprite-scrub hero with a NEW turntable
-// video (`public/hero/hero.mp4`). Two facts about the new footage
-// made the sprite filmstrip unviable:
-//   1. It is NOT a perfectly closed 360° loop — its first and last frames
-//      don't match, so the scrub's left↔right mirror would visibly snap.
-//   2. Its very first frame is a bright flash — any looping playback would
-//      flash white on every repeat.
-// So instead of fighting the strip, we PLAY the footage directly as a
-// cinematic video (the brief's direction: real video, no 3D, no strips).
-// The playback itself lives in the shared `TurntableVideo` (hero.mp4 ↔
-// hero-left.mp4 alternating → continuous rotation on every viewport).
+// Wave 12 history: the old sprite-scrub hero was replaced by direct video
+// playback (the brief's direction: real video, no 3D, no strips).
+// The playback itself lives in the shared `TurntableVideo`
+// (right.mp4 ↔ left.mp4 alternating → continuous rotation on every
+// viewport; both are full 360° turns with a clean loop).
 // ============================================================
 
 export function HeroVideo() {
