@@ -25,18 +25,22 @@ import { useReducedMotion } from "framer-motion";
 //    scrolls past the first screen.
 //  · `fit="contain"` — showcase: show the whole bottle inside its 16:9
 //    frame (black letterbox is removed by the parent mix-blend-screen).
-//  · `interactive`   — hero only (walid's spec, wave 25 + 26): the bottle
-//    is POSITION-LOCKED to the mouse — scrub, not speed:
-//      · mouse X across the window = the turn: 0→1 maps the full 360°
-//        (mouse at the left edge = front view, at the right edge = the
-//        LAST second of the clip — it STOPS there: «الماوس وصل اخر
-//        الصفحة الفيديو يقف عن اخر ثانية»).
-//      · the bottle PLAYS toward the target — `right.mp4` for the right
-//        hand, the RECORDED REVERSED `left.mp4` for the return (walid:
-//        «خاصية الـ reverse — الفيديو يتعكس في الراجعة»), at a rate
-//        PROPORTIONAL to the gap (wave 27: instant catch-up on flicks,
-//        silk landing on the exact frame). Arrival → PAUSE: the frame
-//        holds («الماوس واقف = الفيديو واقف»).
+//  · `interactive`   — hero only (walid's spec, wave 25→28): the bottle
+//    TURNS with the hand — by the MEASURED TRAVEL from WHERE the cursor
+//    landed, in EITHER direction, from ANY hover point:
+//      · the entry point anchors the turn — the bottle starts from its
+//        CURRENT angle (the «منتصف» — no jump) and every measured pixel
+//        of horizontal travel turns it 1:1, wrapped mod 1, so you can
+//        sweep right and it advances to the LAST second («الفيديو يقف
+//        عن اخر ثانية» when it rests), sweep left and it returns with
+//        the hand — the recorded REVERSED `left.mp4` plays forward
+//        («الفيديو يتعكس في الراجعة») — no straight line required, no
+//        absolute position («قيس المسافات» — the ui-skill pattern).
+//      · direct frame-gated seek (never playback racing the hand — the
+//        wave-27 «تقيل» complaint is gone): the videos stay PAUSED, so
+//        the end-of-video restart zone is unreachable = the «بيخرف»
+//        glitch cannot happen, and a resting hand HOLDS the exact frame
+//        («بينلص» becomes a clean silent hold).
 //      · قدام/ورا (mouse down/up) still ROUTES to the FRONT (0) or BACK
 //        (0.5) with a short ease (rAF), then the hand owns the angle
 //        again. VERTICAL wins over horizontal (discrete gesture).
@@ -64,14 +68,7 @@ interface TurntableVideoProps {
 const MIRROR_DELTA = 12 / 71; // 71 sampled frames of left.mp4 (≈0.169)
 const SCRUB_END_MARGIN = 0.01; // park just before the final instant («آخر ثانية»)
 const SCRUB_DEADBAND = 3; // px of micro-jitter ignored (the frame holds)
-// Wave 27 — the turn's chase speed is PROPORTIONAL TO THE GAP (walid:
-// «الفيديو تقيل جداً في استجابته» — the fixed 1.6× lagged big flicks):
-// a long drag spins fast to catch the hand, the last bit slows down and
-// arrives on the exact frame. MIN keeps even tiny nudges alive.
-const SCRUB_RATE_PER_TURN = 5; // playback rate for a full-turn gap (flicks)
-const SCRUB_RATE_MIN = 1; // floor rate while the gap is still open
-const SCRUB_RATE_MAX = 3.5; // ceiling (a fast flick still looks smooth)
-const SCRUB_ARRIVE = 0.02; // ≈1.5 video frames — inside this the turn HOLDS (paused)
+const SCRUB_SEEK_STEP = 0.03; // seek only when ≥ ~1 frame off target (anti-jitter, ui skill)
 const ROUTE_ARRIVE = 0.004; // |Δfraction| below this → the routing is done
 const ROUTE_EASE = 7; // per-second ease factor toward the front/back view
 
@@ -100,6 +97,8 @@ export function TurntableVideo({
   const lastYRef = useRef<number | null>(null);
   const routeAnimRef = useRef<{ target: number; lastT: number } | null>(null);
   const targetNRef = useRef<number | null>(null); // the drag's position target (null = hold/route)
+  const anchorXRef = useRef<number | null>(null); // horizontal drag anchor (entered at)
+  const anchorNRef = useRef(0); // bottle angle at the anchor — the neutral «المنتصف»
   const rafRef = useRef<number | null>(null);
 
   const markReady = useCallback(() => setReady(true), []);
@@ -189,13 +188,23 @@ export function TurntableVideo({
     }
   }, [fracOf, pauseBoth]);
 
-  // The horizontal drag: target the bottle at the mouse's position
-  // fraction (0 = left edge → front, 1 = right edge → last second).
+  // The horizontal drag (ui-skill pattern, wave 28 — walid: «الحركة تتحرك
+  // معايا من المنتصف لأي جهة من الاتنين — قيس المسافات»): the drag anchors
+  // at the cursor's entry point — the bottle's CURRENT angle is the
+  // neutral «منتصف» it turns FROM, never a jump. Every measured pixel of
+  // horizontal travel drives the turn 1:1, wrapped mod 1 so it works in
+  // BOTH directions from ANYWHERE in the section (no straight line to the
+  // right needed). Half a window-width of travel = a full 360° turn.
   const steerTo = useCallback(
-    (nArg: number) => {
+    (x: number) => {
       enterScrub();
       routeAnimRef.current = null;
-      let n = nArg % 1;
+      if (anchorXRef.current === null) {
+        anchorXRef.current = x; // the anchor = where the hand landed
+        anchorNRef.current = scrubNRef.current; // the «منتصف» it starts from
+      }
+      const d = (x - anchorXRef.current) / Math.max(1, window.innerWidth / 2);
+      let n = (anchorNRef.current + d) % 1;
       if (n < 0) n += 1;
       targetNRef.current = n;
     },
@@ -210,6 +219,7 @@ export function TurntableVideo({
     scrubbingRef.current = false;
     routeAnimRef.current = null;
     targetNRef.current = null;
+    anchorXRef.current = null; // next entry anchors fresh at the held angle
     if (active) void active.play().catch(() => {});
   }, []);
 
@@ -225,14 +235,17 @@ export function TurntableVideo({
     [enterScrub],
   );
 
-  // Always-on rAF while interactive (wave 26 + 27): the bottle PLAYS
-  // toward the drag target — forward on `right.mp4` when the hand moves
-  // right, FORWARD on `left.mp4` when it moves left (the recorded
-  // REVERSED footage — walid's «خاصية الـ reverse»: the video really
-  // plays back on the return). The rate follows the GAP (wave 27) so the
-  // turn catches a fast flick immediately (no «ثقيل» lag). Arrival
-  // (≤ ~1.5 frames away) → PAUSE: the frame holds exactly («الماوس واقف
-  // = الفيديو واقف»). The vertical routing ease runs here too.
+  // Always-on rAF while interactive (wave 28 — the ui-skill scrub model):
+  // the bottle follows the DRAG TARGET directly (no playback racing the
+  // hand — walid's «الفيديو تقيل جداً» is gone): each tick seeks to the
+  // exact target ONLY when at least one video frame separates them
+  // (anti-jitter, mirroring the skill's `seeking` guard) — the frames
+  // track the measured drag distance 1:1 and HOLD when the hand rests.
+  // The videos stay PAUSED, so the clip end (and its restart/glitch zone)
+  // is unreachable: right.mp4 forward drives the turn rightward,
+  // left.mp4 (the recorded REVERSED footage) backward — «الفيديو يتعكس
+  // في الراجعة» is real, silent and seamless. The vertical routing ease
+  // runs here too.
   useEffect(() => {
     if (!interactive || reduce) return;
     const tick = () => {
@@ -252,26 +265,14 @@ export function TurntableVideo({
         }
       } else if (targetNRef.current !== null && scrubbingRef.current) {
         const active = activeRef.current;
-        const l = videoLeftRef.current;
-        const r = videoRightRef.current;
-        if (active && l && r) {
+        // The skill's jitter guard: skip a video that is mid-seek — the
+        // very next tick (16ms) re-targets it on the fresh frame.
+        if (active && !active.seeking) {
           const n = fracOf(active); // the ACTUAL displayed angle
           scrubNRef.current = n;
           const d = ((targetNRef.current - n + 1.5) % 1) - 0.5;
-          if (Math.abs(d) < SCRUB_ARRIVE) {
-            // Arrived → HOLD the exact frame.
-            if (!active.paused) active.pause();
-          } else {
-            const dir = d > 0 ? "right" : "left";
-            const need = dir === "right" ? r : l;
-            if (active !== need) displayAt(targetNRef.current); // swap via the mirror
-            // Wave 27 — rate ∝ |gap|: big flicks spin fast to catch the
-            // hand, the approach slows and lands on the exact frame.
-            need.playbackRate = Math.min(
-              SCRUB_RATE_MAX,
-              Math.max(SCRUB_RATE_MIN, Math.abs(d) * SCRUB_RATE_PER_TURN),
-            );
-            if (need.paused) void need.play().catch(() => {});
+          if (Math.abs(d) > SCRUB_SEEK_STEP / Math.max(0.01, active.duration)) {
+            displayAt(targetNRef.current); // direct seek — hold otherwise
           }
         }
       }
@@ -281,7 +282,7 @@ export function TurntableVideo({
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [interactive, reduce, displayAt, steerTo, fracOf]);
+  }, [interactive, reduce, displayAt, fracOf]);
 
   const playNext = useCallback(() => {
     const l = videoLeftRef.current;
@@ -358,13 +359,16 @@ export function TurntableVideo({
     };
   }, [reduce, playNext, fadeOnScroll, markReady, setActive]);
 
-  // Mouse-follow (hero only, walid's wave-25 SCRUB spec): inside the hero
-  // the bottle angle = mouse X / window width (0 = left edge → front,
-  // 1 = right edge → the clip's LAST second, held). Moving right scrubs
-  // `right.mp4` forward, moving left scrubs `left.mp4` forward (the
-  // bottle turns back with the hand), stillness holds the exact frame.
-  // قدام/ورا (mouse down/up) route to the FRONT/BACK view — the frame
-  // holds at the target. Outside the hero: auto 360° ping-pong resumes.
+  // Mouse-follow (hero only, walid's wave-25 SPEC, wave-28 «قيس
+  // المسافات»): the turn is the MEASURED DISTANCE of the hand from WHERE
+  // it landed — the bottle turns from the «منتصف» (its current angle,
+  // whatever it is — no jump) in EITHER direction, from ANYWHERE in the
+  // hero, not a straight absolute line: drag right → right.mp4 scrubs
+  // forward, drag left → left.mp4 (the reversed record) scrubs forward =
+  // the bottle turns back with the hand. Measuring the travel means the
+  // response is 1:1 and instant, and RESTING the hand holds the exact
+  // frame. قدام/ورا (mouse down/up) route to the FRONT/BACK view — the
+  // frame holds at the target. Outside the hero: auto 360° ping-pong.
   useEffect(() => {
     if (!interactive || reduce) return;
     const root = rootRef.current;
@@ -401,9 +405,9 @@ export function TurntableVideo({
         // VERTICAL — route to FRONT (mouse down, قدام) / BACK (up, ورا).
         routeToView(dy > 0 ? 0 : 0.5);
       } else {
-        // HORIZONTAL — the scrub: mouse X across the window = the turn
-        // (the rAF loop plays the matching clip toward this target).
-        steerTo(e.clientX / window.innerWidth);
+        // HORIZONTAL — the scrub: the MEASURED px of travel drive the
+        // turn (anchor-relative, both directions, from any hover point).
+        steerTo(e.clientX);
       }
     };
 
