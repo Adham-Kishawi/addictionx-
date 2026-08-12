@@ -31,12 +31,12 @@ import { useReducedMotion } from "framer-motion";
 //        (mouse at the left edge = front view, at the right edge = the
 //        LAST second of the clip — it STOPS there: «الماوس وصل اخر
 //        الصفحة الفيديو يقف عن اخر ثانية»).
-//      · the bottle PLAYS toward the target: right of the hand = `right.mp4`
-//        plays FORWARD through its turn; left of the hand = `left.mp4`
-//        plays FORWARD — the RECORDED REVERSED footage, so the video
-//        really plays back on the return (walid: «خاصية الـ reverse —
-//        الفيديو يتعكس في الراجعة»). Arrival → PAUSE: the frame holds
-//        exactly («الماوس واقف = الفيديو واقف»).
+//      · the bottle PLAYS toward the target — `right.mp4` for the right
+//        hand, the RECORDED REVERSED `left.mp4` for the return (walid:
+//        «خاصية الـ reverse — الفيديو يتعكس في الراجعة»), at a rate
+//        PROPORTIONAL to the gap (wave 27: instant catch-up on flicks,
+//        silk landing on the exact frame). Arrival → PAUSE: the frame
+//        holds («الماوس واقف = الفيديو واقف»).
 //      · قدام/ورا (mouse down/up) still ROUTES to the FRONT (0) or BACK
 //        (0.5) with a short ease (rAF), then the hand owns the angle
 //        again. VERTICAL wins over horizontal (discrete gesture).
@@ -64,7 +64,13 @@ interface TurntableVideoProps {
 const MIRROR_DELTA = 12 / 71; // 71 sampled frames of left.mp4 (≈0.169)
 const SCRUB_END_MARGIN = 0.01; // park just before the final instant («آخر ثانية»)
 const SCRUB_DEADBAND = 3; // px of micro-jitter ignored (the frame holds)
-const SCRUB_RATE = 1.6; // real playback speed while the hand navigates (reverse = left.mp4)
+// Wave 27 — the turn's chase speed is PROPORTIONAL TO THE GAP (walid:
+// «الفيديو تقيل جداً في استجابته» — the fixed 1.6× lagged big flicks):
+// a long drag spins fast to catch the hand, the last bit slows down and
+// arrives on the exact frame. MIN keeps even tiny nudges alive.
+const SCRUB_RATE_PER_TURN = 5; // playback rate for a full-turn gap (flicks)
+const SCRUB_RATE_MIN = 1; // floor rate while the gap is still open
+const SCRUB_RATE_MAX = 3.5; // ceiling (a fast flick still looks smooth)
 const SCRUB_ARRIVE = 0.02; // ≈1.5 video frames — inside this the turn HOLDS (paused)
 const ROUTE_ARRIVE = 0.004; // |Δfraction| below this → the routing is done
 const ROUTE_EASE = 7; // per-second ease factor toward the front/back view
@@ -219,13 +225,14 @@ export function TurntableVideo({
     [enterScrub],
   );
 
-  // Always-on rAF while interactive (wave 26): the bottle PLAYS toward
-  // the drag target — forward on `right.mp4` when the hand moves right,
-  // FORWARD on `left.mp4` when it moves left (the recorded REVERSED
-  // footage — walid's «خاصية الـ reverse»: the video really plays back
-  // on the return). Arrival (≤ ~1.5 frames away) → PAUSE: the frame
-  // holds exactly («الماوس واقف = الفيديو واقف»). The vertical routing
-  // ease runs here too.
+  // Always-on rAF while interactive (wave 26 + 27): the bottle PLAYS
+  // toward the drag target — forward on `right.mp4` when the hand moves
+  // right, FORWARD on `left.mp4` when it moves left (the recorded
+  // REVERSED footage — walid's «خاصية الـ reverse»: the video really
+  // plays back on the return). The rate follows the GAP (wave 27) so the
+  // turn catches a fast flick immediately (no «ثقيل» lag). Arrival
+  // (≤ ~1.5 frames away) → PAUSE: the frame holds exactly («الماوس واقف
+  // = الفيديو واقف»). The vertical routing ease runs here too.
   useEffect(() => {
     if (!interactive || reduce) return;
     const tick = () => {
@@ -258,7 +265,12 @@ export function TurntableVideo({
             const dir = d > 0 ? "right" : "left";
             const need = dir === "right" ? r : l;
             if (active !== need) displayAt(targetNRef.current); // swap via the mirror
-            need.playbackRate = SCRUB_RATE;
+            // Wave 27 — rate ∝ |gap|: big flicks spin fast to catch the
+            // hand, the approach slows and lands on the exact frame.
+            need.playbackRate = Math.min(
+              SCRUB_RATE_MAX,
+              Math.max(SCRUB_RATE_MIN, Math.abs(d) * SCRUB_RATE_PER_TURN),
+            );
             if (need.paused) void need.play().catch(() => {});
           }
         }
