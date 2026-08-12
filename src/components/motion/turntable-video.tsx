@@ -25,18 +25,18 @@ import { useReducedMotion } from "framer-motion";
 //    scrolls past the first screen.
 //  · `fit="contain"` — showcase: show the whole bottle inside its 16:9
 //    frame (black letterbox is removed by the parent mix-blend-screen).
-//  · `interactive`   — hero only (walid's spec, wave 25): the bottle is
-//    POSITION-LOCKED to the mouse — scrub, not speed:
+//  · `interactive`   — hero only (walid's spec, wave 25 + 26): the bottle
+//    is POSITION-LOCKED to the mouse — scrub, not speed:
 //      · mouse X across the window = the turn: 0→1 maps the full 360°
 //        (mouse at the left edge = front view, at the right edge = the
 //        LAST second of the clip — it STOPS there: «الماوس وصل اخر
 //        الصفحة الفيديو يقف عن اخر ثانية»).
-//      · moving right = `right.mp4` scrubs FORWARD through its turn
-//        («كل ما الماوس يتحرك يمين اكتر الفيديو يتحرك اكتر»); moving
-//        left = `left.mp4` scrubs forward THROUGH IT (the bottle goes
-//        back with the hand — «الفيديو يرجع معاه»). Videos PAUSED, the
-//        frames follow the seek 1:1 — nothing runs on its own inside.
-//      · mouse still → the bottle HOLDS its exact frame.
+//      · the bottle PLAYS toward the target: right of the hand = `right.mp4`
+//        plays FORWARD through its turn; left of the hand = `left.mp4`
+//        plays FORWARD — the RECORDED REVERSED footage, so the video
+//        really plays back on the return (walid: «خاصية الـ reverse —
+//        الفيديو يتعكس في الراجعة»). Arrival → PAUSE: the frame holds
+//        exactly («الماوس واقف = الفيديو واقف»).
 //      · قدام/ورا (mouse down/up) still ROUTES to the FRONT (0) or BACK
 //        (0.5) with a short ease (rAF), then the hand owns the angle
 //        again. VERTICAL wins over horizontal (discrete gesture).
@@ -64,6 +64,8 @@ interface TurntableVideoProps {
 const MIRROR_DELTA = 12 / 71; // 71 sampled frames of left.mp4 (≈0.169)
 const SCRUB_END_MARGIN = 0.01; // park just before the final instant («آخر ثانية»)
 const SCRUB_DEADBAND = 3; // px of micro-jitter ignored (the frame holds)
+const SCRUB_RATE = 1.6; // real playback speed while the hand navigates (reverse = left.mp4)
+const SCRUB_ARRIVE = 0.02; // ≈1.5 video frames — inside this the turn HOLDS (paused)
 const ROUTE_ARRIVE = 0.004; // |Δfraction| below this → the routing is done
 const ROUTE_EASE = 7; // per-second ease factor toward the front/back view
 
@@ -91,6 +93,7 @@ export function TurntableVideo({
   const lastXRef = useRef<number | null>(null);
   const lastYRef = useRef<number | null>(null);
   const routeAnimRef = useRef<{ target: number; lastT: number } | null>(null);
+  const targetNRef = useRef<number | null>(null); // the drag's position target (null = hold/route)
   const rafRef = useRef<number | null>(null);
 
   const markReady = useCallback(() => setReady(true), []);
@@ -180,6 +183,19 @@ export function TurntableVideo({
     }
   }, [fracOf, pauseBoth]);
 
+  // The horizontal drag: target the bottle at the mouse's position
+  // fraction (0 = left edge → front, 1 = right edge → last second).
+  const steerTo = useCallback(
+    (nArg: number) => {
+      enterScrub();
+      routeAnimRef.current = null;
+      let n = nArg % 1;
+      if (n < 0) n += 1;
+      targetNRef.current = n;
+    },
+    [enterScrub],
+  );
+
   // Cursor left the hero → the auto 360° spin resumes from the held
   // angle (plays to the clip end, then the ping-pong alternates).
   const exitScrub = useCallback(() => {
@@ -187,6 +203,7 @@ export function TurntableVideo({
     if (!scrubbingRef.current) return;
     scrubbingRef.current = false;
     routeAnimRef.current = null;
+    targetNRef.current = null;
     if (active) void active.play().catch(() => {});
   }, []);
 
@@ -196,14 +213,19 @@ export function TurntableVideo({
   const routeToView = useCallback(
     (target: 0 | 0.5) => {
       enterScrub();
+      targetNRef.current = null; // the routing wins over the drag target
       routeAnimRef.current = { target, lastT: performance.now() };
     },
     [enterScrub],
   );
 
-  // Always-on rAF while interactive: drives the front/back routing ease
-  // (the only animated motion inside the hero — everything else is a
-  // direct mouse-position seek).
+  // Always-on rAF while interactive (wave 26): the bottle PLAYS toward
+  // the drag target — forward on `right.mp4` when the hand moves right,
+  // FORWARD on `left.mp4` when it moves left (the recorded REVERSED
+  // footage — walid's «خاصية الـ reverse»: the video really plays back
+  // on the return). Arrival (≤ ~1.5 frames away) → PAUSE: the frame
+  // holds exactly («الماوس واقف = الفيديو واقف»). The vertical routing
+  // ease runs here too.
   useEffect(() => {
     if (!interactive || reduce) return;
     const tick = () => {
@@ -221,6 +243,25 @@ export function TurntableVideo({
           const step = rem * (1 - Math.exp(-ROUTE_EASE * dt));
           displayAt((scrubNRef.current + step + adj) % 1);
         }
+      } else if (targetNRef.current !== null && scrubbingRef.current) {
+        const active = activeRef.current;
+        const l = videoLeftRef.current;
+        const r = videoRightRef.current;
+        if (active && l && r) {
+          const n = fracOf(active); // the ACTUAL displayed angle
+          scrubNRef.current = n;
+          const d = ((targetNRef.current - n + 1.5) % 1) - 0.5;
+          if (Math.abs(d) < SCRUB_ARRIVE) {
+            // Arrived → HOLD the exact frame.
+            if (!active.paused) active.pause();
+          } else {
+            const dir = d > 0 ? "right" : "left";
+            const need = dir === "right" ? r : l;
+            if (active !== need) displayAt(targetNRef.current); // swap via the mirror
+            need.playbackRate = SCRUB_RATE;
+            if (need.paused) void need.play().catch(() => {});
+          }
+        }
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -228,7 +269,7 @@ export function TurntableVideo({
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [interactive, reduce, displayAt]);
+  }, [interactive, reduce, displayAt, steerTo, fracOf]);
 
   const playNext = useCallback(() => {
     const l = videoLeftRef.current;
@@ -348,9 +389,9 @@ export function TurntableVideo({
         // VERTICAL — route to FRONT (mouse down, قدام) / BACK (up, ورا).
         routeToView(dy > 0 ? 0 : 0.5);
       } else {
-        // HORIZONTAL — the scrub: mouse X across the window = the turn.
-        routeAnimRef.current = null;
-        displayAt(e.clientX / window.innerWidth);
+        // HORIZONTAL — the scrub: mouse X across the window = the turn
+        // (the rAF loop plays the matching clip toward this target).
+        steerTo(e.clientX / window.innerWidth);
       }
     };
 
@@ -358,7 +399,15 @@ export function TurntableVideo({
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
     };
-  }, [interactive, reduce, enterScrub, exitScrub, displayAt, routeToView]);
+  }, [
+    interactive,
+    reduce,
+    enterScrub,
+    exitScrub,
+    displayAt,
+    routeToView,
+    steerTo,
+  ]);
 
   const videoClass = `absolute inset-0 hidden h-full w-full ${
     fit === "cover" ? "object-cover" : "object-contain"
