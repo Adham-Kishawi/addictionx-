@@ -16,7 +16,9 @@ import { useReducedMotion } from "framer-motion";
 // no seam). Directions VERIFIED with ffmpeg (gradient-flow metric,
 // control-tested on hero.mp4): `right.mp4` = RIGHTWARD, `left.mp4` =
 // LEFTWARD — names match. Both open with the same front view, so the
-// mirrored-time switch maps angles exactly (duration-scaled: 3.04 vs 3.00s).
+// mirrored-time switch maps angles exactly (duration-scaled: 3.04 vs 3.00s,
+// with the wave-23 MEASURED +Δ ≈ 12-frames lag — the raw 1−f formula was
+// up to ~62° off mid-turn).
 // The old pair `hero.mp4`/`hero-left.mp4` (10s versions) was deleted.
 //
 //  · `fadeOnScroll`  — hero only: melts the layer away as the page
@@ -75,6 +77,10 @@ const RATE_DECEL = 0.1; // per-rAF lerp when the target rate falls
 const VERT_ARRIVE = 0.02; // |Δturn fraction| below this → hand back to the glide
 const RATE_PER_ANGLE = 4; // approach rate = |Δ| × this (cap MAX_RATE)
 const POSE_HOLD_MS = 500; // grace window before the routing hands back to the glide
+// Measured mirror lag (wave 23): left's content sits ~12 sampled frames
+// behind right's in the reversed pairing — see mirrorTimeFor below.
+const MIRROR_DELTA_INTO_LEFT = 12 / 71; // left.mp4 sampled every 2nd of 71 frames
+const MIRROR_DELTA_INTO_RIGHT = 12 / 72; // right.mp4 sampled every 2nd of 72 frames
 
 export function TurntableVideo({
   className = "",
@@ -122,10 +128,14 @@ export function TurntableVideo({
   }, []);
 
   // The time in `target` that shows the SAME bottle angle as `source` at
-  // its current time. Both clips are full 360° turns opening at the same
-  // front view — the target plays the turn BACKWARDS, so it must sit at
-  // the matching fraction from its own end (`td · (1 − f)`), scaled by
-  // each clip's real duration (3.04 vs 3.00s, they are NOT equal).
+  // its current time. MEASURED (wave 23): the raw `td · (1 − f)` assumption
+  // is up to ~62° off mid-turn — walid's pair IS reversed but NOT
+  // time-aligned (left's content lags right's by ~12 sampled frames ≈ 61°).
+  // Best-fit line over the full SSD matrix (every 2nd frame, 640×360,
+  // both directions): `fTarget = 1 − fSelf + Δ` — mean SSD 5.98 vs 7.09
+  // for the old formula (in-phase model: 6.47; the 320×180 fit agreed:
+  // scale≈1.1, Δ≈+10). Clamp to [0, 1] — on the front arc the mate lands
+  // on the target's own front (its loop end, same view).
   const mirrorTimeFor = useCallback(
     (source: HTMLVideoElement, target: HTMLVideoElement) => {
       const sd = source.duration;
@@ -134,7 +144,11 @@ export function TurntableVideo({
         return 0;
       }
       const f = Math.min(1, Math.max(0, source.currentTime / sd));
-      return td * (1 - f);
+      const delta =
+        target === videoLeftRef.current
+          ? MIRROR_DELTA_INTO_LEFT
+          : MIRROR_DELTA_INTO_RIGHT;
+      return td * Math.min(1, Math.max(0, 1 - f + delta));
     },
     [],
   );
