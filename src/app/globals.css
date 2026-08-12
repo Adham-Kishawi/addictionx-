@@ -213,6 +213,20 @@
   }
 }
 
+/* Typewriter caret (hero subtitle) — step-end blink, 1s loop */
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
 /* Moving words strip (marquee) — used by Marquee */
 @keyframes marquee-x {
   from {

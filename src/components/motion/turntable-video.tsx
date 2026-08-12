@@ -31,7 +31,7 @@ import { useReducedMotion } from "framer-motion";
 //    direction, no snap — durations scaled: 3.04s vs 3.00s), and
 //    قدام/ورا (mouse down/up) ROUTE the bottle to its FRONT view (faces
 //    the viewer) or BACK with an approach rate ∝ remaining angle (silk
-//    landing into a brief pose, then back to the glide).
+//    hand-off back to the glide — the 360° spin NEVER stops).
 //    The hidden copy stays PRE-SEEKED to the mirrored angle every frame,
 //    so reversing direction is instant at ANY moment (no seek delay).
 //    The 360° spin ALWAYS runs: when the hand rests over the hero the
@@ -62,13 +62,14 @@ const MIN_RATE = 0.1; // slowest creep (barely-moving mouse)
 const RATE_PER_VEL = 1.6; // ≈1× at a normal deliberate drag (~0.6px/ms)
 const IDLE_GLIDE_MS = 300; // stillness over the hero → ease down to the glide
 const IDLE_GLIDE_RATE = 0.55; // graceful continuous 360° while the hand rests
-// Vertical routing (قدام قدام → front, ورا → back): the bottle turns to
+// Vertical routing (قدام → front, ورا → back): the bottle turns to
 // face the viewer (or show its back) with an APPROACH RATE proportional
 // to the remaining turn fraction — it slows down as it gets there and
-// poses (rate 0) for a grace window, then hands back to the glide.
-const VERT_ARRIVE = 0.02; // |Δturn fraction| below this → pose achieved
+// hands back to the continuous glide: the 360° spin NEVER stops
+// (walid: «لازم يلف ويفضل شغال»).
+const VERT_ARRIVE = 0.02; // |Δturn fraction| below this → hand back to the glide
 const RATE_PER_ANGLE = 4; // approach rate = |Δ| × this (cap MAX_RATE)
-const POSE_HOLD_MS = 500; // grace window before the pose eases back to the glide
+const POSE_HOLD_MS = 500; // grace window before the routing hands back to the glide
 const RATE_LERP = 0.12; // playbackRate easing per rAF frame (low = silkier)
 
 export function TurntableVideo({
@@ -180,11 +181,10 @@ export function TurntableVideo({
     return 0;
   }, []);
 
-  // Route the bottle to a pose — FRONT (faces the viewer, قدام) or BACK
+  // Route the bottle to a view — FRONT (faces the viewer, قدام) or BACK
   // (ظهرها) — taking the SHORTEST arc with an approach rate ∝ remaining
-  // distance: fast first, then a silk landing into a brief pose (rate 0),
-  // then the turn hands back to the continuous glide (never frozen for
-  // long — the pose is only the gesture's landing moment).
+  // distance: fast first, then a silk hand-off back to the continuous
+  // glide. The rotation NEVER stops (rate 0 is never a target here).
   const routeToView = useCallback(
     (dir: 1 | -1) => {
       const l = videoLeftRef.current;
@@ -195,7 +195,9 @@ export function TurntableVideo({
       const d = ((target - navFraction() + 1.5) % 1) - 0.5; // shortest signed Δ
       if (Number.isNaN(d)) return;
       if (Math.abs(d) < VERT_ARRIVE) {
-        targetRateRef.current = 0; // pose achieved (front/back facing)
+        // Arrived at the view → ease to the gentle glide (still turning).
+        desiredDirRef.current = null;
+        targetRateRef.current = IDLE_GLIDE_RATE;
         return;
       }
       const turnDir = d > 0 ? "right" : "left";
@@ -330,10 +332,9 @@ export function TurntableVideo({
   // directions: RIGHT/LEFT = steering the 360° turn (velocity-based speed),
   // قدام (mouse forward/down) = the bottle smoothly ROUTES to its FRONT
   // view (faces the viewer), ورا (up) = routes to its BACK — approach rate
-  // ∝ remaining distance, silk landing into a brief pose, then hands back
-  // to the continuous glide (which still never freezes for long: the pose
-  // is the gesture's landing moment only). Outside the hero the turn runs
-  // at the full auto pace (rate 1).
+  // ∝ remaining distance, silk hand-off, and the rotation NEVER stops
+  // (the glide is always the floor — walid: «لازم يلف ويفضل شغال»).
+  // Outside the hero the turn runs at the full auto pace (rate 1).
   useEffect(() => {
     if (!interactive || reduce) return;
     const root = rootRef.current;
@@ -387,7 +388,7 @@ export function TurntableVideo({
 
       if (ax < 3 && ay < 3) {
         // Micro-jitter → ease back to the gentle glide (unless a vertical
-        // pose/routing gesture is still alive — that wins for its window).
+        // routing gesture is still alive — that wins for its window).
         if (vertDirRef.current === null) {
           targetRateRef.current = IDLE_GLIDE_RATE;
         }
@@ -415,8 +416,8 @@ export function TurntableVideo({
       }
 
       // The gesture's grace window: while the hand keeps pushing (or
-      // ≤ POSE_HOLD_MS after it stops) the pose/routing stays alive, then
-      // the turn hands back to the continuous glide. Never a long freeze.
+      // ≤ POSE_HOLD_MS after it stops) the routing stays alive, then
+      // the turn hands back to the continuous glide.
       if (vertHoldTimerRef.current) {
         window.clearTimeout(vertHoldTimerRef.current);
       }

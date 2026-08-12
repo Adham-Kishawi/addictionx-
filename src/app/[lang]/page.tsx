@@ -7,6 +7,8 @@ import { HeroVideo } from "@/components/motion/hero-video";
 import { HeroParallax } from "@/components/motion/hero-parallax";
 import { HeartbeatLine } from "@/components/motion/heartbeat-line";
 import { FadeIn } from "@/components/motion/fade-in";
+import { TypewriterLine } from "@/components/motion/typewriter-line";
+import { CollectionPicker } from "@/components/motion/collection-picker";
 import { WordReveal } from "@/components/motion/word-reveal";
 import { RevealStagger, RevealItem } from "@/components/motion/reveal";
 import { Marquee } from "@/components/motion/marquee";
@@ -121,14 +123,14 @@ export default async function Home({
                 <HeartbeatLine className="h-10 w-56 text-red-500 [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))_drop-shadow(0_4px_24px_rgba(0,0,0,0.45))]" />
               </FadeIn>
 
-              <WordReveal
-                as="p"
+              <TypewriterLine
                 text={dict.hero.subtitle}
-                delay={0.55}
+                speed={46}
+                startDelay={650}
                 className="max-w-xl text-base leading-relaxed text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)] sm:text-lg"
               />
 
-              <FadeIn delay={0.75}>
+              <FadeIn delay={0.85}>
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Magnetic>
                     <Button
@@ -150,6 +152,21 @@ export default async function Home({
                     </Button>
                   </Magnetic>
                 </div>
+              </FadeIn>
+
+              <FadeIn delay={1.05}>
+                <CollectionPicker
+                  locale={locale}
+                  collections={collections}
+                  labels={{
+                    prompt: dict.hero.pickPrompt,
+                    hint: dict.hero.pickHint,
+                    all: dict.hero.pickAll,
+                    empty: dict.hero.pickEmpty,
+                    ready: dict.hero.pickReady,
+                    go: dict.hero.pickGo,
+                  }}
+                />
               </FadeIn>
             </div>
           </MouseDrift>
