@@ -28,6 +28,7 @@ Required level: **production-ready startup**, not a demo or temporary solution.
 - When there is more than one way: start with the easiest, then mention the alternatives.
 - When there is an error: locate it → explain its cause → write the fix explaining the difference.
 - Treat him as a trainee who wants to understand programming deeply, not copy solutions.
+- **Push after every update:** we work on the codebase and push to `origin/main` after each completed update — we do NOT work/test locally (no local dev server workflow). The deployed site is the reference for checking results: **https://addictionx.vercel.app/** (Vercel auto-deploys on push).
 
 **Reason:** he wants to understand the project deeply enough to restructure it himself, not just run it.
 
@@ -559,4 +560,4 @@ src/
 - **Collections (fixed decision):** no FK — `Product.collection` stays a text slug; the `Collection` model is managed from the dashboard (add/delete — deletion is refused while products exist).
 - **Social (fixed decision):** Instagram + TikTok only — **no Facebook** (per walid's request).
 
-**Environment:** Node v24 · npm 11 (npmmirror source + PRISMA_ENGINES_MIRROR for install) · git v2.34 · local PostgreSQL (port 5432) · dev server running on port 3100
+**Environment:** Node v24 · npm 11 (npmmirror source + PRISMA_ENGINES_MIRROR for install) · git v2.34 · DB on Neon (Postgres cloud) · **no local dev server** — we push and check on the live site **https://addictionx.vercel.app/** (Vercel auto-deploy).
