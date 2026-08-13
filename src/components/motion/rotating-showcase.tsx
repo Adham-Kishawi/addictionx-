@@ -22,10 +22,9 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 // f0001..f0239.jpg`, ~10.7MB — everything on the 10s of film, so
 // the scroll divides into the finest possible steps, the silkiest
 // scrub). The section
-// shows the FULL video — object-contain (nothing cropped, wave 31h:
-// walid «الفيديو نفسه اتقص منه») on a theme-colored stage so the
-// letterbox bars melt into the page — NOT a cropped full-bleed box.
-// GSAP
+// shows the sequence FULL-BLEED across the whole width (wave 31i:
+// walid «محتاج ياخد العرض كامل») with soft 3-stop veils at the
+// edges so the video enters/exits the section cleanly. GSAP
 // ScrollTrigger (dynamic import, per the project rule) scrubs the
 // scroll as the section passes through the viewport. Smoothness: TWO
 // stacked imgs crossfade — the base frame is scrubbed 1:1 and the
@@ -140,17 +139,17 @@ export function RotatingShowcase({
       className="relative h-[85vh] w-full overflow-hidden bg-background"
       aria-label={name}
     >
-      {/* FULL-BLEED assembly video — frame-scrubbed by GSAP */}
-      {/* object-contain → the WHOLE video is visible, nothing cropped
-          (wave 31h — walid: «الفيديو نفسه اتقص منه»); the stage follows
-          the page background so the letterbox bars melt into the theme */}
+      {/* FULL-bleed assembly video — full WIDTH again (wave 31i — walid:
+          «محتاج الفيديو ياخد العرض كامل») — object-cover, and the section
+          edges are soft 3-stop fades so the video ENTERS/EXITS the section
+          cleanly instead of a hard crop (walid: «خالص نضيف مع خروجه من السكشن») */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={imgRef}
         src={frameSrc(FRAME_COUNT - 1)}
         alt={name}
         draggable={false}
-        className="absolute inset-0 h-full w-full select-none object-contain"
+        className="absolute inset-0 h-full w-full select-none object-cover"
       />
       {/* Crossfade layer — the NEXT frame fades over the base frame */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -160,26 +159,26 @@ export function RotatingShowcase({
         alt=""
         aria-hidden
         draggable={false}
-        className="absolute inset-0 h-full w-full select-none object-contain"
+        className="absolute inset-0 h-full w-full select-none object-cover"
       />
 
-      {/* Gentle edge veils — SHORT + subtle so they just soften the
-          film-frame like a vignette, not a visible band (wave 31h —
-          walid: «الحواف فوق وتحت تكون مدموجة… الـ opacity بتاعها أقل») */}
+      {/* Soft 3-stop edge veils — solid page-bg at the border → translucent
+          mid → transparent: the video melts cleanly out of the section (no
+          hard cut), with lower opacity than the old band (wave 31i) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[6vh]"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[14vh]"
         style={{
           background:
-            "linear-gradient(to bottom, var(--hero-veil-4) 0%, transparent 100%)",
+            "linear-gradient(to bottom, var(--hero-veil-4) 0%, color-mix(in oklab, var(--background) 30%, transparent) 60%, transparent 100%)",
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[8vh]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[16vh]"
         style={{
           background:
-            "linear-gradient(to top, var(--hero-veil-4) 0%, transparent 100%)",
+            "linear-gradient(to top, var(--hero-veil-4) 0%, color-mix(in oklab, var(--background) 30%, transparent) 60%, transparent 100%)",
         }}
       />
 
