@@ -10,7 +10,7 @@ import { FadeIn } from "@/components/motion/fade-in";
 import { TypewriterLine } from "@/components/motion/typewriter-line";
 import { CollectionPicker } from "@/components/motion/collection-picker";
 import { WordReveal } from "@/components/motion/word-reveal";
-import { RevealStagger, RevealItem } from "@/components/motion/reveal";
+import { RevealStagger, RevealItem, Reveal } from "@/components/motion/reveal";
 import { Marquee } from "@/components/motion/marquee";
 import { Magnetic } from "@/components/motion/magnetic";
 import { MouseDrift } from "@/components/motion/mouse-drift";
@@ -235,34 +235,42 @@ export default async function Home({
         collectionNames={collectionNames}
       />
 
-      {/* ====== Most wanted ====== */}
-      <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 [content-visibility:auto] [contain-intrinsic-size:auto_640px]">
-        <div className="mb-10 flex items-end justify-between gap-4">
-          <SectionHeading
-            eyebrow="ADDICTIONX"
-            title={dict.home.featuredTitle}
-            subtitle={dict.home.featuredSubtitle}
-          />
-          <Link
-            href={`/${locale}/catalog`}
-            className="group hidden shrink-0 items-center gap-1.5 text-sm font-medium text-primary sm:flex"
-          >
-            {dict.home.viewAll}
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
-          </Link>
-        </div>
+      {/* ====== Most wanted — wave 34d: the scents section becomes a
+            storytelling entrance — heading reveals first, then each
+            bestseller rises ONE BY ONE (staggered), over a slow
+            drifting glow layer; ExplodedProduct layers split on hover
+            (see exploded-product.tsx) ====== */}
+      <section className="relative overflow-hidden py-24 [content-visibility:auto] [contain-intrinsic-size:auto_640px]">
+        <SectionGlow />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal y={24}>
+            <div className="mb-10 flex items-end justify-between gap-4">
+              <SectionHeading
+                eyebrow="ADDICTIONX"
+                title={dict.home.featuredTitle}
+                subtitle={dict.home.featuredSubtitle}
+              />
+              <Link
+                href={`/${locale}/catalog`}
+                className="group hidden shrink-0 items-center gap-1.5 text-sm font-medium text-primary sm:flex"
+              >
+                {dict.home.viewAll}
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+              </Link>
+            </div>
+          </Reveal>
 
-        {/* ====== Most wanted — EXPLODED: every card is a 5-layer float in
-              perspective (pattern / glow / bottle / glass chip / CTA), layers
-              split apart on hover and the bottle turns ====== */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
-          {bestsellers.map((product: Product) => (
-            <ExplodedProduct
-              key={product.id}
-              product={product}
-              locale={locale}
-            />
-          ))}
+          {/* Each card: visible → rises in its turn (stagger 0.14) */}
+          <RevealStagger
+            stagger={0.14}
+            className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6"
+          >
+            {bestsellers.map((product: Product) => (
+              <RevealItem key={product.id} y={56}>
+                <ExplodedProduct product={product} locale={locale} />
+              </RevealItem>
+            ))}
+          </RevealStagger>
         </div>
       </section>
 

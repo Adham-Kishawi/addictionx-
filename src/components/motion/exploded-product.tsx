@@ -11,12 +11,13 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 
 // ============================================================
 // EXPLODED PRODUCT — the bestseller card as a 5-layer float in
-// perspective 1200px (wave plan #1):
+// perspective 1200px (wave plan #1, refined wave 34d):
 //   z-120 heartbeat pattern (blurred neon) · z-60 glow (screen)
 //   z-0 the bottle · z+60 glass text chip · z+120 the CTA
-// Scroll-in: the card rises as one body; HOVER: layers split
-// (±35% depth) and the bottle turns rotateY 18°; mouse-leave:
-// layers settle back with a spring. Reduced motion → flat card.
+// Wave 34d: the scroll entry moved to the parent grid's stagger
+// (RevealStagger in page.tsx) so cards rise ONE BY ONE in story
+// order; here HOVER splits the layers (±35% depth), the bottle
+// turns rotateY 18° and settles with a gentle zoom — restrained.
 // ============================================================
 
 const LAYERS = [
@@ -44,10 +45,7 @@ export function ExplodedProduct({
   return (
     <motion.div
       className="relative aspect-[3/4] w-full"
-      initial={reduce ? false : { opacity: 0, y: 60 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ type: "spring", stiffness: 80, damping: 22 }}
+      initial={false}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{ perspective: 1200 }}
@@ -68,6 +66,7 @@ export function ExplodedProduct({
                   : {
                       z: layer.z * 1.35,
                       rotateY: layer.kind === "bottle" ? 18 : 0,
+                      scale: layer.kind === "bottle" ? 1.04 : 1,
                     }
               }
               transition={{ type: "spring", stiffness: 170, damping: 30 }}
