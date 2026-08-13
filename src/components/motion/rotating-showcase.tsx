@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import {
   motion,
+  useMotionTemplate,
   useMotionValueEvent,
   useReducedMotion,
   useScroll,
@@ -12,16 +13,29 @@ import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
 import { formatPrice, type Product } from "@/features/catalog/data/products";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
-import { TurntableVideo } from "./turntable-video";
+import { ScrollScrubVideo } from "./scroll-scrub-video";
 
 // ============================================================
-// ROTATING SHOWCASE — the centerpiece. A 300vh pinned stage right
-// after the hero: the REAL 360° turntable video spins the bottle
-// continuously (wave 12 — the wave 11 WebGL/R3F turntable was removed;
-// the actual footage is lighter, simpler and works everywhere), a light
-// sheen sweeps the glass, the background hue drifts red → gold → silver,
-// and a persistent details strip under the bottle hands over
-// top/heart/base → price+CTA across the four quarters.
+// ROTATING SHOWCASE — the depth centrepiece right after the hero
+// (wave 29). A 300vh pinned stage where the SCROLL IS THE
+// TURNTABLE: the real 360° footage (`public/360/animation.mp4`)
+// turns the bottle exactly one full turn as you scroll through
+// the stage — the user "turns the product with the wheel"
+// (the ui-skill `useVideoScrub` pattern, scroll-flavoured —
+// frame-gated paused seeks, so the end-restart zone is
+// structurally unreachable). Around the turning bottle a full
+// DEPTH ladder (the project's wave-9 depth language):
+//   z-0 hue-drift backdrop (red → gold → silver)
+//   z-1 giant watermark (far layer)
+//   z-2 floor shadow
+//   z-10 the bottle in a PICTURE-PLANE dolly: it pushes IN with
+//        scroll — scale 0.6→1, depth-of-field blur 10px→0, a
+//        subtle orbit tilt (rotateX/rotateY) and y-drift, all in
+//        a 1200px perspective container;
+//   z-5 sheen sweep over the glass · z-6 details strip.
+// The details strip (wave 8) is unchanged: collection + name
+// always on, top→heart→base→price hand-off across the quarters,
+// CTA in the last quarter. Reduced motion → static poster frame.
 // ============================================================
 
 type Slot = {
@@ -30,8 +44,8 @@ type Slot = {
   notes: string[];
 };
 
-// Poster = the static front frame of the turntable (reduce-motion fallback).
-const FRONT_FRAME = "/hero/frame-01.png";
+// Poster = the static front frame of the scroll-scrubbed 360 clip.
+const FRONT_FRAME = "/360/frame-01.png";
 
 // A single detail slot inside the strip — notes chips or price; the active
 // quarter owns it via CSS opacity/translate (children animate, the glass never).
@@ -102,9 +116,21 @@ export function RotatingShowcase({
     offset: ["start start", "end end"],
   });
 
-  // Full-range animation transformed into silk: the bottle holds the whole
-  // scale arc but the motion is front-loaded (ease-out), so it settles.
-  const scale = useTransform(scrollYProgress, [0, 0.45, 1], [0.72, 0.98, 0.9]);
+  // ============ Depth ladder — scroll-driven transforms (wave 29) ============
+  // The dolly: the bottle pushes IN from a distance (scale + depth-of-field
+  // blur clearing), orbiting slightly in a 1200px perspective so the turn
+  // reads as a real object turning in space, not a flat image.
+  const bottleScale = useTransform(
+    scrollYProgress,
+    [0, 0.4, 0.8, 1],
+    [0.6, 1.0, 0.98, 0.92],
+  );
+  const bottleBlur = useTransform(scrollYProgress, [0, 0.3], [10, 0]);
+  const bottleFilter = useMotionTemplate`blur(${bottleBlur}px)`;
+  const bottleRotateX = useTransform(scrollYProgress, [0, 0.5, 1], [7, 0, 3]);
+  const bottleRotateY = useTransform(scrollYProgress, [0, 0.5, 1], [-8, 0, 8]);
+  const bottleY = useTransform(scrollYProgress, [0, 0.5, 1], [46, 0, 14]);
+
   const sheenX = useTransform(scrollYProgress, [0, 1], ["-180%", "180%"]);
   const watermarkOpacity = useTransform(scrollYProgress, [0, 0.3], [0.45, 0.1]);
 
@@ -199,35 +225,50 @@ export function RotatingShowcase({
           ADDICTIONX
         </motion.span>
 
-        {/* The turning bottle — the real 360° turntable video (wave 12).
-            mix-blend-screen makes the dark studio backdrop vanish over the page. */}
-        <motion.div
-          className="relative z-10 flex h-[52vh] w-full items-center justify-center px-6"
-          style={reduce ? undefined : { scale }}
-        >
-          <div
-            className={`relative aspect-video h-full w-auto max-w-[74vw] ${
+        {/* The turning bottle — the SCROLL IS THE TURNTABLE (wave 29):
+            one full 360° turn of `animation.mp4` per stage, scrubbed by
+            scroll in a 1200px perspective dolly (push-in + orbit + DOF). */}
+        <div className="relative z-10 flex h-[52vh] w-full items-center justify-center px-6 [perspective:1200px]">
+          <motion.div
+            className="relative flex h-full w-full items-center justify-center"
+            style={
               reduce
-                ? ""
-                : "mix-blend-screen [filter:drop-shadow(0_0_60px_oklch(0.6_0.22_22/0.22))]"
-            }`}
+                ? undefined
+                : {
+                    scale: bottleScale,
+                    y: bottleY,
+                    rotateX: bottleRotateX,
+                    rotateY: bottleRotateY,
+                    filter: bottleFilter,
+                    transformStyle: "preserve-3d",
+                  }
+            }
           >
-            <TurntableVideo
-              fit="contain"
-              poster={FRONT_FRAME}
-              className="absolute inset-0"
-            />
-          </div>
+            <div
+              className={`relative aspect-video h-full w-auto max-w-[74vw] ${
+                reduce
+                  ? ""
+                  : "mix-blend-screen [filter:drop-shadow(0_0_60px_oklch(0.6_0.22_22/0.22))]"
+              }`}
+            >
+              <ScrollScrubVideo
+                progress={scrollYProgress}
+                src="/360/animation.mp4"
+                poster={FRONT_FRAME}
+                className="absolute inset-0 h-full w-full object-contain"
+              />
 
-          {/* Sweeping sheen over the glass */}
-          {!reduce && (
-            <motion.div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent mix-blend-soft-light"
-              style={{ x: sheenX }}
-            />
-          )}
-        </motion.div>
+              {/* Sweeping sheen over the glass */}
+              {!reduce && (
+                <motion.div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent mix-blend-soft-light"
+                  style={{ x: sheenX }}
+                />
+              )}
+            </div>
+          </motion.div>
+        </div>
 
         {/* Floor shadow under the bottle */}
         <motion.div
