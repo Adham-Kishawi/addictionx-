@@ -22,8 +22,10 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 // f0001..f0239.jpg`, ~10.7MB — everything on the 10s of film, so
 // the scroll divides into the finest possible steps, the silkiest
 // scrub). The section
-// shows the sequence as a FULL-BLEED video filling the whole
-// screen (like the hero) — NOT a square sprite box. GSAP
+// shows the FULL video — object-contain (nothing cropped, wave 31h:
+// walid «الفيديو نفسه اتقص منه») on a theme-colored stage so the
+// letterbox bars melt into the page — NOT a cropped full-bleed box.
+// GSAP
 // ScrollTrigger (dynamic import, per the project rule) scrubs the
 // scroll as the section passes through the viewport. Smoothness: TWO
 // stacked imgs crossfade — the base frame is scrubbed 1:1 and the
@@ -135,17 +137,20 @@ export function RotatingShowcase({
     // scroll, giving the smoothest scrub yet (wave 31g).
     <section
       ref={ref}
-      className="relative h-[85vh] w-full overflow-hidden bg-black"
+      className="relative h-[85vh] w-full overflow-hidden bg-background"
       aria-label={name}
     >
       {/* FULL-BLEED assembly video — frame-scrubbed by GSAP */}
+      {/* object-contain → the WHOLE video is visible, nothing cropped
+          (wave 31h — walid: «الفيديو نفسه اتقص منه»); the stage follows
+          the page background so the letterbox bars melt into the theme */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={imgRef}
         src={frameSrc(FRAME_COUNT - 1)}
         alt={name}
         draggable={false}
-        className="absolute inset-0 h-full w-full select-none object-cover"
+        className="absolute inset-0 h-full w-full select-none object-contain"
       />
       {/* Crossfade layer — the NEXT frame fades over the base frame */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -155,16 +160,15 @@ export function RotatingShowcase({
         alt=""
         aria-hidden
         draggable={false}
-        className="absolute inset-0 h-full w-full select-none object-cover"
+        className="absolute inset-0 h-full w-full select-none object-contain"
       />
 
-      {/* Edge veils — the section melts into the page (same --hero-veil-4
-            pattern the hero uses: background-color at 0% → transparent), so the
-            hard top/bottom cut lines disappear and the video feels part of the
-            site in BOTH themes (dark blends into dark, light melts into light) */}
+      {/* Gentle edge veils — SHORT + subtle so they just soften the
+          film-frame like a vignette, not a visible band (wave 31h —
+          walid: «الحواف فوق وتحت تكون مدموجة… الـ opacity بتاعها أقل») */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[14vh]"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[6vh]"
         style={{
           background:
             "linear-gradient(to bottom, var(--hero-veil-4) 0%, transparent 100%)",
@@ -172,7 +176,7 @@ export function RotatingShowcase({
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[18vh]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[8vh]"
         style={{
           background:
             "linear-gradient(to top, var(--hero-veil-4) 0%, transparent 100%)",
