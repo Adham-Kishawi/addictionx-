@@ -6,10 +6,14 @@ import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 export default async function NotFound({
   params,
 }: {
-  params: Promise<{ lang: string }>;
+  params?: Promise<{ lang: string }>;
 }) {
-  const { lang } = await params;
-  const locale = isLocale(lang) ? lang : defaultLocale;
+  // HARDENED (hotfix): Next.js renders this not-found OUTSIDE the [lang]
+  // route context for some unmatched paths — params can be undefined,
+  // which previously crashed into the generic "Oops" 500 page instead of
+  // a clean 404. Fall back to the default locale, never crash.
+  const { lang } = params ? await params : { lang: undefined };
+  const locale = lang && isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
   return (
