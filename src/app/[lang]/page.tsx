@@ -173,13 +173,13 @@ export default async function Home({
         }
       />
 
-      {/* ====== ROTATING SHOWCASE — 85vh stage SHORTER than the hero: the hero product
-            assembles with the wheel (full-bleed frame scrub + crossfade, no pin —
-            scrolls with the page), SHOP NOW (→ general catalog) ======
-            (wave 9: LazyMount keeps the 85vh scene + its scroll listeners out of
+      {/* ====== ROTATING SHOWCASE — 95vh stage: the hero product assembles with the
+            wheel (full-bleed frame scrub + crossfade), animation COMPLETES when the
+            section is fully in view, SHOP NOW (→ general catalog) ======
+            (wave 9: LazyMount keeps the 95vh scene + its scroll listeners out of
             the DOM until the user actually reaches it — the hero stays fast) ====== */}
       {heroProduct ? (
-        <LazyMount fallbackHeight="85vh">
+        <LazyMount fallbackHeight="95vh">
           <RotatingShowcase
             product={heroProduct}
             locale={locale}

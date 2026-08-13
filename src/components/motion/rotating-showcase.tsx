@@ -26,8 +26,9 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 // walid «محتاج ياخد العرض كامل») with soft 3-stop veils at the
 // edges so the video enters/exits the section cleanly. GSAP
 // ScrollTrigger (dynamic import, per the project rule) scrubs the
-// scroll as the section passes through the viewport. Smoothness: TWO
-// stacked imgs crossfade — the base frame is scrubbed 1:1 and the
+// scroll while the 95vh section crosses the viewport, and the
+// assembly COMPLETES exactly when the section is fully in view
+// (wave 31j). Smoothness: TWO stacked imgs crossfade — the base frame is scrubbed 1:1 and the
 // NEXT frame fades over it by the fractional progress, so the
 // assembly glides like the video itself instead of stepping between
 // frames (wave 31c — walid: «الحركة تكون سموث أكتر من كده»).
@@ -63,7 +64,7 @@ export function RotatingShowcase({
 
   const { scrollYProgress } = useScroll({
     target: ref as React.RefObject<HTMLElement>,
-    offset: ["start end", "end start"],
+    offset: ["start end", "end end"],
   });
 
   // GSAP ScrollTrigger — scrub the frame with the wheel (wave 31b).
@@ -98,7 +99,11 @@ export function RotatingShowcase({
       st = ScrollTrigger.create({
         trigger: section,
         start: "top bottom",
-        end: "bottom top",
+        // The assembly COMPLETES the moment the section is fully in view
+        // (its bottom hits the viewport bottom) — then the assembled
+        // product rides up out of view (wave 31j — walid: «مع انتهاء
+        // السكشن يكون كل الانيميشن خلص»).
+        end: "bottom bottom",
         scrub: 1,
         onUpdate: (self) => {
           const raw = self.progress * (FRAME_COUNT - 1);
@@ -128,15 +133,15 @@ export function RotatingShowcase({
   const shopY = useTransform(scrollYProgress, [0.72, 0.9], [26, 0]);
 
   return (
-    // 85vh stage — SHORTER than the hero (100dvh). No sticky pin: a
-    // pinned full-screen stage physically needs a section taller than
-    // the viewport, so the whole block now scrolls WITH the page and
-    // the GSAP trigger spans "top bottom → bottom top" — the section
-    // is shorter than the hero AND the frames glide across ~185vh of
-    // scroll, giving the smoothest scrub yet (wave 31g).
+    // 95vh stage — a bit bigger (wave 31j: walid «كبر السكشن أكبر
+    // شوية بيه ميكونش كبير أوي»), still under the hero (100dvh). No
+    // sticky pin: the block scrolls WITH the page and the GSAP trigger
+    // spans "top bottom → bottom bottom" — the assembly finishes
+    // EXACTLY when the section is fully in view (wave 31j), then the
+    // assembled product + SHOP NOW ride up out of view.
     <section
       ref={ref}
-      className="relative h-[85vh] w-full overflow-hidden bg-background"
+      className="relative h-[95vh] w-full overflow-hidden bg-background"
       aria-label={name}
     >
       {/* FULL-bleed assembly video — full WIDTH again (wave 31i — walid:
