@@ -39,11 +39,21 @@ export async function generateMetadata({
   const dict = getDictionary(locale);
 
   return {
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_SITE_URL ?? "https://addictionx.vercel.app",
+    ),
     title: {
       default: dict.meta.title,
       template: `%s | ${dict.meta.title}`,
     },
     description: dict.meta.description,
+    openGraph: {
+      title: dict.meta.title,
+      description: dict.meta.description,
+      siteName: "ADDICTIONX",
+      locale: locale === "ar" ? "ar_EG" : "en_US",
+      type: "website",
+    },
     robots: { index: true, follow: true },
   };
 }
