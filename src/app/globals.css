@@ -52,6 +52,8 @@
 /* ADDICTIONX Palette — deep black + neon red + metallic silver */
 :root,
 .dark {
+  --font-cairo: "Cairo", ui-sans-serif, system-ui, sans-serif;
+  --font-playfair: "Playfair Display", ui-serif, Georgia, serif;
   --background: oklch(0.12 0.005 285);
   --foreground: oklch(0.95 0.004 285);
   --card: oklch(0.16 0.006 285);

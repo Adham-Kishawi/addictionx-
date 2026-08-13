@@ -1,5 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Cairo, Playfair_Display } from "next/font/google";
+import "@fontsource/cairo/300.css";
+import "@fontsource/cairo/400.css";
+import "@fontsource/cairo/500.css";
+import "@fontsource/cairo/600.css";
+import "@fontsource/cairo/700.css";
+import "@fontsource/playfair-display/400.css";
+import "@fontsource/playfair-display/500.css";
+import "@fontsource/playfair-display/600.css";
+import "@fontsource/playfair-display/700.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CartDrawer } from "@/features/cart/components/cart-drawer";
@@ -14,20 +22,6 @@ import { PageTransition } from "@/components/motion/page-transition";
 import { auth } from "@/lib/auth";
 import { getDictionary, isLocale, type Locale } from "@/lib/i18n/dictionary";
 import "../globals.css";
-
-const cairo = Cairo({
-  variable: "--font-cairo",
-  subsets: ["arabic", "latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
 
 export async function generateMetadata({
   params,
@@ -77,7 +71,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={locale === "ar" ? "rtl" : "ltr"}
-      className={`dark ${cairo.variable} ${playfair.variable} h-full antialiased`}
+      className="dark h-full antialiased"
     >
       <body className="min-h-full">
         {/* isolate = stacking context: the fixed DepthBackdrop (-z-10) stays
