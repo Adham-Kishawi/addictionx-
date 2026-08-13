@@ -42,15 +42,15 @@ export function LazyMount({
     return () => obs.disconnect();
   }, [rootMargin]);
 
-  // The placeholder keeps the same height as the scene so the page
-  // never jumps when it mounts. Height 0 = the layout below simply
-  // sits higher until the scene is near (best for short-page feel);
-  // pass a vh number to reserve the space.
+  // Reserve the scene's height only until it mounts. The child then owns
+  // that height, preventing both a scroll jump and duplicated 300vh space.
   return (
     <div
       ref={ref}
       className={className}
-      style={fallbackHeight ? { height: fallbackHeight } : undefined}
+      style={
+        !mounted && fallbackHeight ? { height: fallbackHeight } : undefined
+      }
     >
       {mounted ? children : null}
     </div>

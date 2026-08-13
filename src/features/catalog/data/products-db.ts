@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import type { Product } from "./products";
-import { collections as staticCollections } from "./products";
+import {
+  collections as staticCollections,
+  products as staticProducts,
+} from "./products";
 
 // Data layer that reads from the database with the same interface as the static file —
 // so the storefront only changes its data source without any change in the interfaces.
@@ -12,21 +15,24 @@ export interface CollectionRow {
   nameEn: string;
 }
 
-// Collections are managed from the dashboard. When no records exist (new DB without seed)
-// we fall back to the static array so the pages never break.
+// Collections are managed from the dashboard. The storefront still has a local
+// fallback so a temporary database outage does not take the public site offline.
 export async function getCollections(): Promise<CollectionRow[]> {
-  const rows = await prisma.collection.findMany({
-    orderBy: { sortOrder: "asc" },
-    select: { slug: true, nameAr: true, nameEn: true },
-  });
-  if (rows.length === 0) {
-    return staticCollections.map((c) => ({
-      slug: c.slug,
-      nameAr: c.nameAr,
-      nameEn: c.nameEn,
-    }));
+  try {
+    const rows = await prisma.collection.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: { slug: true, nameAr: true, nameEn: true },
+    });
+    if (rows.length > 0) return rows;
+  } catch {
+    // Use the static catalog while the remote database is unavailable.
   }
-  return rows;
+
+  return staticCollections.map((c) => ({
+    slug: c.slug,
+    nameAr: c.nameAr,
+    nameEn: c.nameEn,
+  }));
 }
 
 const include = {
@@ -86,15 +92,28 @@ export function productFromRow(db: DbProduct): Product {
 }
 
 export async function getProducts(): Promise<Product[]> {
-  const rows = await prisma.product.findMany({
-    where: { isActive: true },
-    include,
-    orderBy: { createdAt: "desc" },
-  });
-  return rows.map((row) => productFromRow(row as DbProduct));
+  try {
+    const rows = await prisma.product.findMany({
+      where: { isActive: true },
+      include,
+      orderBy: { createdAt: "desc" },
+    });
+    if (rows.length > 0)
+      return rows.map((row) => productFromRow(row as DbProduct));
+  } catch {
+    // Use the static catalog while the remote database is unavailable.
+  }
+
+  return staticProducts;
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const row = await prisma.product.findUnique({ where: { slug }, include });
-  return row ? productFromRow(row as DbProduct) : null;
+  try {
+    const row = await prisma.product.findUnique({ where: { slug }, include });
+    if (row) return productFromRow(row as DbProduct);
+  } catch {
+    // Use the static catalog while the remote database is unavailable.
+  }
+
+  return staticProducts.find((product) => product.slug === slug) ?? null;
 }
