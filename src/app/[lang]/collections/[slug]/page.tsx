@@ -34,7 +34,13 @@ export async function generateMetadata({
   return {
     title: name,
     description: dict.meta.description,
-    alternates: { canonical: path },
+    alternates: {
+      canonical: path,
+      languages: {
+        en: `/en/collections/${collection.slug}`,
+        ar: `/ar/collections/${collection.slug}`,
+      },
+    },
     openGraph: {
       title: name,
       description: dict.meta.description,

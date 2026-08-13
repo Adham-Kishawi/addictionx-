@@ -21,6 +21,7 @@ import { NoiseOverlay } from "@/components/motion/noise-overlay";
 import { PageTransition } from "@/components/motion/page-transition";
 import { auth } from "@/lib/auth";
 import { getDictionary, isLocale, type Locale } from "@/lib/i18n/dictionary";
+import { siteUrl } from "@/lib/site-url";
 import "../globals.css";
 
 export async function generateMetadata({
@@ -33,9 +34,7 @@ export async function generateMetadata({
   const dict = getDictionary(locale);
 
   return {
-    metadataBase: new URL(
-      process.env.NEXT_PUBLIC_SITE_URL ?? "https://addictionx.vercel.app",
-    ),
+    metadataBase: new URL(siteUrl),
     title: {
       default: dict.meta.title,
       template: `%s | ${dict.meta.title}`,

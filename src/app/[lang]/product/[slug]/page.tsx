@@ -16,6 +16,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/features/catalog/data/products";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
+import { siteUrl } from "@/lib/site-url";
 import { Reveal } from "@/components/motion/reveal";
 import { SectionGlow } from "@/components/motion/section-glow";
 
@@ -37,7 +38,13 @@ export async function generateMetadata({
   return {
     title: name,
     description,
-    alternates: { canonical: path },
+    alternates: {
+      canonical: path,
+      languages: {
+        en: `/en/product/${product.slug}`,
+        ar: `/ar/product/${product.slug}`,
+      },
+    },
     openGraph: {
       title: name,
       description,
@@ -91,9 +98,7 @@ export default async function ProductPage({
   const description = isAr ? product.descriptionAr : product.descriptionEn;
   const collectionMeta = collections.find((c) => c.slug === product.collection);
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://addictionx.vercel.app";
-  const canonicalUrl = `${baseUrl}/${locale}/product/${product.slug}`;
+  const canonicalUrl = `${siteUrl}/${locale}/product/${product.slug}`;
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",

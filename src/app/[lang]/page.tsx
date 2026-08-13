@@ -11,6 +11,7 @@ import { TypewriterLine } from "@/components/motion/typewriter-line";
 import { CollectionPicker } from "@/components/motion/collection-picker";
 import { WordReveal } from "@/components/motion/word-reveal";
 import { RevealStagger, RevealItem, Reveal } from "@/components/motion/reveal";
+import { siteUrl } from "@/lib/site-url";
 import { Marquee } from "@/components/motion/marquee";
 import { Magnetic } from "@/components/motion/magnetic";
 import { MouseDrift } from "@/components/motion/mouse-drift";
@@ -87,6 +88,22 @@ export default async function Home({
 
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": ["Organization", "WebSite"],
+            name: "ADDICTIONX",
+            url: siteUrl,
+            potentialAction: {
+              "@type": "SearchAction",
+              target: `${siteUrl}/${locale}/catalog?q={search_term_string}`,
+              "query-input": "required name=search_term_string",
+            },
+          }),
+        }}
+      />
       {/* ====== HERO — cinematic scene: the video stays dark in BOTH themes (black product footage
             cannot go light), but the veil/bg follow the theme via --hero-* vars so the hero melts
             into the page below. HeroParallax slides three layers at different scroll speeds
