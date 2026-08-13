@@ -204,7 +204,7 @@ export function ProductCarousel({
     : `transform ${ANIM_MS}ms ${EASE}, filter ${ANIM_MS}ms ${EASE}, opacity ${ANIM_MS}ms ${EASE}, left ${ANIM_MS}ms ${EASE}`;
 
   return (
-    <section className="relative overflow-hidden border-y border-border bg-card/40 py-10">
+    <section className="relative overflow-hidden border-y border-border bg-card/40 py-8">
       {/* ===== Per-collection identity background (wave 8) =====
             One layer per product, each carrying the collection's glow tint +
             giant collection name behind the stage. Active index crossfades
@@ -303,7 +303,7 @@ export function ProductCarousel({
               onPointerUp={onPointerUp}
               onPointerLeave={onPointerUp}
               onPointerCancel={onPointerUp}
-              className="relative aspect-[0.72/1] w-full max-w-[220px] touch-pan-y select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:max-w-sm lg:max-w-md"
+              className="relative aspect-[0.95/1] w-full max-w-[220px] touch-pan-y select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:max-w-sm lg:max-w-md"
             >
               {/* Wave 34c — the whole stage rides the drag spring */}
               <motion.div
@@ -322,7 +322,7 @@ export function ProductCarousel({
                       style={{
                         bottom: 0,
                         left: `${s.left}%`,
-                        width: "56%",
+                        width: "52%",
                         aspectRatio: "0.6 / 1",
                         transform: `translateX(-50%) scale(${s.scale})`,
                         opacity: s.opacity,
