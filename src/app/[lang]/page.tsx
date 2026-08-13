@@ -20,7 +20,7 @@ import { StatsBand } from "@/components/motion/stats-band";
 import { SectionGlow } from "@/components/motion/section-glow";
 import { RotatingShowcase } from "@/components/motion/rotating-showcase";
 import { LazyMount } from "@/components/motion/lazy-mount";
-import { MoodWorlds } from "@/components/motion/mood-worlds";
+import { CollectionShelf } from "@/components/motion/collection-shelf";
 import { CtaScene } from "@/components/motion/cta-scene";
 import { SignatureScene } from "@/components/motion/signature-scene";
 import { SectionHeading } from "@/components/layout/section-heading";
@@ -31,7 +31,10 @@ import {
   getProducts,
   getCollections,
 } from "@/features/catalog/data/products-db";
-import { collectionBackdrop } from "@/features/catalog/data/collection-assets";
+import {
+  collectionBackdrop,
+  shelfBottle,
+} from "@/features/catalog/data/collection-assets";
 import { getWishlistIds } from "@/features/account/data";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 
@@ -314,10 +317,12 @@ export default async function Home({
         ctaHref={`/${locale}/catalog`}
       />
 
-      {/* ====== THREE MOODS, ENTIRE WORLDS (wave 34f) — each collection is its own
-            world: ambient backdrop + glow + ghost word + tagline, dissolving into
-            the next as you scroll (crossfade/scale/parallax — see mood-worlds.tsx).
-            The depth-stack deck was retired ====== */}
+      {/* ====== THREE MOODS, THE SHELF (wave 41) — an interactive display
+            case: each collection is a bottle in a glass card standing on a
+            lit shelf; spotlight cone + floor reflection + mouse tilt on the
+            active card, arrows/tabs/drag to switch (see collection-shelf.tsx).
+            The bottle renders are walid's fresh generations (public/shelf/*)
+            — until they land, the mood backdrops carry the cards ====== */}
       <section className="relative">
         <div className="mx-auto max-w-7xl px-4 pt-20 sm:px-6 lg:px-8">
           <div className="mb-6 text-center">
@@ -329,9 +334,9 @@ export default async function Home({
           </div>
         </div>
 
-        <MoodWorlds
-          hrefLabel={dict.home.signatureCta}
-          worlds={collections.map((collection) => {
+        <CollectionShelf
+          rtl={locale === "ar"}
+          cards={collections.map((collection) => {
             const collectionProducts = allProducts.filter(
               (p) => p.collection === collection.slug,
             );
@@ -349,7 +354,8 @@ export default async function Home({
               ghost: collection.nameEn,
               tagline,
               href: `/${locale}/collections/${collection.slug}`,
-              image: cover.image ?? collectionBackdrop(collection.slug),
+              bottle: shelfBottle(collection.slug),
+              image: collectionBackdrop(collection.slug) ?? null,
               glow: cover.art?.glow ?? "#ef4444",
               indexLabel:
                 locale === "ar" ? collection.nameAr : collection.nameEn,
