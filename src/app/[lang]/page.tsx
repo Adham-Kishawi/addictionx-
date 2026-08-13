@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Truck, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedTitle } from "@/components/motion/animated-title";
 import { ParticleField } from "@/components/motion/particle-field";
@@ -15,14 +15,14 @@ import { Marquee } from "@/components/motion/marquee";
 import { Magnetic } from "@/components/motion/magnetic";
 import { MouseDrift } from "@/components/motion/mouse-drift";
 import { HeroMelt } from "@/components/motion/hero-melt";
-import { RotatingShowcase } from "@/components/motion/rotating-showcase";
 import { StatsBand } from "@/components/motion/stats-band";
 import { SectionGlow } from "@/components/motion/section-glow";
+import { RotatingShowcase } from "@/components/motion/rotating-showcase";
 import { LazyMount } from "@/components/motion/lazy-mount";
 import { ExplodedProduct } from "@/components/motion/exploded-product";
 import { DepthStack } from "@/components/motion/depth-stack";
-import { ScrollWordReveal } from "@/components/motion/scroll-word-reveal";
 import { CtaScene } from "@/components/motion/cta-scene";
+import { SignatureScene } from "@/components/motion/signature-scene";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { ProductCarousel } from "@/features/catalog/components/product-carousel";
 import { type Product } from "@/features/catalog/data/products";
@@ -274,6 +274,20 @@ export default async function Home({
         </div>
       </section>
 
+      {/* ====== Signature moment — the flagship bottle floats over a drifting
+            glow while the brand promise word-reveals beside it; a perfume
+            atmosphere scene, not trust badges (wave 34e, replaces the old
+            perk-card strip and moves up to follow the scents) ====== */}
+      <SignatureScene
+        image={heroProduct?.image}
+        glow={heroProduct?.art.glow ?? "#ef4444"}
+        eyebrow={dict.home.signatureEyebrow}
+        title={dict.home.experienceTitle}
+        text={dict.home.experienceText}
+        ctaLabel={dict.home.signatureCta}
+        ctaHref={`/${locale}/catalog`}
+      />
+
       {/* ====== Collections — DEPTH STACK: a scroll-driven deck where each card
             lives on its own depth slot (x/scale/rotateY/z) and rises to the
             front as its turn comes, then exits right ====== */}
@@ -304,38 +318,6 @@ export default async function Home({
             };
           })}
         />
-      </section>
-
-      {/* ====== Experience strip — glow drifts on its own scroll layer ====== */}
-      <section className="relative overflow-hidden border-y border-border bg-card/40 py-20 [content-visibility:auto] [contain-intrinsic-size:auto_520px]">
-        <SectionGlow background="radial-gradient(60% 80% at 50% 0%, oklch(0.6 0.22 22 / 0.12), transparent 70%)" />
-        <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 text-center sm:px-6">
-          <ScrollWordReveal
-            text={dict.home.experienceTitle}
-            className="font-display text-3xl font-bold sm:text-4xl"
-          />
-          <FadeIn delay={0.15}>
-            <p className="max-w-2xl leading-relaxed text-muted-foreground">
-              {dict.home.experienceText}
-            </p>
-          </FadeIn>
-
-          {/* Perks */}
-          <RevealStagger className="mt-4 grid w-full gap-4 sm:grid-cols-3">
-            {[
-              { icon: Truck, text: dict.cart.shippingNotice },
-              { icon: ShieldCheck, text: dict.product.from },
-              { icon: Sparkles, text: dict.product.notes },
-            ].map(({ icon: Icon, text }, idx) => (
-              <RevealItem key={idx}>
-                <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-background/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_0_30px_-12px_oklch(0.6_0.22_22/0.5)]">
-                  <Icon className="size-6 text-primary transition-transform duration-300 group-hover:scale-110" />
-                  <span className="text-sm text-muted-foreground">{text}</span>
-                </div>
-              </RevealItem>
-            ))}
-          </RevealStagger>
-        </div>
       </section>
 
       {/* ====== Closing CTA — layered depth scene: watermark parallax (z-0) →
