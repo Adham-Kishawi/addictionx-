@@ -34,6 +34,7 @@ import {
 import {
   collectionBackdrop,
   shelfBottle,
+  shelfTint,
 } from "@/features/catalog/data/collection-assets";
 import { getWishlistIds } from "@/features/account/data";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
@@ -356,7 +357,7 @@ export default async function Home({
               href: `/${locale}/collections/${collection.slug}`,
               bottle: shelfBottle(collection.slug),
               image: collectionBackdrop(collection.slug) ?? null,
-              glow: cover.art?.glow ?? "#ef4444",
+              tint: shelfTint(collection.slug) ?? cover.art?.glow ?? "#ef4444",
               indexLabel:
                 locale === "ar" ? collection.nameAr : collection.nameEn,
               hrefLabel: dict.home.signatureCta,

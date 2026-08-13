@@ -36,7 +36,7 @@ export type ShelfCard = {
   href: string;
   bottle: string | null;
   image: string | null;
-  glow: string;
+  tint: string;
   indexLabel: string;
   hrefLabel: string;
 };
@@ -54,8 +54,14 @@ function GlassCard({
 }) {
   return (
     <div className="relative aspect-[3/4] w-[62vw] max-w-[280px]">
-      {/* Glass body */}
-      <div className="absolute inset-0 overflow-hidden rounded-[1.5rem] border border-white/12 bg-white/[0.045] shadow-[0_24px_80px_-24px_rgba(0,0,0,0.65)] backdrop-blur-md">
+      {/* Glass body — tinted to match the bottle + colored shadow */}
+      <div
+        className="absolute inset-0 overflow-hidden rounded-[1.5rem] border bg-white/[0.045] backdrop-blur-md"
+        style={{
+          borderColor: `${card.tint}4D`,
+          boxShadow: `0 24px 80px -24px ${card.tint}66`,
+        }}
+      >
         {/* Mood backdrop fallback (until the generated bottles land) */}
         {!card.bottle && card.image ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -65,6 +71,14 @@ function GlassCard({
             className="h-full w-full object-cover opacity-45"
           />
         ) : null}
+        {/* Tint wash — the pane itself carries the bottle's color */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `linear-gradient(to bottom, ${card.tint}2E 0%, ${card.tint}0D 55%, transparent 100%)`,
+          }}
+        />
         {/* Diagonal sheen across the pane */}
         <div
           aria-hidden
@@ -74,7 +88,7 @@ function GlassCard({
         <div
           aria-hidden
           className="absolute inset-x-6 top-8 h-1/2 rounded-full blur-[70px]"
-          style={{ background: `${card.glow}59` }}
+          style={{ background: `${card.tint}66` }}
         />
       </div>
 
@@ -175,7 +189,7 @@ export function CollectionShelf({
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
     >
-      {/* L0 — collection glow drifting behind the deck */}
+      {/* L0 — bottle-tinted glow drifting behind the deck */}
       <motion.div
         key={activeCard.key}
         initial={{ opacity: 0 }}
@@ -183,7 +197,7 @@ export function CollectionShelf({
         transition={{ duration: 0.6 }}
         aria-hidden
         className="absolute left-1/2 top-[42%] h-[70%] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[110px]"
-        style={{ background: activeCard.glow + "26" }}
+        style={{ background: activeCard.tint + "38" }}
       />
 
       {/* L1 — spotlight cone falling from above the shelf */}
@@ -192,7 +206,7 @@ export function CollectionShelf({
         className="absolute left-1/2 top-0 h-[75%] w-[54%] -translate-x-1/2 blur-md [clip-path:polygon(46%_0,54%_0,100%_100%,0_100%)] bg-gradient-to-b from-white/[0.1] via-white/[0.035] to-transparent"
       />
 
-      {/* L2 — ghost word of the active world */}
+      {/* L2 — ghost word of the active world, tinted by the bottle */}
       <motion.span
         key={activeCard.key}
         dir="ltr"
@@ -200,7 +214,11 @@ export function CollectionShelf({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6 }}
         aria-hidden
-        className="text-metallic-shine pointer-events-none absolute inset-x-0 top-[6%] z-[3] flex select-none justify-center whitespace-nowrap font-display text-[16vw] font-bold leading-none opacity-[0.13] lg:text-[10vw]"
+        className="pointer-events-none absolute inset-x-0 top-[6%] z-[3] flex select-none justify-center whitespace-nowrap font-display text-[16vw] font-bold leading-none opacity-[0.16] lg:text-[10vw]"
+        style={{
+          color: activeCard.tint,
+          textShadow: `0 0 60px ${activeCard.tint}66`,
+        }}
       >
         {activeCard.ghost}
       </motion.span>
