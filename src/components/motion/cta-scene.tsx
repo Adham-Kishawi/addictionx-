@@ -19,8 +19,12 @@ import { Spotlight } from "@/components/motion/spotlight";
 //   z-5  rising neon sparks    — screen blend over the card
 //   z-10 glass card            — gradient-only border + frost
 //   z-20 bottom fade           — melts the scene into the footer
-// Children = the card content (server-safe). All scroll motion is
-// disabled under prefers-reduced-motion; CSS loops die globally.
+// Wave 34g: the glass card no longer hangs on a negative top
+// margin (that is what cropped it over the previous section) —
+// the section owns its space (py-24), only the shape overlaps,
+// and the watermark scales down on small screens so no glyph
+// is ever clipped. Children = the card content (server-safe).
+// All scroll motion is disabled under prefers-reduced-motion.
 // ============================================================
 
 export function CtaScene({
@@ -42,12 +46,12 @@ export function CtaScene({
   const glowY = useTransform(scrollYProgress, [0, 1], ["10%", "-10%"]);
 
   return (
-    <section ref={ref} className="relative overflow-hidden">
+    <section ref={ref} className="relative overflow-hidden py-24">
       {/* L0 — giant rotated ADDICTIONX watermark, metallic shine + parallax */}
       <motion.span
         aria-hidden
         dir="ltr"
-        className="text-watermark text-metallic-shine pointer-events-none absolute inset-0 z-0 flex select-none items-center justify-center rotate-[-6deg] text-[15vw]"
+        className="text-watermark text-metallic-shine pointer-events-none absolute inset-0 z-0 flex select-none items-center justify-center rotate-[-6deg] text-[11vw] lg:text-[15vw]"
         style={reduce ? undefined : { y: watermarkY }}
       >
         ADDICTIONX
@@ -81,7 +85,7 @@ export function CtaScene({
       <div className="group relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
         {/* L3b — giant rotating neon orbit around the card (speeds up on hover) */}
         <div aria-hidden className="cta-orbit-ring" />
-        <Spotlight className="glass-card relative -mt-20 rounded-2xl px-6 py-16 text-center sm:-mt-28 sm:rounded-3xl sm:px-10 sm:py-20">
+        <Spotlight className="glass-card relative rounded-2xl px-5 py-14 text-center sm:rounded-3xl sm:px-10 sm:py-20">
           {children}
         </Spotlight>
       </div>

@@ -338,19 +338,20 @@ export default async function Home({
             (z-10) → bottom fade (z-20). "Join thousands who chose to
             live the moment." lives on the glass layer ====== */}
       <CtaScene glow={heroProduct?.art.glow ?? "#ef4444"}>
-        <FadeIn>
+        <FadeIn y={20}>
           <WordReveal
             as="h2"
             text={dict.home.ctaTitle}
-            className="font-display text-3xl font-bold sm:text-5xl"
+            delay={0.1}
+            className="font-display text-3xl font-bold text-balance sm:text-5xl"
           />
         </FadeIn>
-        <FadeIn delay={0.15}>
-          <p className="mx-auto max-w-xl text-muted-foreground">
+        <FadeIn delay={0.3} y={20}>
+          <p className="mx-auto max-w-xl leading-relaxed text-muted-foreground">
             {dict.home.ctaText}
           </p>
         </FadeIn>
-        <FadeIn delay={0.3}>
+        <FadeIn delay={0.5} y={20}>
           <Magnetic strength={0.25}>
             <span className="btn-conic-ring inline-flex">
               <Button
