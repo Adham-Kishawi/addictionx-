@@ -54,18 +54,27 @@ function WorldScene({
 }) {
   const start = index / count;
   const end = (index + 1) / count;
+  // The overlap window must stay inside [0, 1]: framer-motion v13 drives
+  // scroll-linked values through the WAAPI (ScrollTimeline) in Chrome and
+  // passes these ranges straight to Element.animate as keyframe offsets —
+  // any offset outside [0, 1] throws "Offsets must be monotonically
+  // non-decreasing" / "Offsets must be null or in the range [0,1]" and
+  // crashes the page. Progress only ever visits [0, 1], so clamping the
+  // window is visually identical.
+  const fadeStart = Math.max(0, start - OVERLAP);
+  const fadeEnd = Math.min(1, end + OVERLAP);
 
   // Dissolve: fade in slightly early, hold, fade out slightly late
   const opacity = useTransform(
     progress,
-    [start - OVERLAP, start, end, end + OVERLAP],
+    [fadeStart, start, end, fadeEnd],
     [0, 1, 1, 0],
     { clamp: true },
   );
   // Settle: world arrives zoomed, settles to rest, pushes away on exit
   const scale = useTransform(
     progress,
-    [start - OVERLAP, start, end, end + OVERLAP],
+    [fadeStart, start, end, fadeEnd],
     [1.08, 1, 1, 1.06],
     { clamp: true },
   );

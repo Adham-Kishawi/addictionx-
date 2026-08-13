@@ -32,7 +32,10 @@ function Word({
   reduce: boolean;
 }) {
   const start = index / count;
-  const end = (index + 1.3) / count;
+  // Keep the completion point inside [0, 1] — framer-motion v13 hands these
+  // scroll ranges to Element.animate (ScrollTimeline) and Chrome rejects
+  // offsets outside [0, 1] with a crashing TypeError.
+  const end = Math.min(1, (index + 1.3) / count);
   const opacity = useTransform(progress, [start, end], [0.12, 1]);
   const rotateX = useTransform(progress, [start, end], [-42, 0]);
   const y = useTransform(progress, [start, end], [18, 0]);
