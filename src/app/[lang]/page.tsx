@@ -14,6 +14,7 @@ import { RevealStagger, RevealItem } from "@/components/motion/reveal";
 import { Marquee } from "@/components/motion/marquee";
 import { Magnetic } from "@/components/motion/magnetic";
 import { MouseDrift } from "@/components/motion/mouse-drift";
+import { HeroMelt } from "@/components/motion/hero-melt";
 import { RotatingShowcase } from "@/components/motion/rotating-showcase";
 import { StatsBand } from "@/components/motion/stats-band";
 import { SectionGlow } from "@/components/motion/section-glow";
@@ -177,6 +178,9 @@ export default async function Home({
             </MouseDrift>
           }
         />
+        {/* Wave 34b — the hero exits as a cinematic focus-pull: progressive
+              blur + theme-bg melt (see hero-melt.tsx) ====== */}
+        <HeroMelt />
       </div>
 
       {/* ====== ROTATING SHOWCASE — 95vh stage: the hero product assembles with the
