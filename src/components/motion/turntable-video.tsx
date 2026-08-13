@@ -21,6 +21,15 @@ import { useReducedMotion } from "framer-motion";
 // up to ~62° off mid-turn).
 // The old pair `hero.mp4`/`hero-left.mp4` (10s versions) was deleted.
 //
+//  · WAVE 32 — the hero plays the ALL-INTRА re-encodes
+//    `right-scrub.mp4`/`left-scrub.mp4` (every frame a keyframe I-frame,
+//    `-g 1 -bf 0`, 1.3MB each — walid: «استخدم نفس طريقة الفريمات و GSAP
+//    في الهيرو لحل مشاكل الحركة يمين وشمال»): every interactive seek now
+//    decodes ONE frame and presents it exactly — no keyframe snapping,
+//    no inter-frame decode chains, the left/right steering is silk at any
+//    hand speed (the same fix that made the assembly showcase smooth).
+//    Originals kept for reference (only used when re-encoding).
+//
 //  · `fadeOnScroll`  — hero only: melts the layer away as the page
 //    scrolls past the first screen.
 //  · `fit="contain"` — showcase: show the whole bottle inside its 16:9
@@ -472,7 +481,7 @@ export function TurntableVideo({
     >
       <video
         ref={videoRightRef}
-        src="/hero/right.mp4"
+        src="/hero/right-scrub.mp4"
         muted
         playsInline
         preload="auto"
@@ -481,7 +490,7 @@ export function TurntableVideo({
       />
       <video
         ref={videoLeftRef}
-        src="/hero/left.mp4"
+        src="/hero/left-scrub.mp4"
         muted
         playsInline
         preload="auto"
