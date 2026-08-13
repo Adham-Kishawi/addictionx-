@@ -23,12 +23,14 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 // shows the sequence as a FULL-BLEED video filling the whole
 // screen (like the hero) — NOT a square sprite box. GSAP
 // ScrollTrigger (dynamic import, per the project rule) scrubs the
-// scroll over the 300vh pinned section and swaps the `<img>` src
-// to the matching frame 1:1 — the product assembles with the
-// wheel. All frames are preloaded in the effect so the swaps are
-// instant. The ONLY other element is the SHOP NOW button
-// (fades in as the product completes). Reduced motion → the last
-// frame (fully assembled), static.
+// scroll over the 240vh pinned section. Smoothness: TWO stacked
+// imgs crossfade — the base frame is scrubbed 1:1 and the NEXT
+// frame fades over it by the fractional progress, so the assembly
+// glides like the video itself instead of stepping between frames
+// (wave 31c — walid: «الحركة تكون سموث أكتر من كده»). The ONLY
+// other element is the SHOP NOW button (fades in as the product
+// completes). Reduced motion → the last frame (fully assembled),
+// static.
 // ============================================================
 
 const FRAME_COUNT = 120;
@@ -47,6 +49,7 @@ export function RotatingShowcase({
 }) {
   const ref = useRef<HTMLElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const imgNextRef = useRef<HTMLImageElement | null>(null);
   const reduce = useReducedMotion();
   const dict = getDictionary(locale);
   const isAr = locale === "ar";
@@ -62,7 +65,8 @@ export function RotatingShowcase({
   useEffect(() => {
     const section = ref.current;
     const img = imgRef.current;
-    if (!section || !img) return;
+    const imgNext = imgNextRef.current;
+    if (!section || !img || !imgNext) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let killed = false;
@@ -76,26 +80,34 @@ export function RotatingShowcase({
       if (killed) return;
       gsap.registerPlugin(ScrollTrigger);
 
-      // Preload every frame so src swaps are instant.
+      // Preload every frame so blended swaps are instant.
       for (let i = 0; i < FRAME_COUNT; i++) {
         const pre = new Image();
         pre.src = frameSrc(i);
       }
 
+      // Crossfade scrub: img shows the base frame, imgNext is layered
+      // directly ABOVE it with opacity = fractional progress — the
+      // assembly glides between frames instead of stepping.
+      imgNext.style.opacity = "0";
       st = ScrollTrigger.create({
         trigger: section,
         start: "top top",
         end: "bottom bottom",
-        scrub: 0.6,
+        scrub: 1,
         onUpdate: (self) => {
-          const idx = Math.min(
-            FRAME_COUNT - 1,
-            Math.max(0, Math.round(self.progress * (FRAME_COUNT - 1))),
-          );
-          if (img.dataset.idx !== String(idx)) {
-            img.dataset.idx = String(idx);
-            img.src = frameSrc(idx);
+          const raw = self.progress * (FRAME_COUNT - 1);
+          const base = Math.min(FRAME_COUNT - 2, Math.max(0, Math.floor(raw)));
+          const frac = Math.min(1, Math.max(0, raw - base));
+          if (img.dataset.idx !== String(base)) {
+            img.dataset.idx = String(base);
+            img.src = frameSrc(base);
           }
+          if (imgNext.dataset.idx !== String(base + 1)) {
+            imgNext.dataset.idx = String(base + 1);
+            imgNext.src = frameSrc(base + 1);
+          }
+          imgNext.style.opacity = String(frac);
         },
       });
     })();
@@ -111,7 +123,7 @@ export function RotatingShowcase({
   const shopY = useTransform(scrollYProgress, [0.72, 0.9], [26, 0]);
 
   return (
-    <section ref={ref} className="relative h-[300vh]" aria-label={name}>
+    <section ref={ref} className="relative h-[240vh]" aria-label={name}>
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
         {/* FULL-BLEED assembly video — frame-scrubbed by GSAP */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -119,6 +131,16 @@ export function RotatingShowcase({
           ref={imgRef}
           src={frameSrc(FRAME_COUNT - 1)}
           alt={name}
+          draggable={false}
+          className="absolute inset-0 h-full w-full select-none object-cover"
+        />
+        {/* Crossfade layer — the NEXT frame fades over the base frame */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          ref={imgNextRef}
+          src={frameSrc(FRAME_COUNT - 1)}
+          alt=""
+          aria-hidden
           draggable={false}
           className="absolute inset-0 h-full w-full select-none object-cover"
         />
