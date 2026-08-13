@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import {
+  animate,
   motion,
-  useMotionTemplate,
+  useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
   useScroll,
@@ -13,29 +14,32 @@ import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
 import { formatPrice, type Product } from "@/features/catalog/data/products";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
-import { ScrollScrubVideo } from "./scroll-scrub-video";
 
 // ============================================================
-// ROTATING SHOWCASE — the depth centrepiece right after the hero
-// (wave 29). A 300vh pinned stage where the SCROLL IS THE
-// TURNTABLE: the real 360° footage (`public/360/animation.mp4`)
-// turns the bottle exactly one full turn as you scroll through
-// the stage — the user "turns the product with the wheel"
-// (the ui-skill `useVideoScrub` pattern, scroll-flavoured —
-// frame-gated paused seeks, so the end-restart zone is
-// structurally unreachable). Around the turning bottle a full
-// DEPTH ladder (the project's wave-9 depth language):
-//   z-0 hue-drift backdrop (red → gold → silver)
-//   z-1 giant watermark (far layer)
-//   z-2 floor shadow
-//   z-10 the bottle in a PICTURE-PLANE dolly: it pushes IN with
-//        scroll — scale 0.6→1, depth-of-field blur 10px→0, a
-//        subtle orbit tilt (rotateX/rotateY) and y-drift, all in
-//        a 1200px perspective container;
-//   z-5 sheen sweep over the glass · z-6 details strip.
-// The details strip (wave 8) is unchanged: collection + name
-// always on, top→heart→base→price hand-off across the quarters,
-// CTA in the last quarter. Reduced motion → static poster frame.
+// EXPLODED PRODUCT LAYERS — the depth centrepiece right after
+// the hero (wave 30, AI_UI_BRIEF §5.1). A 300vh pinned stage
+// built from walid's four real transparent cutouts of the Red
+// Rush bottle (`public/uploads/explode/*.png`), re-aligned onto
+// ONE shared 1024×1536 canvas (`aligned/` — measured registration,
+// the reassembled union reconstructs 94% of the bottle's
+// silhouette) and stacked as CSS layers inside a 1200px
+// perspective:
+//   · BODY   — z0, the glass (flies in from depth −40)
+//   · LIQUID — +26 above the body, rises on hover
+//   · CAP    — the top piece, flies in from the DEEPEST (−280)
+//              and on hover LIFTS off the neck (translateY −26
+//              + translateZ 70) — the "disassembly"
+//   · whole group rotateY 15° on hover + sheen sweep
+// Scroll owns the ASSEMBLY: entry (0→0.5) flies the pieces in
+// from their different depths, exit (0.85→1) disassembles them
+// apart again. Floating FRONT layers complete the ladder:
+//   · z+60  glass chip (collection · name · rating, parallax)
+//   · z+120 CTA button with a PULSING NEON shadow (last quarter)
+// Behind (z-): pulsing heartbeat-line pattern (blurred red),
+// circular red glow (screen blend), watermark, floor shadow.
+// The wave-8 details strip keeps its quarterly hand-off
+// (top→heart→base→price). Reduced motion → the static assembled
+// cutout + chip + CTA, no transforms.
 // ============================================================
 
 type Slot = {
@@ -44,8 +48,11 @@ type Slot = {
   notes: string[];
 };
 
-// Poster = the static front frame of the scroll-scrubbed 360 clip.
-const FRONT_FRAME = "/360/frame-01.png";
+// The four cutouts — cap/body/liquid are pre-aligned on the same canvas.
+const BOTTLE_IMG = "/uploads/explode/bottle.png";
+const CAP_IMG = "/uploads/explode/aligned/cap.png";
+const BODY_IMG = "/uploads/explode/aligned/body.png";
+const LIQUID_IMG = "/uploads/explode/aligned/liquid.png";
 
 // A single detail slot inside the strip — notes chips or price; the active
 // quarter owns it via CSS opacity/translate (children animate, the glass never).
@@ -116,28 +123,78 @@ export function RotatingShowcase({
     offset: ["start start", "end end"],
   });
 
-  // ============ Depth ladder — scroll-driven transforms (wave 29) ============
-  // The dolly: the bottle pushes IN from a distance (scale + depth-of-field
-  // blur clearing), orbiting slightly in a 1200px perspective so the turn
-  // reads as a real object turning in space, not a flat image.
+  // ============ Hover disassembly — a springy 0→1 MotionValue ============
+  const hoverP = useMotionValue(0);
+
+  // ============ Scroll assembly — each layer flies from its own depth ======
+  // Entry (0→0.5): depth closes to 0. Exit (0.85→1): disassembles again.
+  const bodyZ = useTransform(
+    scrollYProgress,
+    [0, 0.5, 0.85, 1],
+    [-40, 0, 0, -24],
+  );
+  const liquidZ = useTransform(
+    scrollYProgress,
+    [0, 0.5, 0.85, 1],
+    [-90, 0, 0, -18],
+  );
+  const capZ = useTransform(
+    scrollYProgress,
+    [0, 0.5, 0.85, 1],
+    [-280, 0, 0, -60],
+  );
+  const capY = useTransform(
+    scrollYProgress,
+    [0, 0.5, 0.85, 1],
+    [90, 0, 0, -46],
+  );
+  const liquidY = useTransform(
+    scrollYProgress,
+    [0, 0.5, 0.85, 1],
+    [46, 0, 0, -14],
+  );
   const bottleScale = useTransform(
     scrollYProgress,
-    [0, 0.4, 0.8, 1],
-    [0.6, 1.0, 0.98, 0.92],
+    [0, 0.5, 0.85, 1],
+    [0.9, 1, 1, 0.96],
   );
-  const bottleBlur = useTransform(scrollYProgress, [0, 0.3], [10, 0]);
-  const bottleFilter = useMotionTemplate`blur(${bottleBlur}px)`;
-  const bottleRotateX = useTransform(scrollYProgress, [0, 0.5, 1], [7, 0, 3]);
-  const bottleRotateY = useTransform(scrollYProgress, [0, 0.5, 1], [-8, 0, 8]);
-  const bottleY = useTransform(scrollYProgress, [0, 0.5, 1], [46, 0, 14]);
 
-  const sheenX = useTransform(scrollYProgress, [0, 1], ["-180%", "180%"]);
+  // Hover disassembly (small lifts, ±z toward the viewer)
+  const capHoverY = useTransform(hoverP, (v) => v * -26);
+  const capHoverZ = useTransform(hoverP, (v) => v * 70);
+  const liquidHoverY = useTransform(hoverP, (v) => v * -10);
+  const liquidHoverZ = useTransform(hoverP, (v) => v * 26);
+  const rotateY = useTransform(hoverP, (v) => v * 15);
+
+  // Combined scroll+hover per axis
+  const capCombY = useTransform([capY, capHoverY], ([a, b]: number[]) => a + b);
+  const capCombZ = useTransform([capZ, capHoverZ], ([a, b]: number[]) => a + b);
+  const liquidCombY = useTransform(
+    [liquidY, liquidHoverY],
+    ([a, b]: number[]) => a + b,
+  );
+  const liquidCombZ = useTransform(
+    [liquidZ, liquidHoverZ],
+    ([a, b]: number[]) => a + b,
+  );
+
+  // ============ Floating FRONT layers ============
+  const chipZ = useTransform(scrollYProgress, [0, 1], [30, 60]);
+  const chipY = useTransform(scrollYProgress, [0, 1], [10, -16]);
+  const chipOpacity = useTransform(scrollYProgress, [0.12, 0.3], [0, 1]);
+  const ctaZ = useTransform(scrollYProgress, [0, 1], [60, 120]);
+  const ctaOpacity = useTransform(scrollYProgress, [0.74, 0.88], [0, 1]);
+  const ctaY = useTransform(scrollYProgress, [0.74, 0.9], [34, 0]);
+
+  // Back layers
   const watermarkOpacity = useTransform(scrollYProgress, [0, 0.3], [0.45, 0.1]);
+  const floorScale = useTransform(
+    scrollYProgress,
+    [0, 0.35, 0.55, 1],
+    [0.7, 1.14, 1.15, 0.9],
+  );
 
-  // ============ Details strip (wave 8): a persistent glass bar under the
-  // bottle — collection chip + name always on, the middle slot hands over
-  // top → heart → base → price across the four quarters, and the CTA slides
-  // in for the last quarter. Children animate, the glass itself never does.
+  // ============ Details strip (wave 8): quarterly hand-off ============
   const [quarter, setQuarter] = useState(reduce ? 3 : 0);
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     if (reduce) return;
@@ -170,48 +227,65 @@ export function RotatingShowcase({
     : product.collection;
   const glow = product.art?.glow ?? "#ef4444";
 
-  const ctaOpacity = useTransform(scrollYProgress, [0.78, 0.9], [0, 1]);
-  const ctaY = useTransform(scrollYProgress, [0.78, 0.92], [40, 0]);
-  const floorScale = useTransform(
-    scrollYProgress,
-    [0, 0.35, 0.55, 1],
-    [0.7, 1.14, 1.15, 0.9],
+  const layers = reduce ? null : (
+    <>
+      {/* BODY — the glass, deepest of the three */}
+      <motion.img
+        src={BODY_IMG}
+        alt=""
+        draggable={false}
+        className="absolute inset-0 h-full w-full object-contain"
+        style={{ z: bodyZ }}
+      />
+      {/* LIQUID — inside the glass, rises slightly */}
+      <motion.img
+        src={LIQUID_IMG}
+        alt=""
+        draggable={false}
+        className="absolute inset-0 h-full w-full object-contain"
+        style={{ z: liquidCombZ, y: liquidCombY }}
+      />
+      {/* CAP — the top piece, lifts off on hover / scroll exit */}
+      <motion.img
+        src={CAP_IMG}
+        alt=""
+        draggable={false}
+        className="absolute inset-0 h-full w-full object-contain"
+        style={{ z: capCombZ, y: capCombY }}
+      />
+    </>
   );
-
-  // Background hue drift across the turn: red → gold → silver
-  const redO = useTransform(scrollYProgress, [0, 0.3, 0.5], [0.75, 1, 0]);
-  const goldO = useTransform(scrollYProgress, [0.28, 0.5, 0.72], [0, 1, 0]);
-  const silverO = useTransform(scrollYProgress, [0.55, 0.78, 1], [0, 1, 0.85]);
 
   return (
     <section ref={ref} className="relative h-[300vh]" aria-label={name}>
       <div className="sticky top-0 flex h-screen flex-col items-center justify-center overflow-hidden">
-        {/* Hue drift backdrop */}
+        {/* Pulsing heartbeat-line pattern (deepest) */}
+        {!reduce && (
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-0 opacity-15 blur-[6px]"
+            style={{
+              background:
+                "repeating-linear-gradient(90deg, transparent 0 26px, oklch(0.62 0.22 22 / 0.9) 26px 44px)",
+              maskImage:
+                "radial-gradient(60% 70% at 50% 45%, black, transparent 75%)",
+            }}
+            animate={{
+              backgroundPositionX: [0, 120, 0],
+              opacity: [0.1, 0.2, 0.1],
+            }}
+            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+          />
+        )}
+
+        {/* Circular glow — screen blend, behind the bottle */}
         <motion.div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0"
           style={{
-            background:
-              "radial-gradient(60% 70% at 50% 45%, oklch(0.62 0.19 25 / 0.28), transparent 70%)",
-            opacity: reduce ? 1 : redO,
-          }}
-        />
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-0"
-          style={{
-            background:
-              "radial-gradient(60% 70% at 50% 45%, oklch(0.72 0.14 70 / 0.24), transparent 70%)",
-            opacity: reduce ? 0 : goldO,
-          }}
-        />
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-0"
-          style={{
-            background:
-              "radial-gradient(60% 70% at 50% 45%, oklch(0.85 0.02 240 / 0.22), transparent 70%)",
-            opacity: reduce ? 0 : silverO,
+            background: `radial-gradient(46% 52% at 50% 46%, ${glow}59, transparent 70%)`,
+            mixBlendMode: "screen",
+            opacity: reduce ? 1 : undefined,
           }}
         />
 
@@ -225,59 +299,143 @@ export function RotatingShowcase({
           ADDICTIONX
         </motion.span>
 
-        {/* The turning bottle — the SCROLL IS THE TURNTABLE (wave 29):
-            one full 360° turn of `animation.mp4` per stage, scrubbed by
-            scroll in a 1200px perspective dolly (push-in + orbit + DOF). */}
-        <div className="relative z-10 flex h-[52vh] w-full items-center justify-center px-6 [perspective:1200px]">
+        {/* THE EXPLODED BOTTLE — perspective stage (wave 30).
+            Siblings sit at real translateZ depths; the whole group
+            rotates 15° toward the viewer on hover. */}
+        <div className="relative z-10 flex h-[50vh] w-full items-center justify-center px-6 [perspective:1200px]">
           <motion.div
             className="relative flex h-full w-full items-center justify-center"
-            style={
-              reduce
-                ? undefined
-                : {
-                    scale: bottleScale,
-                    y: bottleY,
-                    rotateX: bottleRotateX,
-                    rotateY: bottleRotateY,
-                    filter: bottleFilter,
-                    transformStyle: "preserve-3d",
-                  }
+            style={{ transformStyle: "preserve-3d" }}
+            onHoverStart={() =>
+              animate(hoverP, reduce ? 0 : 1, {
+                type: "spring",
+                stiffness: 160,
+                damping: 22,
+              })
+            }
+            onHoverEnd={() =>
+              animate(hoverP, 0, {
+                type: "spring",
+                stiffness: 160,
+                damping: 22,
+              })
             }
           >
-            <div
-              className={`relative aspect-video h-full w-auto max-w-[74vw] ${
+            {/* Assembled bottle group */}
+            <motion.div
+              className="relative h-full w-auto max-w-[70vw]"
+              style={
                 reduce
-                  ? ""
-                  : "mix-blend-screen [filter:drop-shadow(0_0_60px_oklch(0.6_0.22_22/0.22))]"
-              }`}
+                  ? undefined
+                  : {
+                      scale: bottleScale,
+                      rotateY,
+                      transformStyle: "preserve-3d",
+                    }
+              }
             >
-              <ScrollScrubVideo
-                progress={scrollYProgress}
-                src="/360/animation.mp4"
-                poster={FRONT_FRAME}
-                className="absolute inset-0 h-full w-full object-contain"
-              />
+              <div className="relative aspect-[2/3] h-full w-auto">
+                {reduce ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={BOTTLE_IMG}
+                    alt={name}
+                    className="h-full w-full object-contain drop-shadow-[0_0_50px_oklch(0.6_0.22_22/0.25)]"
+                  />
+                ) : (
+                  <>
+                    {layers}
+                    {/* Sheen sweep over the glass */}
+                    <motion.div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent mix-blend-soft-light"
+                      animate={{
+                        x: ["-120%", "120%"],
+                        opacity: [0, 0.6, 0],
+                      }}
+                      transition={{
+                        duration: 3.4,
+                        repeat: Infinity,
+                        repeatDelay: 2.2,
+                        ease: "easeInOut",
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+            </motion.div>
 
-              {/* Sweeping sheen over the glass */}
-              {!reduce && (
-                <motion.div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent mix-blend-soft-light"
-                  style={{ x: sheenX }}
+            {/* Floating glass chip — collection · name · rating (z+60) */}
+            <motion.div
+              className="pointer-events-none absolute right-[4vw] top-[14%] hidden rounded-2xl border border-white/10 bg-card/60 px-4 py-3 backdrop-blur-md sm:block"
+              style={
+                reduce
+                  ? undefined
+                  : { z: chipZ, y: chipY, opacity: chipOpacity }
+              }
+            >
+              <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span
+                  className="size-2 rounded-full"
+                  style={{ background: glow, boxShadow: `0 0 10px ${glow}` }}
                 />
-              )}
-            </div>
+                {collectionName}
+              </span>
+              <p className="mt-1 max-w-40 truncate font-display text-sm font-bold">
+                {name}
+              </p>
+              <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                <Star className="size-3.5 fill-primary text-primary" />
+                {product.rating}
+              </span>
+            </motion.div>
+
+            {/* Floating CTA — pulsing neon shadow (z+120), last quarter */}
+            <motion.div
+              className="absolute bottom-[20%] right-[6vw] hidden sm:block"
+              style={
+                reduce ? undefined : { z: ctaZ, y: ctaY, opacity: ctaOpacity }
+              }
+            >
+              <motion.div
+                className="rounded-full"
+                animate={
+                  reduce
+                    ? undefined
+                    : {
+                        boxShadow: [
+                          `0 0 22px -6px ${glow}cc`,
+                          `0 0 46px -4px ${glow}`,
+                          `0 0 22px -6px ${glow}cc`,
+                        ],
+                      }
+                }
+                transition={{
+                  duration: 2.4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                <Link
+                  href={href}
+                  className="group/btn flex h-12 items-center gap-2 rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground"
+                >
+                  {dict.product.addToCart}
+                  <ArrowRight className="size-4 transition-transform group-hover/btn:translate-x-0.5 rtl:rotate-180 rtl:group-hover/btn:-translate-x-0.5" />
+                </Link>
+              </motion.div>
+            </motion.div>
           </motion.div>
         </div>
 
         {/* Floor shadow under the bottle */}
         <motion.div
           aria-hidden
-          className="absolute bottom-[16vh] left-1/2 z-[2] h-8 w-[38vw] -translate-x-1/2 rounded-[100%] bg-black/50 blur-2xl"
+          className="absolute bottom-[15vh] left-1/2 z-[2] h-8 w-[34vw] -translate-x-1/2 rounded-[100%] bg-black/50 blur-2xl"
           style={reduce ? undefined : { scaleX: floorScale }}
         />
 
-        {/* Details strip — persistent identity + quarterly hand-off (wave 8) */}
+        {/* Details strip — identity + quarterly hand-off (wave 8) */}
         <div className="absolute bottom-[4vh] left-1/2 z-[6] w-[min(94vw,880px)] -translate-x-1/2 px-4">
           <div className="rounded-2xl border border-white/10 bg-card/60 px-5 py-4 shadow-[0_24px_70px_-24px_rgba(0,0,0,0.8)] backdrop-blur-md">
             <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-center">
@@ -313,28 +471,11 @@ export function RotatingShowcase({
                         <span className="text-muted-foreground">
                           {dict.product.currency}
                         </span>
-                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Star className="size-4 fill-primary text-primary" />
-                          {product.rating}
-                        </span>
                       </div>
                     }
                   />
                 ))}
               </div>
-
-              {/* Zone C — add-to-cart slides in for the last quarter */}
-              <motion.div
-                style={reduce ? undefined : { opacity: ctaOpacity, y: ctaY }}
-              >
-                <Link
-                  href={href}
-                  className="group/btn flex h-12 items-center gap-2 rounded-full bg-primary px-8 text-base font-semibold text-primary-foreground shadow-[0_0_35px_-8px_theme(colors.red.600)] transition-shadow hover:shadow-[0_0_50px_-6px_theme(colors.red.500)]"
-                >
-                  {dict.product.addToCart}
-                  <ArrowRight className="size-4 transition-transform group-hover/btn:translate-x-0.5 rtl:rotate-180 rtl:group-hover/btn:-translate-x-0.5" />
-                </Link>
-              </motion.div>
             </div>
           </div>
         </div>
