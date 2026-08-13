@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -15,6 +16,34 @@ import { Pagination } from "@/features/catalog/components/pagination";
 export const dynamic = "force-dynamic";
 
 const PER_PAGE = 10;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string; slug: string }>;
+}): Promise<Metadata> {
+  const { lang, slug } = await params;
+  const locale = isLocale(lang) ? lang : defaultLocale;
+  const collections = await getCollections();
+  const collection = collections.find((c) => c.slug === slug);
+  if (!collection) return {};
+  const isAr = locale === "ar";
+  const name = isAr ? collection.nameAr : collection.nameEn;
+  const dict = getDictionary(locale);
+  const path = `/${locale}/collections/${collection.slug}`;
+  return {
+    title: name,
+    description: dict.meta.description,
+    alternates: { canonical: path },
+    openGraph: {
+      title: name,
+      description: dict.meta.description,
+      type: "website",
+      locale: isAr ? "ar_EG" : "en_US",
+      url: path,
+    },
+  };
+}
 
 export default async function CollectionPage({
   params,

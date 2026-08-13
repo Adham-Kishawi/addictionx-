@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Star } from "lucide-react";
@@ -19,6 +20,33 @@ import { Reveal } from "@/components/motion/reveal";
 import { SectionGlow } from "@/components/motion/section-glow";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string; slug: string }>;
+}): Promise<Metadata> {
+  const { lang, slug } = await params;
+  const locale = isLocale(lang) ? lang : defaultLocale;
+  const product = await getProductBySlug(slug);
+  if (!product) return {};
+  const isAr = locale === "ar";
+  const name = isAr ? product.nameAr : product.nameEn;
+  const description = isAr ? product.descriptionAr : product.descriptionEn;
+  const path = `/${locale}/product/${product.slug}`;
+  return {
+    title: name,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      title: name,
+      description,
+      type: "website",
+      locale: isAr ? "ar_EG" : "en_US",
+      url: path,
+    },
+  };
+}
 
 export default async function ProductPage({
   params,
@@ -63,8 +91,42 @@ export default async function ProductPage({
   const description = isAr ? product.descriptionAr : product.descriptionEn;
   const collectionMeta = collections.find((c) => c.slug === product.collection);
 
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://addictionx.vercel.app";
+  const canonicalUrl = `${baseUrl}/${locale}/product/${product.slug}`;
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name,
+    description,
+    image: [`${canonicalUrl}/opengraph-image`],
+    brand: { "@type": "Brand", name: "ADDICTIONX" },
+    offers: {
+      "@type": "Offer",
+      url: canonicalUrl,
+      price: (product.price / 100).toFixed(2),
+      priceCurrency: "EGP",
+      availability: product.isSoldOut
+        ? "https://schema.org/OutOfStock"
+        : "https://schema.org/InStock",
+    },
+    ...(product.reviewsCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: product.rating,
+            reviewCount: product.reviewsCount,
+          },
+        }
+      : {}),
+  };
+
   return (
     <main className="relative mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
       <SectionGlow />
       {/* Breadcrumb */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
