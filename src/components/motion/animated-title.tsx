@@ -15,7 +15,7 @@ export function AnimatedTitle({ text }: { text: string }) {
         show: {
           transition: {
             staggerChildren: reduce ? 0 : 0.07,
-            delayChildren: reduce ? 0 : 0.25,
+            delayChildren: reduce ? 0 : 0.15,
           },
         },
       }}

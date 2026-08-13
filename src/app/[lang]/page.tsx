@@ -86,92 +86,99 @@ export default async function Home({
             cannot go light), but the veil/bg follow the theme via --hero-* vars so the hero melts
             into the page below. HeroParallax slides three layers at different scroll speeds
             (backdrop slow + zoom, veil mid, content fast fade) — the depth that makes the
-            next sections feel like they're rolling OVER the hero ====== */}
-      <HeroParallax
-        backdrop={<HeroVideo />}
-        mid={
-          <>
-            {/* Theme-aware contrast veil — solves readability without mix-blend */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 z-[5]"
-              style={{
-                background:
-                  "linear-gradient(to bottom, var(--hero-veil-1) 0%, var(--hero-veil-2) 40%, var(--hero-veil-3) 78%, var(--hero-veil-4) 100%)",
-              }}
-            />
-            {/* Light neon dust over the video — screen blend (red stays red) */}
-            <ParticleField count={10} blend="screen" opacityScale={0.3} />
-          </>
-        }
-        content={
-          <MouseDrift
-            strength={8}
-            className="flex w-full flex-col items-center"
-          >
-            <div className="flex flex-col items-center gap-6 px-6 pt-20 text-center">
-              <FadeIn delay={0.1}>
-                <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-1.5 text-xs tracking-[0.25em] text-red-400 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)]">
-                  <Sparkles className="size-3.5" />
-                  {dict.hero.badge}
-                </span>
-              </FadeIn>
-
-              <AnimatedTitle text={dict.hero.title} />
-
-              <FadeIn delay={0.5}>
-                <HeartbeatLine className="h-10 w-56 text-red-500 [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))_drop-shadow(0_4px_24px_rgba(0,0,0,0.45))]" />
-              </FadeIn>
-
-              <TypewriterLine
-                text={dict.hero.subtitle}
-                speed={46}
-                startDelay={650}
-                className="max-w-xl text-base leading-relaxed text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)] sm:text-lg"
+            next sections feel like they're rolling OVER the hero ======
+            (wave 33: #hero-stage wraps the scene — the prmpt-style custom cursor ring takes
+            over there (system cursor hidden `[cursor:none]`), and the content enters with the
+            staggered rhythm 0 / 0.15 / 0.3 / 0.45 for a calmer first impression) ====== */}
+      <div id="hero-stage" className="relative [cursor:none]">
+        <HeroParallax
+          backdrop={<HeroVideo />}
+          mid={
+            <>
+              {/* Theme-aware contrast veil — solves readability without mix-blend */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 z-[5]"
+                style={{
+                  background:
+                    "linear-gradient(to bottom, var(--hero-veil-1) 0%, var(--hero-veil-2) 40%, var(--hero-veil-3) 78%, var(--hero-veil-4) 100%)",
+                }}
               />
+              {/* Light neon dust over the video — screen blend (red stays red) */}
+              <ParticleField count={10} blend="screen" opacityScale={0.3} />
+            </>
+          }
+          content={
+            <MouseDrift
+              strength={8}
+              className="flex w-full flex-col items-center"
+            >
+              <div className="flex flex-col items-center gap-6 px-6 pt-20 text-center">
+                {/* Wave 33 — prmpt staggered entrance: 0 / 0.15 / 0.3 / 0.45 / 0.6,
+                  each fading up with a soft settle (eye-comfort rhythm) */}
+                <FadeIn delay={0}>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-1.5 text-xs tracking-[0.25em] text-red-400 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)]">
+                    <Sparkles className="size-3.5" />
+                    {dict.hero.badge}
+                  </span>
+                </FadeIn>
 
-              <FadeIn delay={0.85}>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Magnetic>
-                    <Button
-                      render={<Link href={`/${locale}/catalog`} />}
-                      size="lg"
-                      className="h-12 rounded-full px-8 text-base shadow-[0_0_30px_-8px_theme(colors.red.600)]"
-                    >
-                      {dict.hero.ctaPrimary}
-                    </Button>
-                  </Magnetic>
-                  <Magnetic>
-                    <Button
-                      render={<Link href={`/${locale}/catalog`} />}
-                      size="lg"
-                      variant="outline"
-                      className="h-12 rounded-full border-white/30 bg-white/5 px-8 text-base text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
-                    >
-                      {dict.hero.ctaSecondary}
-                    </Button>
-                  </Magnetic>
-                </div>
-              </FadeIn>
+                <AnimatedTitle text={dict.hero.title} />
 
-              <FadeIn delay={1.05}>
-                <CollectionPicker
-                  locale={locale}
-                  collections={collections}
-                  labels={{
-                    prompt: dict.hero.pickPrompt,
-                    hint: dict.hero.pickHint,
-                    all: dict.hero.pickAll,
-                    empty: dict.hero.pickEmpty,
-                    ready: dict.hero.pickReady,
-                    go: dict.hero.pickGo,
-                  }}
+                <FadeIn delay={0.3}>
+                  <HeartbeatLine className="h-10 w-56 text-red-500 [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))_drop-shadow(0_4px_24px_rgba(0,0,0,0.45))]" />
+                </FadeIn>
+
+                <TypewriterLine
+                  text={dict.hero.subtitle}
+                  speed={46}
+                  startDelay={450}
+                  className="max-w-xl text-base leading-relaxed text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)] sm:text-lg"
                 />
-              </FadeIn>
-            </div>
-          </MouseDrift>
-        }
-      />
+
+                <FadeIn delay={0.6}>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Magnetic>
+                      <Button
+                        render={<Link href={`/${locale}/catalog`} />}
+                        size="lg"
+                        className="h-12 rounded-full px-8 text-base shadow-[0_0_30px_-8px_theme(colors.red.600)]"
+                      >
+                        {dict.hero.ctaPrimary}
+                      </Button>
+                    </Magnetic>
+                    <Magnetic>
+                      <Button
+                        render={<Link href={`/${locale}/catalog`} />}
+                        size="lg"
+                        variant="outline"
+                        className="h-12 rounded-full border-white/30 bg-white/5 px-8 text-base text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
+                      >
+                        {dict.hero.ctaSecondary}
+                      </Button>
+                    </Magnetic>
+                  </div>
+                </FadeIn>
+
+                <FadeIn delay={0.8}>
+                  <CollectionPicker
+                    locale={locale}
+                    collections={collections}
+                    labels={{
+                      prompt: dict.hero.pickPrompt,
+                      hint: dict.hero.pickHint,
+                      all: dict.hero.pickAll,
+                      empty: dict.hero.pickEmpty,
+                      ready: dict.hero.pickReady,
+                      go: dict.hero.pickGo,
+                    }}
+                  />
+                </FadeIn>
+              </div>
+            </MouseDrift>
+          }
+        />
+      </div>
 
       {/* ====== ROTATING SHOWCASE — 95vh stage: the hero product assembles with the
             wheel (full-bleed frame scrub + crossfade), animation COMPLETES when the

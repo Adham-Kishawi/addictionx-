@@ -497,6 +497,15 @@ export function TurntableVideo({
         poster={poster}
         className={videoClass}
       />
+      {/* Wave 33 — soft-focus veil ABOVE the footage (walid: «خلي
+          الفيديو نفسه في فوقه طبقة BLUR»): a gentle backdrop-blur that
+          softens the product footage for a dreamy, eye-comfortable
+          cinematic look — content layers above (veil/particles/copy)
+          are NOT blurred, only the video itself. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-[3] backdrop-blur-[5px]"
+      />
     </div>
   );
 }
