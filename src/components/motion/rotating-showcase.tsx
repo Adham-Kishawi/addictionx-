@@ -18,9 +18,11 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 // (h264) and GSAP ScrollTrigger scrubs its `currentTime` with the
 // wheel — so the eye sees actual 24fps motion, NOT images swapping
 // (wave 31l — walid: «محتاج أحس إني بتفرج على فيديو مش صورة بتتغير
-// مع كل سكرول»). The clip is re-encoded with a keyframe every 12
-// frames (`assembly-scrub.mp4`, ~4.4MB) so seeking is instant and
-// buttery at any scroll speed.
+// مع كل سكرول»). The clip is re-encoded ALL-INTRА — every frame is
+// a keyframe I-frame (`-g 1 -bf 0`, ~6.9MB) so seeking presents the
+// EXACT frame instantly with no inter-frame decode chains and no
+// visible frame-stepping (wave 31m — walid: «لسه صور مفيش إحساس
+// الفيديو والتنقل بين الفريمات»).
 //
 // Section = 95vh, shorter than the hero; the trigger spans
 // "top bottom → bottom bottom": the assembly COMPLETES exactly when
