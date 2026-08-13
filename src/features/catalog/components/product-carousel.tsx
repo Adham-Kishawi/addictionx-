@@ -4,7 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useReducedMotion } from "framer-motion";
+import {
+  motion,
+  useReducedMotion,
+  useMotionValue,
+  useSpring,
+} from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/motion/reveal";
 import { SectionHeading } from "@/components/layout/section-heading";
@@ -16,7 +21,11 @@ import { collectionBackdrop } from "@/features/catalog/data/collection-assets";
 import type { Locale, Dictionary } from "@/lib/i18n/dictionary";
 
 // ============================================================
-// Roles carousel — one product from each collection.
+// Roles carousel — one product from each collection (wave 34c:
+// compact editorial edition — smaller stage, tighter spread,
+// mouse-drag physics with a spring settle instead of a bare
+// threshold swipe; the role-swap below still uses CSS
+// transitions — the project's documented performance exception).
 //
 // Core idea: we don't move any element from place to place — each element
 // asks "what is my role now?" and applies its own style. When activeIndex changes
@@ -39,18 +48,21 @@ const ROLE_STYLES: Record<
     height: number;
   }
 > = {
-  // Wave 8: the stage is bigger (max-w-xl) so the side roles spread wider
-  // and hold more scale — the center reads as a real hero, not a small card.
+  // Wave 34c: compact editorial proportions — the center keeps the stage
+  // authority (scale 1) but the side roles spread at a gentler 0.55 and
+  // fade further, so the whole scene reads as a small theatre, not a screen.
   center: { scale: 1, blur: 0, opacity: 1, z: 20, left: 50, height: 100 },
-  left: { scale: 0.62, blur: 2, opacity: 0.8, z: 10, left: 15, height: 64 },
-  right: { scale: 0.62, blur: 2, opacity: 0.8, z: 10, left: 85, height: 64 },
-  back: { scale: 0.5, blur: 4, opacity: 0.55, z: 5, left: 50, height: 52 },
+  left: { scale: 0.55, blur: 3, opacity: 0.7, z: 10, left: 18, height: 58 },
+  right: { scale: 0.55, blur: 3, opacity: 0.7, z: 10, left: 82, height: 58 },
+  back: { scale: 0.45, blur: 5, opacity: 0.45, z: 5, left: 50, height: 46 },
 };
 
-const ANIM_MS = 700;
-const SWIPE_THRESHOLD = 50;
-// Ease-out: roles glide into place and settle — no mechanical snap
-const EASE = "cubic-bezier(0.22, 0.61, 0.36, 1)";
+const ANIM_MS = 650;
+const SWIPE_THRESHOLD = 60;
+const DRAG_FOLLOW = 0.35;
+// Ease-out: roles glide into place and settle — no mechanical snap.
+// Wave 34c: opens with a touch of spring (0.34/1.08) in front of the tail.
+const EASE = "cubic-bezier(0.34, 1.08, 0.24, 1)";
 
 function slideLabel(product: Product) {
   return `${product.nameAr} — ${product.nameEn}`;
@@ -80,6 +92,12 @@ export function ProductCarousel({
   const stageRef = useRef<HTMLDivElement>(null);
   const inViewRef = useRef(true);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
+
+  // Wave 34c — drag physics: the stage follows the pointer elastically
+  // (DRAG_FOLLOW) while held, then the spring carries it back to 0 while
+  // the role swap plays — a soft "throw-and-settle" instead of a snap.
+  const stageX = useMotionValue(0);
+  const springX = useSpring(stageX, { stiffness: 320, damping: 26, mass: 0.6 });
 
   const center = active;
   const right = (active + 1) % total;
@@ -118,7 +136,7 @@ export function ProductCarousel({
     return () => window.clearTimeout(t);
   }, [isAnimating]);
 
-  // ============ Touch swipe ============
+  // ============ Pointer drag (mouse + touch) — wave 34c ============
   const onPointerDown = (e: React.PointerEvent) => {
     pointerRef.current = { x: e.clientX, y: e.clientY, active: true };
   };
@@ -130,17 +148,26 @@ export function ProductCarousel({
     // Vertical swipe = page scroll — we never intercept it
     if (Math.abs(dy) > Math.abs(dx)) {
       p.active = false;
+      stageX.set(0);
       return;
     }
-    if (Math.abs(dx) > SWIPE_THRESHOLD) {
-      p.active = false;
+    // Elastic follow while held (clamped so it feels like a rubber band)
+    stageX.set(
+      isAnimating ? 0 : Math.max(-170, Math.min(170, dx * DRAG_FOLLOW)),
+    );
+  };
+  const onPointerUp = (e: React.PointerEvent) => {
+    const p = pointerRef.current;
+    if (!p.active) return;
+    p.active = false;
+    const dx = e.clientX - p.x;
+    if (Math.abs(dx) >= SWIPE_THRESHOLD && !isAnimating) {
       // In RTL the logical directions are reversed
       const dir = dx < 0 ? 1 : -1;
       goTo(active + dir * (isRtl ? -1 : 1));
     }
-  };
-  const onPointerUp = () => {
-    pointerRef.current.active = false;
+    // Spring settles the stage back to rest while the roles glide
+    stageX.set(0);
   };
 
   // ============ Pause off-screen ============
@@ -177,7 +204,7 @@ export function ProductCarousel({
     : `transform ${ANIM_MS}ms ${EASE}, filter ${ANIM_MS}ms ${EASE}, opacity ${ANIM_MS}ms ${EASE}, left ${ANIM_MS}ms ${EASE}`;
 
   return (
-    <section className="relative overflow-hidden border-y border-border bg-card/40 py-14">
+    <section className="relative overflow-hidden border-y border-border bg-card/40 py-10">
       {/* ===== Per-collection identity background (wave 8) =====
             One layer per product, each carrying the collection's glow tint +
             giant collection name behind the stage. Active index crossfades
@@ -224,7 +251,7 @@ export function ProductCarousel({
               className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 select-none justify-center overflow-hidden whitespace-nowrap"
             >
               <span
-                className="font-display text-[19vw] font-bold leading-none lg:text-[13vw]"
+                className="font-display text-[14vw] font-bold leading-none lg:text-[10vw]"
                 style={{
                   color: "transparent",
                   WebkitTextStroke: `1px ${product.art.glow}40`,
@@ -244,7 +271,7 @@ export function ProductCarousel({
         className="pointer-events-none absolute inset-x-0 bottom-[-2%] z-0 flex select-none justify-center overflow-hidden whitespace-nowrap"
       >
         <span
-          className="font-display text-[26vw] font-bold leading-none lg:text-[20vw]"
+          className="font-display text-[16vw] font-bold leading-none lg:text-[12vw]"
           style={{
             color: "transparent",
             WebkitTextStroke: "1px rgba(255,255,255,0.07)",
@@ -262,7 +289,7 @@ export function ProductCarousel({
         />
 
         <Reveal delay={0.12}>
-          <div className="mt-8 flex flex-col items-center gap-6">
+          <div className="mt-6 flex flex-col items-center gap-5">
             {/* ===== Stage ===== */}
             <div
               ref={stageRef}
@@ -275,54 +302,62 @@ export function ProductCarousel({
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerLeave={onPointerUp}
-              className="relative aspect-[0.72/1] w-full max-w-sm touch-pan-y select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:max-w-xl"
+              onPointerCancel={onPointerUp}
+              className="relative aspect-[0.72/1] w-full max-w-[220px] touch-pan-y select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:max-w-sm lg:max-w-md"
             >
-              {products.map((product, i) => {
-                const role = roleOf(i);
-                const s = ROLE_STYLES[role];
-                const isCenter = role === "center";
-                return (
-                  <div
-                    key={product.id}
-                    className="absolute"
-                    style={{
-                      bottom: 0,
-                      left: `${s.left}%`,
-                      width: "56%",
-                      aspectRatio: "0.6 / 1",
-                      transform: `translateX(-50%) scale(${s.scale})`,
-                      opacity: s.opacity,
-                      zIndex: s.z,
-                      filter: reduce ? "none" : `blur(${s.blur}px)`,
-                      transition,
-                      willChange: isAnimating
-                        ? "transform, filter, opacity"
-                        : "auto",
-                    }}
-                  >
-                    {isCenter ? (
-                      <Link
-                        href={`/${locale}/product/${product.slug}`}
-                        aria-label={slideLabel(product)}
-                        className="block h-full w-full focus-visible:outline-none"
-                        draggable={false}
-                      >
-                        <SlideImage product={product} priority />
-                      </Link>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => goTo(i)}
-                        tabIndex={-1}
-                        aria-hidden="true"
-                        className="block h-full w-full cursor-pointer focus-visible:outline-none"
-                      >
-                        <SlideImage product={product} />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+              {/* Wave 34c — the whole stage rides the drag spring */}
+              <motion.div
+                aria-hidden
+                className="absolute inset-0"
+                style={reduce ? undefined : { x: springX }}
+              >
+                {products.map((product, i) => {
+                  const role = roleOf(i);
+                  const s = ROLE_STYLES[role];
+                  const isCenter = role === "center";
+                  return (
+                    <div
+                      key={product.id}
+                      className="absolute"
+                      style={{
+                        bottom: 0,
+                        left: `${s.left}%`,
+                        width: "56%",
+                        aspectRatio: "0.6 / 1",
+                        transform: `translateX(-50%) scale(${s.scale})`,
+                        opacity: s.opacity,
+                        zIndex: s.z,
+                        filter: reduce ? "none" : `blur(${s.blur}px)`,
+                        transition,
+                        willChange: isAnimating
+                          ? "transform, filter, opacity"
+                          : "auto",
+                      }}
+                    >
+                      {isCenter ? (
+                        <Link
+                          href={`/${locale}/product/${product.slug}`}
+                          aria-label={slideLabel(product)}
+                          className="block h-full w-full focus-visible:outline-none"
+                          draggable={false}
+                        >
+                          <SlideImage product={product} priority />
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => goTo(i)}
+                          tabIndex={-1}
+                          aria-hidden="true"
+                          className="block h-full w-full cursor-pointer focus-visible:outline-none"
+                        >
+                          <SlideImage product={product} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </motion.div>
             </div>
 
             {/* ===== Active product info ===== */}
@@ -344,10 +379,10 @@ export function ProductCarousel({
                   </span>
                 );
               })()}
-              <h3 className="font-display text-xl font-bold sm:text-2xl">
+              <h3 className="font-display text-lg font-bold sm:text-xl">
                 {locale === "ar" ? activeProduct.nameAr : activeProduct.nameEn}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground sm:text-sm">
                 {formatPrice(activeProduct.price)} {dict.product.currency}
               </p>
               <div className="mt-1.5 flex items-center gap-3">
@@ -379,7 +414,7 @@ export function ProductCarousel({
                 onClick={goPrev}
                 aria-label={dict.home.carouselPrev}
                 className={cn(
-                  "flex size-10 items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary",
+                  "flex size-9 items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary",
                   "focus-visible:ring-2 focus-visible:ring-ring",
                 )}
               >
@@ -390,7 +425,7 @@ export function ProductCarousel({
                 onClick={goNext}
                 aria-label={dict.home.carouselNext}
                 className={cn(
-                  "flex size-10 items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary",
+                  "flex size-9 items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary",
                   "focus-visible:ring-2 focus-visible:ring-ring",
                 )}
               >
