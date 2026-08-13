@@ -25,13 +25,13 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 // shows the sequence as a FULL-BLEED video filling the whole
 // screen (like the hero) — NOT a square sprite box. GSAP
 // ScrollTrigger (dynamic import, per the project rule) scrubs the
-// scroll over the 160vh pinned section. Smoothness: TWO stacked
-// imgs crossfade — the base frame is scrubbed 1:1 and the NEXT
-// frame fades over it by the fractional progress, so the assembly
-// glides like the video itself instead of stepping between frames
-// (wave 31c — walid: «الحركة تكون سموث أكتر من كده»). The ONLY
-// other element is the SHOP NOW button (fades in as the product
-// completes) — it links to the GENERAL catalog (wave 31f).
+// scroll as the section passes through the viewport. Smoothness: TWO
+// stacked imgs crossfade — the base frame is scrubbed 1:1 and the
+// NEXT frame fades over it by the fractional progress, so the
+// assembly glides like the video itself instead of stepping between
+// frames (wave 31c — walid: «الحركة تكون سموث أكتر من كده»).
+// The ONLY other element is the SHOP NOW button (fades in as the
+// product completes) — it links to the GENERAL catalog (wave 31f).
 // Reduced motion → the last frame (fully assembled), static.
 // ============================================================
 
@@ -62,7 +62,7 @@ export function RotatingShowcase({
 
   const { scrollYProgress } = useScroll({
     target: ref as React.RefObject<HTMLElement>,
-    offset: ["start start", "end end"],
+    offset: ["start end", "end start"],
   });
 
   // GSAP ScrollTrigger — scrub the frame with the wheel (wave 31b).
@@ -96,8 +96,8 @@ export function RotatingShowcase({
       imgNext.style.opacity = "0";
       st = ScrollTrigger.create({
         trigger: section,
-        start: "top top",
-        end: "bottom bottom",
+        start: "top bottom",
+        end: "bottom top",
         scrub: 1,
         onUpdate: (self) => {
           const raw = self.progress * (FRAME_COUNT - 1);
@@ -127,62 +127,70 @@ export function RotatingShowcase({
   const shopY = useTransform(scrollYProgress, [0.72, 0.9], [26, 0]);
 
   return (
-    <section ref={ref} className="relative h-[160vh]" aria-label={name}>
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
-        {/* FULL-BLEED assembly video — frame-scrubbed by GSAP */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          ref={imgRef}
-          src={frameSrc(FRAME_COUNT - 1)}
-          alt={name}
-          draggable={false}
-          className="absolute inset-0 h-full w-full select-none object-cover"
-        />
-        {/* Crossfade layer — the NEXT frame fades over the base frame */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          ref={imgNextRef}
-          src={frameSrc(FRAME_COUNT - 1)}
-          alt=""
-          aria-hidden
-          draggable={false}
-          className="absolute inset-0 h-full w-full select-none object-cover"
-        />
+    // 85vh stage — SHORTER than the hero (100dvh). No sticky pin: a
+    // pinned full-screen stage physically needs a section taller than
+    // the viewport, so the whole block now scrolls WITH the page and
+    // the GSAP trigger spans "top bottom → bottom top" — the section
+    // is shorter than the hero AND the frames glide across ~185vh of
+    // scroll, giving the smoothest scrub yet (wave 31g).
+    <section
+      ref={ref}
+      className="relative h-[85vh] w-full overflow-hidden bg-black"
+      aria-label={name}
+    >
+      {/* FULL-BLEED assembly video — frame-scrubbed by GSAP */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        ref={imgRef}
+        src={frameSrc(FRAME_COUNT - 1)}
+        alt={name}
+        draggable={false}
+        className="absolute inset-0 h-full w-full select-none object-cover"
+      />
+      {/* Crossfade layer — the NEXT frame fades over the base frame */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        ref={imgNextRef}
+        src={frameSrc(FRAME_COUNT - 1)}
+        alt=""
+        aria-hidden
+        draggable={false}
+        className="absolute inset-0 h-full w-full select-none object-cover"
+      />
 
-        {/* Edge veils — the section melts into the page (same --hero-veil-4
+      {/* Edge veils — the section melts into the page (same --hero-veil-4
             pattern the hero uses: background-color at 0% → transparent), so the
             hard top/bottom cut lines disappear and the video feels part of the
             site in BOTH themes (dark blends into dark, light melts into light) */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[14vh]"
-          style={{
-            background:
-              "linear-gradient(to bottom, var(--hero-veil-4) 0%, transparent 100%)",
-          }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[18vh]"
-          style={{
-            background:
-              "linear-gradient(to top, var(--hero-veil-4) 0%, transparent 100%)",
-          }}
-        />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[14vh]"
+        style={{
+          background:
+            "linear-gradient(to bottom, var(--hero-veil-4) 0%, transparent 100%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[18vh]"
+        style={{
+          background:
+            "linear-gradient(to top, var(--hero-veil-4) 0%, transparent 100%)",
+        }}
+      />
 
-        {/* The only other element — SHOP NOW */}
-        <motion.div
-          className="absolute inset-x-0 bottom-[10vh] flex justify-center"
-          style={reduce ? undefined : { opacity: shopOpacity, y: shopY }}
+      {/* The only other element — SHOP NOW */}
+      <motion.div
+        className="absolute inset-x-0 bottom-[10vh] flex justify-center"
+        style={reduce ? undefined : { opacity: shopOpacity, y: shopY }}
+      >
+        <Link
+          href={href}
+          className="flex h-14 items-center gap-2 rounded-full bg-primary px-10 text-lg font-bold uppercase tracking-[0.18em] text-primary-foreground shadow-[0_0_40px_-6px_theme(colors.red.600)] backdrop-blur-sm transition-transform hover:scale-105"
         >
-          <Link
-            href={href}
-            className="flex h-14 items-center gap-2 rounded-full bg-primary px-10 text-lg font-bold uppercase tracking-[0.18em] text-primary-foreground shadow-[0_0_40px_-6px_theme(colors.red.600)] backdrop-blur-sm transition-transform hover:scale-105"
-          >
-            {dict.common.shopNow}
-          </Link>
-        </motion.div>
-      </div>
+          {dict.common.shopNow}
+        </Link>
+      </motion.div>
     </section>
   );
 }
