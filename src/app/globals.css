@@ -85,6 +85,12 @@
   --hero-veil-2: rgba(0, 0, 0, 0.15);
   --hero-veil-3: rgba(0, 0, 0, 0.35);
   --hero-veil-4: rgba(0, 0, 0, 0.75);
+  /* Mood worlds (wave 34f) — the world stage is always dark cinema: warm
+     to the atmosphere of each collection's backdrop, black at the edges so
+     worlds dissolve into each other and into the page (both themes). */
+  --mood-veil-1: rgba(0, 0, 0, 0.72);
+  --mood-veil-2: rgba(0, 0, 0, 0.35);
+  --mood-veil-3: rgba(0, 0, 0, 0.85);
   --sidebar-foreground: oklch(0.95 0.004 285);
   --sidebar-primary: oklch(0.6 0.22 22);
   --sidebar-primary-foreground: oklch(0.98 0.005 285);

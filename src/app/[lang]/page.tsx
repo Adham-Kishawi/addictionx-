@@ -20,7 +20,7 @@ import { SectionGlow } from "@/components/motion/section-glow";
 import { RotatingShowcase } from "@/components/motion/rotating-showcase";
 import { LazyMount } from "@/components/motion/lazy-mount";
 import { ExplodedProduct } from "@/components/motion/exploded-product";
-import { DepthStack } from "@/components/motion/depth-stack";
+import { MoodWorlds } from "@/components/motion/mood-worlds";
 import { CtaScene } from "@/components/motion/cta-scene";
 import { SignatureScene } from "@/components/motion/signature-scene";
 import { SectionHeading } from "@/components/layout/section-heading";
@@ -288,20 +288,24 @@ export default async function Home({
         ctaHref={`/${locale}/catalog`}
       />
 
-      {/* ====== Collections — DEPTH STACK: a scroll-driven deck where each card
-            lives on its own depth slot (x/scale/rotateY/z) and rises to the
-            front as its turn comes, then exits right ====== */}
-      <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
-        <div className="mb-10">
-          <SectionHeading
-            eyebrow="Feel the Rush"
-            title={dict.home.collectionsTitle}
-            subtitle={dict.home.collectionsSubtitle}
-          />
+      {/* ====== THREE MOODS, ENTIRE WORLDS (wave 34f) — each collection is its own
+            world: ambient backdrop + glow + ghost word + tagline, dissolving into
+            the next as you scroll (crossfade/scale/parallax — see mood-worlds.tsx).
+            The depth-stack deck was retired ====== */}
+      <section className="relative">
+        <div className="mx-auto max-w-7xl px-4 pt-20 sm:px-6 lg:px-8">
+          <div className="mb-6 text-center">
+            <SectionHeading
+              eyebrow="Feel the Rush"
+              title={dict.home.collectionsTitle}
+              subtitle={dict.home.collectionsSubtitle}
+            />
+          </div>
         </div>
 
-        <DepthStack
-          cards={collections.map((collection) => {
+        <MoodWorlds
+          hrefLabel={dict.home.signatureCta}
+          worlds={collections.map((collection) => {
             const collectionProducts = allProducts.filter(
               (p) => p.collection === collection.slug,
             );
@@ -309,12 +313,21 @@ export default async function Home({
               image: undefined,
               art: { from: "#1e1b4b", to: "#020617", glow: "#6366f1" },
             };
+            const tagline =
+              locale === "ar"
+                ? (cover?.descriptionAr ?? "")
+                : (cover?.descriptionEn ?? "");
             return {
               key: collection.slug,
-              href: `/${locale}/collections/${collection.slug}`,
               name: locale === "ar" ? collection.nameAr : collection.nameEn,
+              ghost: collection.nameEn,
+              tagline,
+              href: `/${locale}/collections/${collection.slug}`,
               image: cover.image ?? collectionBackdrop(collection.slug),
-              art: cover.art,
+              glow: cover.art?.glow ?? "#ef4444",
+              indexLabel:
+                locale === "ar" ? collection.nameAr : collection.nameEn,
+              hrefLabel: dict.home.signatureCta,
             };
           })}
         />
