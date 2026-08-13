@@ -3,7 +3,6 @@ import { User } from "lucide-react";
 import type { Session } from "next-auth";
 import { HeartbeatLine } from "@/components/motion/heartbeat-line";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { CartButton } from "@/features/cart/components/cart-button";
 import { HeaderScroll } from "@/components/layout/header-scroll";
 import { SearchBox } from "@/features/catalog/components/search-box";
@@ -114,7 +113,6 @@ export function Header({
               />
             </div>
             <LanguageSwitcher currentLocale={locale} />
-            <ThemeToggle />
             <Link
               href={isAuthed ? `/${locale}/account` : `/${locale}/login`}
               aria-label={dict.header.account}

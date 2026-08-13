@@ -77,9 +77,9 @@
   --chart-5: oklch(0.65 0.15 10);
   --radius: 0.5rem;
   --sidebar: oklch(0.14 0.006 285);
-  /* Cinematic hero — the video stays dark in BOTH themes (a black product video
-     cannot adapt to a light page), but the backdrop/veil follow the theme so the
-     hero melts into the page below it (dark → black, light → soft dark float). */
+  /* Cinematic hero — the video stays dark (a black product video cannot adapt
+     to a light page). The site is DARK-ONLY (light theme removed), so the hero
+     always melts into the black page below it. */
   --hero-bg: #0a0a0a;
   --hero-veil-1: rgba(0, 0, 0, 0.6);
   --hero-veil-2: rgba(0, 0, 0, 0.15);
@@ -92,7 +92,7 @@
   --metallic-4: #d6d9e0;
   /* Mood worlds (wave 34f) — the world stage is always dark cinema: warm
      to the atmosphere of each collection's backdrop, black at the edges so
-     worlds dissolve into each other and into the page (both themes). */
+     worlds dissolve into each other and into the page. */
   --mood-veil-1: rgba(0, 0, 0, 0.72);
   --mood-veil-2: rgba(0, 0, 0, 0.35);
   --mood-veil-3: rgba(0, 0, 0, 0.85);
@@ -103,54 +103,6 @@
   --sidebar-accent-foreground: oklch(0.9 0.004 285);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.6 0.22 22);
-}
-
-/* Light mode — the same ADDICTIONX identity in light colors */
-:root[data-theme="light"]:not(.dark) {
-  --background: oklch(0.97 0.004 285);
-  --foreground: oklch(0.2 0.01 285);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.01 285);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.01 285);
-  --primary: oklch(0.55 0.22 22);
-  --primary-foreground: oklch(0.99 0.005 285);
-  --secondary: oklch(0.93 0.006 285);
-  --secondary-foreground: oklch(0.3 0.01 285);
-  --muted: oklch(0.93 0.006 285);
-  --muted-foreground: oklch(0.5 0.01 285);
-  --accent: oklch(0.88 0.01 285);
-  --accent-foreground: oklch(0.2 0.01 285);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0 0 0 / 12%);
-  --input: oklch(0 0 0 / 15%);
-  --ring: oklch(0.55 0.22 22);
-  --chart-1: oklch(0.55 0.22 22);
-  --chart-2: oklch(0.6 0.15 285);
-  --chart-3: oklch(0.7 0.1 30);
-  --chart-4: oklch(0.65 0.1 60);
-  --chart-5: oklch(0.6 0.15 10);
-  --radius: 0.5rem;
-  --sidebar: oklch(0.97 0.004 285);
-  --sidebar-foreground: oklch(0.2 0.01 285);
-  --sidebar-primary: oklch(0.55 0.22 22);
-  --sidebar-primary-foreground: oklch(0.99 0.005 285);
-  --sidebar-accent: oklch(0.93 0.006 285);
-  --sidebar-accent-foreground: oklch(0.3 0.01 285);
-  --sidebar-border: oklch(0 0 0 / 12%);
-  --sidebar-ring: oklch(0.55 0.22 22);
-  /* Hero veil — softer darkness in light mode, and the bottom melts into the
-     light page (--background) so the dark video doesn't float on a black box. */
-  --hero-veil-1: rgba(0, 0, 0, 0.45);
-  --hero-veil-2: rgba(0, 0, 0, 0.1);
-  --hero-veil-3: rgba(0, 0, 0, 0.22);
-  --hero-veil-4: var(--background);
-  --hero-bg: #0d0d0f;
-  /* Metallic shine text — dark chrome so it stays legible on the light canvas */
-  --metallic-1: #6b7280;
-  --metallic-2: #4b5563;
-  --metallic-3: #111827;
-  --metallic-4: #374151;
 }
 
 @layer base {
@@ -280,17 +232,6 @@
   --depth-orb-a: oklch(0.6 0.22 22 / 0.09);
   --depth-orb-b: oklch(0.45 0.1 285 / 0.07);
   --depth-orb-blur: 90px;
-}
-
-:root[data-theme="light"]:not(.dark) {
-  --depth-glow: radial-gradient(
-    55% 45% at 50% -5%,
-    oklch(0.55 0.22 22 / 0.1),
-    transparent 70%
-  );
-  --depth-orb-a: oklch(0.55 0.22 22 / 0.07);
-  --depth-orb-b: oklch(0.6 0.15 285 / 0.05);
-  --depth-orb-blur: 80px;
 }
 
 .depth-backdrop {

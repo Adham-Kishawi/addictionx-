@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo, Playfair_Display } from "next/font/google";
-import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CartDrawer } from "@/features/cart/components/cart-drawer";
@@ -50,10 +49,7 @@ export async function generateMetadata({
 }
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-  ],
+  themeColor: "#0a0a0a",
 };
 
 export default async function RootLayout({
@@ -71,33 +67,25 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={locale === "ar" ? "rtl" : "ltr"}
-      className={`${cairo.variable} ${playfair.variable} h-full antialiased`}
+      className={`dark ${cairo.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <ThemeProvider>
-          {/* isolate = stacking context: the fixed DepthBackdrop (-z-10) stays
-              behind all page content of every route — the site-wide depth layer */}
-          <div className="relative isolate">
-            <DepthBackdrop />
-            <DepthFog />
-            <CursorGlow />
-            <CursorRing />
-            <SmoothScroll />
-            <CartFlyProvider>
-              <Header locale={locale} session={session} />
-              <CartDrawer locale={locale} />
-              <PageTransition>{children}</PageTransition>
-              <Footer locale={locale} />
-            </CartFlyProvider>
-            <NoiseOverlay />
-          </div>
-          <script
-            id="theme-init"
-            dangerouslySetInnerHTML={{
-              __html: `(function(){try{var t=localStorage.getItem("theme");if(!t){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches)?"light":"dark";}if(t==="light"){document.documentElement.classList.remove("dark");document.documentElement.dataset.theme="light";}else{document.documentElement.classList.add("dark");document.documentElement.dataset.theme="dark";}}catch(e){document.documentElement.classList.add("dark");}})();`,
-            }}
-          />
-        </ThemeProvider>
+        {/* isolate = stacking context: the fixed DepthBackdrop (-z-10) stays
+            behind all page content of every route — the site-wide depth layer */}
+        <div className="relative isolate">
+          <DepthBackdrop />
+          <DepthFog />
+          <CursorGlow />
+          <CursorRing />
+          <SmoothScroll />
+          <CartFlyProvider>
+            <Header locale={locale} session={session} />
+            <CartDrawer locale={locale} />
+            <PageTransition>{children}</PageTransition>
+            <Footer locale={locale} />
+          </CartFlyProvider>
+          <NoiseOverlay />
+        </div>
       </body>
     </html>
   );
