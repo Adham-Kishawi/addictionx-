@@ -465,10 +465,6 @@ export const dictionary = {
       success: "تم الاشتراك — أهلًا بك في نادي ADDICTIONX",
       error: "تعذّر الاشتراك — تحقق من البريد الإلكتروني",
     },
-    theme: {
-      toggleDark: "الوضع الليلي",
-      toggleLight: "الوضع النهاري",
-    },
     lang: {
       switchTo: "English",
       switchLabel: "English",
@@ -980,10 +976,6 @@ export const dictionary = {
       submit: "Subscribe",
       success: "Subscribed — welcome to the ADDICTIONX club",
       error: "Could not subscribe — check your email",
-    },
-    theme: {
-      toggleDark: "Dark mode",
-      toggleLight: "Light mode",
     },
     lang: {
       switchTo: "العربية",
