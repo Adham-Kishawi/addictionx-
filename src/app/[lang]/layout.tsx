@@ -8,19 +8,12 @@ import "@fontsource/playfair-display/400.css";
 import "@fontsource/playfair-display/500.css";
 import "@fontsource/playfair-display/600.css";
 import "@fontsource/playfair-display/700.css";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { CartDrawer } from "@/features/cart/components/cart-drawer";
-import { CartFlyProvider } from "@/components/motion/fly-to-cart";
-import { CursorGlow } from "@/components/motion/cursor-glow";
-import { CursorRing } from "@/components/motion/cursor-ring";
-import { SmoothScroll } from "@/components/motion/smooth-scroll";
-import { DepthBackdrop } from "@/components/motion/depth-backdrop";
-import { DepthFog } from "@/components/motion/depth-fog";
-import { NoiseOverlay } from "@/components/motion/noise-overlay";
-import { PageTransition } from "@/components/motion/page-transition";
-import { auth } from "@/lib/auth";
-import { getDictionary, isLocale, type Locale } from "@/lib/i18n/dictionary";
+import {
+  getDictionary,
+  isLocale,
+  defaultLocale,
+  type Locale,
+} from "@/lib/i18n/dictionary";
 import { siteUrl } from "@/lib/site-url";
 import "../globals.css";
 
@@ -30,7 +23,7 @@ export async function generateMetadata({
   params: Promise<{ lang: string }>;
 }): Promise<Metadata> {
   const { lang } = await params;
-  const locale: Locale = isLocale(lang) ? lang : "ar";
+  const locale: Locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
   return {
@@ -55,7 +48,7 @@ export const viewport: Viewport = {
   themeColor: "#0a0a0a",
 };
 
-export default async function RootLayout({
+export default async function LocaleLayout({
   children,
   params,
 }: {
@@ -63,8 +56,7 @@ export default async function RootLayout({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
-  const locale: Locale = isLocale(lang) ? lang : "ar";
-  const session = await auth();
+  const locale: Locale = isLocale(lang) ? lang : defaultLocale;
 
   return (
     <html
@@ -72,24 +64,7 @@ export default async function RootLayout({
       dir={locale === "ar" ? "rtl" : "ltr"}
       className="dark h-full antialiased"
     >
-      <body className="min-h-full">
-        {/* isolate = stacking context: the fixed DepthBackdrop (-z-10) stays
-            behind all page content of every route — the site-wide depth layer */}
-        <div className="relative isolate">
-          <DepthBackdrop />
-          <DepthFog />
-          <CursorGlow />
-          <CursorRing />
-          <SmoothScroll />
-          <CartFlyProvider>
-            <Header locale={locale} session={session} />
-            <CartDrawer locale={locale} />
-            <PageTransition>{children}</PageTransition>
-            <Footer locale={locale} />
-          </CartFlyProvider>
-          <NoiseOverlay />
-        </div>
-      </body>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

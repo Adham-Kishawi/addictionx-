@@ -73,7 +73,7 @@ export default async function AdminLayout({
   };
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 pb-24 pt-24 sm:px-6 lg:flex-row lg:px-8">
+    <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 pb-24 pt-10 sm:px-6 lg:flex-row lg:px-8">
       <aside className="shrink-0 lg:w-56">
         <div className="mb-4 px-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
