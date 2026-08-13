@@ -14,10 +14,9 @@ import { RevealStagger, RevealItem } from "@/components/motion/reveal";
 import { Marquee } from "@/components/motion/marquee";
 import { Magnetic } from "@/components/motion/magnetic";
 import { MouseDrift } from "@/components/motion/mouse-drift";
-import { BottleRush } from "@/components/motion/bottle-rush";
+import { RotatingShowcase } from "@/components/motion/rotating-showcase";
 import { StatsBand } from "@/components/motion/stats-band";
 import { SectionGlow } from "@/components/motion/section-glow";
-import { RotatingShowcase } from "@/components/motion/rotating-showcase";
 import { LazyMount } from "@/components/motion/lazy-mount";
 import { ExplodedProduct } from "@/components/motion/exploded-product";
 import { DepthStack } from "@/components/motion/depth-stack";
@@ -231,19 +230,6 @@ export default async function Home({
         dict={dict}
         collectionNames={collectionNames}
       />
-
-      {/* ====== BOTTLE RUSH — the awe scene: 220vh scroll-scrubbed stage.
-            The real product photo scales 0.5→1.15, rotates and un-blurs
-            while "ADDICTION" (metallic) splits sideways and the red aura
-            ramps. Sticky stage + scroll-linked framer transforms ======
-            (wave 9: LazyMount defers the whole scene off-page) ====== */}
-      <LazyMount fallbackHeight="220vh">
-        <BottleRush
-          image={heroProduct?.image}
-          title={dict.home.rushTitle}
-          subtitle={dict.home.rushSubtitle}
-        />
-      </LazyMount>
 
       {/* ====== Most wanted ====== */}
       <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 [content-visibility:auto] [contain-intrinsic-size:auto_640px]">
