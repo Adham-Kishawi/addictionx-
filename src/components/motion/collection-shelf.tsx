@@ -54,9 +54,11 @@ function GlassCard({
 }) {
   return (
     <div className="relative aspect-[3/4] w-[62vw] max-w-[280px]">
-      {/* Glass body — tinted to match the bottle + colored shadow */}
+      {/* Card body — pure black so the bottle render's own black background
+          blends in seamlessly (the bottles keep their original studio shots,
+          no keying). The colored ring + glow orb + shadow are the halo. */}
       <div
-        className="absolute inset-0 overflow-hidden rounded-[1.5rem] border bg-white/[0.045] backdrop-blur-md"
+        className="absolute inset-0 overflow-hidden rounded-[1.5rem] border bg-[#000000]"
         style={{
           borderColor: `${card.tint}4D`,
           boxShadow: `0 24px 80px -24px ${card.tint}66`,
@@ -71,24 +73,16 @@ function GlassCard({
             className="h-full w-full object-cover opacity-45"
           />
         ) : null}
-        {/* Tint wash — the pane itself carries the bottle's color */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: `linear-gradient(to bottom, ${card.tint}2E 0%, ${card.tint}0D 55%, transparent 100%)`,
-          }}
-        />
         {/* Diagonal sheen across the pane */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.09] via-transparent to-transparent"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.07] via-transparent to-transparent"
         />
-        {/* Collection glow trapped inside the glass */}
+        {/* Collection glow trapped inside the glass (the halo) */}
         <div
           aria-hidden
           className="absolute inset-x-6 top-8 h-1/2 rounded-full blur-[70px]"
-          style={{ background: `${card.tint}66` }}
+          style={{ background: `${card.tint}59` }}
         />
       </div>
 
@@ -271,11 +265,13 @@ export function CollectionShelf({
                 <GlassCard card={card} active={isActive} index={i} />
               )}
 
-              {/* Floor reflection — the bottle's ghost on the shelf */}
+              {/* Floor reflection — the bottle's ghost on the shelf. Screen
+                  blend drops the render's black background so only the lit
+                  glass/glow mirrors onto the plank. */}
               {card.bottle ? (
                 <div
                   aria-hidden
-                  className="pointer-events-none absolute inset-x-3 top-full h-32 opacity-40 [mask-image:linear-gradient(to_bottom,rgba(0,0,0,0.5)_0%,transparent_85%)] [-webkit-mask-image:linear-gradient(to_bottom,rgba(0,0,0,0.5)_0%,transparent_85%)]"
+                  className="pointer-events-none absolute inset-x-3 top-full h-32 opacity-40 mix-blend-screen [mask-image:linear-gradient(to_bottom,rgba(0,0,0,0.5)_0%,transparent_85%)] [-webkit-mask-image:linear-gradient(to_bottom,rgba(0,0,0,0.5)_0%,transparent_85%)]"
                 >
                   <Image
                     src={card.bottle}
