@@ -43,6 +43,13 @@ const FRAMES_BASE = "/uploads/explode/frames";
 const frameSrc = (idx: number) =>
   `${FRAMES_BASE}/f${String(Math.min(FRAME_COUNT, idx + 1)).padStart(4, "0")}.jpg`;
 
+// easeInOutCubic — the assembly starts slow, accelerates mid-flight and
+// SETTLES gently at the end, which reads far smoother/more comfortable
+// than linear scrubbing (wave 31k — walid: «الحركة تكون سموث أكتر مريحة
+// للعين أكتر من كده»).
+const easeInOut = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
 export function RotatingShowcase({
   product,
   locale,
@@ -104,9 +111,13 @@ export function RotatingShowcase({
         // product rides up out of view (wave 31j — walid: «مع انتهاء
         // السكشن يكون كل الانيميشن خلص»).
         end: "bottom bottom",
-        scrub: 1,
+        // Longer catch-up glide after the wheel is released + the raw
+        // progress is EASED (easeInOutCubic) so the assembly breathes.
+        scrub: 1.25,
         onUpdate: (self) => {
-          const raw = self.progress * (FRAME_COUNT - 1);
+          // easeInOut reshapes the scroll → the video starts gently,
+          // flows mid-flight and settles softly at the assembled frame.
+          const raw = easeInOut(self.progress) * (FRAME_COUNT - 1);
           const base = Math.min(FRAME_COUNT - 2, Math.max(0, Math.floor(raw)));
           const frac = Math.min(1, Math.max(0, raw - base));
           if (img.dataset.idx !== String(base)) {
@@ -128,9 +139,11 @@ export function RotatingShowcase({
     };
   }, []);
 
-  // SHOP NOW fades in as the product completes.
-  const shopOpacity = useTransform(scrollYProgress, [0.72, 0.88], [0, 1]);
-  const shopY = useTransform(scrollYProgress, [0.72, 0.9], [26, 0]);
+  // SHOP NOW fades in as the product completes — driven by the SAME
+  // eased progress as the video so they stay in sync.
+  const easedProgress = useTransform(scrollYProgress, (v) => easeInOut(v));
+  const shopOpacity = useTransform(easedProgress, [0.72, 0.88], [0, 1]);
+  const shopY = useTransform(easedProgress, [0.72, 0.9], [26, 0]);
 
   return (
     // 95vh stage — a bit bigger (wave 31j: walid «كبر السكشن أكبر
