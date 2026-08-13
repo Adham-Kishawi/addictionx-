@@ -1,12 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { EASE, DURATION_SLOW, RISE } from "@/lib/motion-system";
 
 export function FadeIn({
   children,
   className,
   delay = 0,
-  y = 24,
+  y = RISE,
 }: {
   children: React.ReactNode;
   className?: string;
@@ -17,7 +18,7 @@ export function FadeIn({
     <motion.div
       initial={{ opacity: 0, y }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: DURATION_SLOW, delay, ease: EASE }}
       className={className}
     >
       {children}

@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
+import { EASE, DURATION_MEDIUM, RISE } from "@/lib/motion-system";
 
 // Cinematic reveal on scroll — unified system for every storefront section.
 // Runs once (once), respecting prefers-reduced-motion.
@@ -10,10 +11,10 @@ export function Reveal({
   children,
   className,
   delay = 0,
-  y = 32,
+  y = RISE,
   x = 0,
   scale = 1,
-  duration = 0.7,
+  duration = DURATION_MEDIUM,
 }: {
   children: ReactNode;
   className?: string;
@@ -30,7 +31,7 @@ export function Reveal({
       initial={reduce ? { opacity: 0 } : { opacity: 0, y, x, scale }}
       whileInView={{ opacity: 1, y: 0, x: 0, scale: 1 }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration, delay, ease: EASE }}
       className={className}
     >
       {children}
@@ -84,7 +85,7 @@ export function RevealItem({
         show: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+          transition: { duration: 0.6, ease: EASE },
         },
       }}
       className={className}

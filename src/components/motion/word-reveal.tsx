@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { EASE } from "@/lib/motion-system";
 
 // ============================================================
 // Masked word reveal — bombon/voyeurverite split-text style.
@@ -9,8 +10,6 @@ import { motion, useReducedMotion } from "framer-motion";
 // Works with Arabic (split on spaces) and slots inside any heading,
 // including metallic-shine gradient text. Fires once on scroll.
 // ============================================================
-
-const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export function WordReveal({
   text,

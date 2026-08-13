@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { EASE } from "@/lib/motion-system";
 
 export function AnimatedTitle({ text }: { text: string }) {
   const reduce = useReducedMotion();
@@ -40,7 +41,7 @@ export function AnimatedTitle({ text }: { text: string }) {
               filter: "blur(0px)",
               transition: {
                 duration: 0.9,
-                ease: [0.22, 1, 0.36, 1],
+                ease: EASE,
               },
             },
           }}

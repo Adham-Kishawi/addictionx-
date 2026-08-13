@@ -7,6 +7,7 @@ import { CartDrawer } from "@/features/cart/components/cart-drawer";
 import { CartFlyProvider } from "@/components/motion/fly-to-cart";
 import { CursorGlow } from "@/components/motion/cursor-glow";
 import { CursorRing } from "@/components/motion/cursor-ring";
+import { SmoothScroll } from "@/components/motion/smooth-scroll";
 import { DepthBackdrop } from "@/components/motion/depth-backdrop";
 import { DepthFog } from "@/components/motion/depth-fog";
 import { NoiseOverlay } from "@/components/motion/noise-overlay";
@@ -81,6 +82,7 @@ export default async function RootLayout({
             <DepthFog />
             <CursorGlow />
             <CursorRing />
+            <SmoothScroll />
             <CartFlyProvider>
               <Header locale={locale} session={session} />
               <CartDrawer locale={locale} />
