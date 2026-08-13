@@ -17,9 +17,11 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 // الأولوية القصوى للفيديو يتعرض بمرونة وياخد عرض الشاشة»).
 //
 // The walid-made assembly video (`Perfume_product_assembly_…mp4`)
-// was turned into 120 ffmpeg frames at the video's NATIVE
-// 1280×720 (`public/uploads/explode/frames/f0001..f0120.jpg` —
-// every 2nd frame of the 240, full quality, ~5.6MB). The section
+// was turned into ALL its native frames — ffmpeg at the video's
+// native 24fps / 1280×720 (`public/uploads/explode/frames/
+// f0001..f0239.jpg`, ~10.7MB — everything on the 10s of film, so
+// the scroll divides into the finest possible steps, the silkiest
+// scrub). The section
 // shows the sequence as a FULL-BLEED video filling the whole
 // screen (like the hero) — NOT a square sprite box. GSAP
 // ScrollTrigger (dynamic import, per the project rule) scrubs the
@@ -33,7 +35,7 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 // static.
 // ============================================================
 
-const FRAME_COUNT = 120;
+const FRAME_COUNT = 239;
 const FRAMES_BASE = "/uploads/explode/frames";
 
 const frameSrc = (idx: number) =>
