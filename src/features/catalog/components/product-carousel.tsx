@@ -204,7 +204,7 @@ export function ProductCarousel({
     : `transform ${ANIM_MS}ms ${EASE}, filter ${ANIM_MS}ms ${EASE}, opacity ${ANIM_MS}ms ${EASE}, left ${ANIM_MS}ms ${EASE}`;
 
   return (
-    <section className="relative overflow-hidden border-y border-border bg-card/40 py-8">
+    <section className="relative overflow-hidden border-y border-border bg-card/40 py-10">
       {/* ===== Per-collection identity background (wave 8) =====
             One layer per product, each carrying the collection's glow tint +
             giant collection name behind the stage. Active index crossfades
@@ -289,7 +289,7 @@ export function ProductCarousel({
         />
 
         <Reveal delay={0.12}>
-          <div className="mt-6 flex flex-col items-center gap-5">
+          <div className="mt-8 flex flex-col items-center gap-7">
             {/* ===== Stage ===== */}
             <div
               ref={stageRef}
@@ -303,7 +303,7 @@ export function ProductCarousel({
               onPointerUp={onPointerUp}
               onPointerLeave={onPointerUp}
               onPointerCancel={onPointerUp}
-              className="relative aspect-[0.95/1] w-full max-w-[220px] touch-pan-y select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:max-w-sm lg:max-w-md"
+              className="relative aspect-[0.85/1] w-full max-w-[220px] touch-pan-y select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:max-w-sm lg:max-w-md"
             >
               {/* Wave 34c — the whole stage rides the drag spring */}
               <motion.div
@@ -322,7 +322,7 @@ export function ProductCarousel({
                       style={{
                         bottom: 0,
                         left: `${s.left}%`,
-                        width: "52%",
+                        width: "60%",
                         aspectRatio: "0.6 / 1",
                         transform: `translateX(-50%) scale(${s.scale})`,
                         opacity: s.opacity,
@@ -361,7 +361,7 @@ export function ProductCarousel({
             </div>
 
             {/* ===== Active product info ===== */}
-            <div className="flex flex-col items-center gap-1.5 text-center">
+            <div className="flex flex-col items-center gap-2 text-center">
               {/* Collection identity chip (wave 8) */}
               {(() => {
                 const cn = collectionNames?.[activeProduct.collection];
@@ -385,7 +385,7 @@ export function ProductCarousel({
               <p className="text-xs text-muted-foreground sm:text-sm">
                 {formatPrice(activeProduct.price)} {dict.product.currency}
               </p>
-              <div className="mt-1.5 flex items-center gap-3">
+              <div className="mt-2 flex items-center gap-3">
                 <WishlistButton
                   productId={activeProduct.id}
                   initial={wishlistIds?.includes(activeProduct.id) ?? false}
@@ -408,28 +408,28 @@ export function ProductCarousel({
             </div>
 
             {/* ===== Navigation buttons ===== */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-8">
               <button
                 type="button"
                 onClick={goPrev}
                 aria-label={dict.home.carouselPrev}
                 className={cn(
-                  "flex size-9 items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary",
+                  "flex size-11 items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary",
                   "focus-visible:ring-2 focus-visible:ring-ring",
                 )}
               >
-                <ArrowLeft className="size-4 rtl:rotate-180" />
+                <ArrowLeft className="size-5 rtl:rotate-180" />
               </button>
               <button
                 type="button"
                 onClick={goNext}
                 aria-label={dict.home.carouselNext}
                 className={cn(
-                  "flex size-9 items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary",
+                  "flex size-11 items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary",
                   "focus-visible:ring-2 focus-visible:ring-ring",
                 )}
               >
-                <ArrowRight className="size-4 rtl:rotate-180" />
+                <ArrowRight className="size-5 rtl:rotate-180" />
               </button>
             </div>
           </div>
