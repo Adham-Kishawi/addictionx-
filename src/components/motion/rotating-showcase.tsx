@@ -123,59 +123,64 @@ export function RotatingShowcase({
     offset: ["start start", "end end"],
   });
 
-  // ============ Hover disassembly — a springy 0→1 MotionValue ============
+  // ============ Scroll ASSEMBLY → the complete product ============
+  // (wave 30c — walid's spec: «السائل تحت الجسم و عند لحظة معينة في
+  // الاسكرول يتجمعوا و يبقوا المنتج كامل اللي هي صورة ال bottle»).
+  // `a` = assembly progress: 0 = pieces stacked apart, 1 = fully
+  // assembled. It rises over the entry (0→0.55), holds through the
+  // middle, and reverses on the exit (0.85→1) so the bottle
+  // disassembles as you leave. Z-order is LIQUID under BODY under
+  // CAP (the liquid sits behind the glass, the cap on top). At the
+  // END of the assembly the master `bottle.png` fades in — the
+  // pieces have converged onto its exact pixels by then (measured
+  // registration), so the swap is the "now it is the full product"
+  // beat, not a jump. Hover still lifts the pieces apart (springy
+  // 0→1) — but only while the bottle is assembled.
   const hoverP = useMotionValue(0);
+  const a = useTransform(scrollYProgress, [0, 0.55, 0.85, 1], [0, 1, 1, 0]);
 
-  // ============ Scroll assembly — each layer flies from its own depth ======
-  // Entry (0→0.5): depth closes to 0. Exit (0.85→1): disassembles again.
-  const bodyZ = useTransform(
-    scrollYProgress,
-    [0, 0.5, 0.85, 1],
-    [-40, 0, 0, -24],
-  );
-  const liquidZ = useTransform(
-    scrollYProgress,
-    [0, 0.5, 0.85, 1],
-    [-90, 0, 0, -18],
-  );
-  const capZ = useTransform(
-    scrollYProgress,
-    [0, 0.5, 0.85, 1],
-    [-280, 0, 0, -60],
-  );
-  const capY = useTransform(
-    scrollYProgress,
-    [0, 0.5, 0.85, 1],
-    [90, 0, 0, -46],
-  );
-  const liquidY = useTransform(
-    scrollYProgress,
-    [0, 0.5, 0.85, 1],
-    [46, 0, 0, -14],
-  );
-  const bottleScale = useTransform(
-    scrollYProgress,
-    [0, 0.5, 0.85, 1],
-    [0.9, 1, 1, 0.96],
-  );
+  // Travel: cap rides down from ABOVE, liquid rides up from BELOW the
+  // glass, body settles from a slightly smaller scale.
+  const capTravelY = useTransform(a, (v) => (1 - v) * -150);
+  const liquidTravelY = useTransform(a, (v) => (1 - v) * 150);
+  const bodyTravelScale = useTransform(a, (v) => 1 - (1 - v) * 0.07);
 
-  // Hover disassembly (small lifts, ±z toward the viewer)
-  const capHoverY = useTransform(hoverP, (v) => v * -26);
-  const capHoverZ = useTransform(hoverP, (v) => v * 70);
-  const liquidHoverY = useTransform(hoverP, (v) => v * -10);
-  const liquidHoverZ = useTransform(hoverP, (v) => v * 26);
+  // Hover disassembly (only meaningful once assembled).
+  const capHoverY = useTransform(hoverP, (v) => v * -46);
+  const capHoverScale = useTransform(hoverP, (v) => 1 + v * 0.05);
+  const liquidHoverY = useTransform(hoverP, (v) => v * -20);
+  const bodyHoverScale = useTransform(hoverP, (v) => 1 + v * 0.02);
   const rotateY = useTransform(hoverP, (v) => v * 15);
 
-  // Combined scroll+hover per axis
-  const capCombY = useTransform([capY, capHoverY], ([a, b]: number[]) => a + b);
-  const capCombZ = useTransform([capZ, capHoverZ], ([a, b]: number[]) => a + b);
-  const liquidCombY = useTransform(
-    [liquidY, liquidHoverY],
-    ([a, b]: number[]) => a + b,
+  // Combined per axis (travel + hover).
+  const capY = useTransform(
+    [capTravelY, capHoverY],
+    ([x, h]: number[]) => x + h,
   );
-  const liquidCombZ = useTransform(
-    [liquidZ, liquidHoverZ],
-    ([a, b]: number[]) => a + b,
+  const capScale = useTransform(
+    [bodyTravelScale, capHoverScale],
+    ([x, h]: number[]) => x * h,
+  );
+  const liquidY = useTransform(
+    [liquidTravelY, liquidHoverY],
+    ([x, h]: number[]) => x + h,
+  );
+  const bodyScale = useTransform(
+    [bodyTravelScale, bodyHoverScale],
+    ([x, h]: number[]) => x * h,
+  );
+
+  // The complete-product reveal: bottle.png fades in at the end of the
+  // assembly, and hides again while the hover disassembly is on.
+  const assembleReveal = useTransform(a, [0.78, 1], [0, 1]);
+  const hoverHide = useTransform(hoverP, (v) => 1 - v);
+  const bottleOpacity = useTransform(
+    [assembleReveal, hoverHide],
+    ([r, h]: number[]) => r * h,
+  );
+  const piecesOpacity = useTransform(bottleOpacity, (v) => 1 - v);
+  const piecesPointer = useTransform(piecesOpacity, (v) =>
+    v > 0.5 ? "auto" : "none",
   );
 
   // ============ Floating FRONT layers ============
@@ -229,29 +234,31 @@ export function RotatingShowcase({
 
   const layers = reduce ? null : (
     <>
-      {/* BODY — the glass, deepest of the three */}
-      <motion.img
-        src={BODY_IMG}
-        alt=""
-        draggable={false}
-        className="absolute inset-0 h-full w-full object-contain"
-        style={{ z: bodyZ }}
-      />
-      {/* LIQUID — inside the glass, rises slightly */}
+      {/* LIQUID — UNDER the body (it sits behind the glass wall), rides
+          up into the bottle from below as the scroll assembles */}
       <motion.img
         src={LIQUID_IMG}
         alt=""
         draggable={false}
         className="absolute inset-0 h-full w-full object-contain"
-        style={{ z: liquidCombZ, y: liquidCombY }}
+        style={{ y: liquidY }}
       />
-      {/* CAP — the top piece, lifts off on hover / scroll exit */}
+      {/* BODY — the glass, over the liquid, under the cap */}
+      <motion.img
+        src={BODY_IMG}
+        alt=""
+        draggable={false}
+        className="absolute inset-0 h-full w-full object-contain"
+        style={{ scale: bodyScale }}
+      />
+      {/* CAP — rides down from above and lands on the neck; lifts off on
+          hover */}
       <motion.img
         src={CAP_IMG}
         alt=""
         draggable={false}
         className="absolute inset-0 h-full w-full object-contain"
-        style={{ z: capCombZ, y: capCombY }}
+        style={{ y: capY, scale: capScale }}
       />
     </>
   );
@@ -302,7 +309,7 @@ export function RotatingShowcase({
         {/* THE EXPLODED BOTTLE — perspective stage (wave 30).
             Siblings sit at real translateZ depths; the whole group
             rotates 15° toward the viewer on hover. */}
-        <div className="relative z-10 flex h-[50vh] w-full items-center justify-center px-6 [perspective:1200px]">
+        <div className="relative z-10 flex h-[54vh] w-full items-center justify-center px-6 [perspective:1200px]">
           <motion.div
             className="relative flex h-full w-full items-center justify-center"
             style={{ transformStyle: "preserve-3d" }}
@@ -321,14 +328,14 @@ export function RotatingShowcase({
               })
             }
           >
-            {/* Assembled bottle group */}
+            {/* Assembled bottle group — the master cutout, always whole */}
             <motion.div
               className="relative h-full w-auto max-w-[70vw]"
               style={
                 reduce
                   ? undefined
                   : {
-                      scale: bottleScale,
+                      scale: bodyTravelScale,
                       rotateY,
                       transformStyle: "preserve-3d",
                     }
@@ -344,22 +351,42 @@ export function RotatingShowcase({
                   />
                 ) : (
                   <>
-                    {layers}
-                    {/* Sheen sweep over the glass */}
-                    <motion.div
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent mix-blend-soft-light"
-                      animate={{
-                        x: ["-120%", "120%"],
-                        opacity: [0, 0.6, 0],
-                      }}
-                      transition={{
-                        duration: 3.4,
-                        repeat: Infinity,
-                        repeatDelay: 2.2,
-                        ease: "easeInOut",
-                      }}
+                    {/* The COMPLETE PRODUCT — fades in when the pieces
+                        finish assembling (the assembly beat) and hides
+                        while the hover disassembly is active */}
+                    <motion.img
+                      src={BOTTLE_IMG}
+                      alt={name}
+                      draggable={false}
+                      className="absolute inset-0 h-full w-full object-contain drop-shadow-[0_0_50px_oklch(0.6_0.22_22/0.25)]"
+                      style={{ opacity: bottleOpacity }}
                     />
+                    {/* The pieces — visible until they converge, then
+                        the full product takes over */}
+                    <motion.div
+                      className="absolute inset-0"
+                      style={{
+                        opacity: piecesOpacity,
+                        pointerEvents: piecesPointer,
+                      }}
+                    >
+                      {layers}
+                      {/* Sheen sweep over the glass */}
+                      <motion.div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent mix-blend-soft-light"
+                        animate={{
+                          x: ["-120%", "120%"],
+                          opacity: [0, 0.6, 0],
+                        }}
+                        transition={{
+                          duration: 3.4,
+                          repeat: Infinity,
+                          repeatDelay: 2.2,
+                          ease: "easeInOut",
+                        }}
+                      />
+                    </motion.div>
                   </>
                 )}
               </div>
