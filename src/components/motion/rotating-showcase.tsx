@@ -145,6 +145,27 @@ export function RotatingShowcase({
           className="absolute inset-0 h-full w-full select-none object-cover"
         />
 
+        {/* Edge veils — the section melts into the page (same --hero-veil-4
+            pattern the hero uses: background-color at 0% → transparent), so the
+            hard top/bottom cut lines disappear and the video feels part of the
+            site in BOTH themes (dark blends into dark, light melts into light) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[14vh]"
+          style={{
+            background:
+              "linear-gradient(to bottom, var(--hero-veil-4) 0%, transparent 100%)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[18vh]"
+          style={{
+            background:
+              "linear-gradient(to top, var(--hero-veil-4) 0%, transparent 100%)",
+          }}
+        />
+
         {/* The only other element — SHOP NOW */}
         <motion.div
           className="absolute inset-x-0 bottom-[10vh] flex justify-center"
