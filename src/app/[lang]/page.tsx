@@ -352,14 +352,13 @@ export default async function Home({
             return {
               key: collection.slug,
               name: locale === "ar" ? collection.nameAr : collection.nameEn,
-              ghost: collection.nameEn,
+              nameEn: collection.nameEn,
+              nameAr: collection.nameAr,
               tagline,
               href: `/${locale}/collections/${collection.slug}`,
               bottle: shelfBottle(collection.slug),
               image: collectionBackdrop(collection.slug) ?? null,
               tint: shelfTint(collection.slug) ?? cover.art?.glow ?? "#ef4444",
-              indexLabel:
-                locale === "ar" ? collection.nameAr : collection.nameEn,
               hrefLabel: dict.home.signatureCta,
             };
           })}

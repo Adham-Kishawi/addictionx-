@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-cairo);
+  --font-sans: var(--font-arabic);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-display: var(--font-playfair);
 
@@ -52,7 +52,7 @@
 /* ADDICTIONX Palette — deep black + neon red + metallic silver */
 :root,
 .dark {
-  --font-cairo: "Cairo", ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: "Alexandria", ui-sans-serif, system-ui, sans-serif;
   --font-playfair: "Playfair Display", ui-serif, Georgia, serif;
   --background: oklch(0.12 0.005 285);
   --foreground: oklch(0.95 0.004 285);

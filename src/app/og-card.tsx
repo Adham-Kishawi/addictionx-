@@ -6,15 +6,15 @@ import { join } from "node:path";
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 
-// Static WOFFs (satori-safe) — Cairo wght 400/700 + Playfair Display wght 700.
+// Static WOFFs (satori-safe) — Alexandria wght 400/700 + Playfair Display wght 700.
 const playfair = await readFile(
   join(process.cwd(), "assets/fonts/playfair-latin-700.woff"),
 );
-const cairo400 = await readFile(
-  join(process.cwd(), "assets/fonts/cairo-latin-400.woff"),
+const alexandria400 = await readFile(
+  join(process.cwd(), "assets/fonts/alexandria-latin-400.woff"),
 );
-const cairo700 = await readFile(
-  join(process.cwd(), "assets/fonts/cairo-latin-700.woff"),
+const alexandria700 = await readFile(
+  join(process.cwd(), "assets/fonts/alexandria-latin-700.woff"),
 );
 
 export const ogFonts = [
@@ -25,14 +25,14 @@ export const ogFonts = [
     style: "normal" as const,
   },
   {
-    name: "Cairo",
-    data: cairo400,
+    name: "Alexandria",
+    data: alexandria400,
     weight: 400 as const,
     style: "normal" as const,
   },
   {
-    name: "Cairo",
-    data: cairo700,
+    name: "Alexandria",
+    data: alexandria700,
     weight: 700 as const,
     style: "normal" as const,
   },
@@ -103,7 +103,7 @@ export function ogCard({
             fontWeight: 700,
             letterSpacing: "0.5em",
             color: accent,
-            fontFamily: "Cairo",
+            fontFamily: "Alexandria",
             textTransform: "uppercase",
             textAlign: "center",
           }}
@@ -128,7 +128,7 @@ export function ogCard({
             style={{
               fontSize: 34,
               fontWeight: 400,
-              fontFamily: "Cairo",
+              fontFamily: "Alexandria",
               color: "#c9ccd6",
               marginTop: 4,
             }}
@@ -163,7 +163,7 @@ export function ogCard({
           fontWeight: 400,
           letterSpacing: "0.6em",
           color: "#8b8f9a",
-          fontFamily: "Cairo",
+          fontFamily: "Alexandria",
         }}
       >
         ADDICTIONX

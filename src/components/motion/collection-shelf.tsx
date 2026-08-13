@@ -31,13 +31,13 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 export type ShelfCard = {
   key: string;
   name: string;
-  ghost: string;
+  nameEn: string;
+  nameAr: string;
   tagline: string;
   href: string;
   bottle: string | null;
   image: string | null;
   tint: string;
-  indexLabel: string;
   hrefLabel: string;
 };
 
@@ -100,20 +100,13 @@ function GlassCard({
         </div>
       ) : null}
 
-      {/* Foot: numeral + name + tagline + the door */}
+      {/* Foot: numeral + tagline + the door (the name lives BEHIND the
+          bottles — clean fronts) */}
       <div className="absolute inset-x-0 bottom-0 px-5 pb-5 text-left">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] tracking-[0.35em] text-white/55">
-            {card.indexLabel}
-          </span>
-          <span className="font-display text-base text-white/40">
-            0{index + 1}
-          </span>
-        </div>
-        <h3 className="mt-1.5 font-display text-2xl font-bold text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.8)]">
-          {card.name}
-        </h3>
-        <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-white/70">
+        <span className="font-display text-base text-white/40">
+          0{index + 1}
+        </span>
+        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/70">
           {card.tagline}
         </p>
         {active && (
@@ -200,22 +193,40 @@ export function CollectionShelf({
         className="absolute left-1/2 top-0 h-[75%] w-[54%] -translate-x-1/2 blur-md [clip-path:polygon(46%_0,54%_0,100%_100%,0_100%)] bg-gradient-to-b from-white/[0.1] via-white/[0.035] to-transparent"
       />
 
-      {/* L2 — ghost word of the active world, tinted by the bottle */}
-      <motion.span
+      {/* L2 — bilingual name BEHIND the three bottles (poster watermark):
+          English in Playfair + Arabic in Alexandria, both tinted by the
+          bottle's color, hidden behind the deck and peeking around it */}
+      <motion.div
         key={activeCard.key}
-        dir="ltr"
-        initial={{ opacity: 0, scale: 0.96 }}
+        initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6 }}
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-[6%] z-[3] flex select-none justify-center whitespace-nowrap font-display text-[16vw] font-bold leading-none opacity-[0.16] lg:text-[10vw]"
-        style={{
-          color: activeCard.tint,
-          textShadow: `0 0 60px ${activeCard.tint}66`,
-        }}
+        className="pointer-events-none absolute inset-x-0 top-[20%] z-[3] flex select-none flex-col items-center justify-center gap-2 whitespace-nowrap"
       >
-        {activeCard.ghost}
-      </motion.span>
+        <span
+          dir="ltr"
+          className="font-display text-[11vw] font-bold leading-none lg:text-8xl"
+          style={{
+            color: activeCard.tint,
+            opacity: 0.16,
+            textShadow: `0 0 60px ${activeCard.tint}66`,
+          }}
+        >
+          {activeCard.nameEn}
+        </span>
+        <span
+          dir="rtl"
+          className="text-[9vw] font-bold leading-none lg:text-7xl"
+          style={{
+            color: activeCard.tint,
+            opacity: 0.13,
+            textShadow: `0 0 50px ${activeCard.tint}55`,
+          }}
+        >
+          {activeCard.nameAr}
+        </span>
+      </motion.div>
 
       {/* L3 — the deck: cards + reflections + plank, drag-nudge physics */}
       <motion.div
@@ -320,7 +331,7 @@ export function CollectionShelf({
           <button
             key={card.key}
             type="button"
-            aria-label={card.indexLabel}
+            aria-label={card.name}
             aria-current={i === active}
             onClick={() => setActive(i)}
             className={`font-display text-sm tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${

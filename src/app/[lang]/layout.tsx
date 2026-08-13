@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource/cairo/300.css";
-import "@fontsource/cairo/400.css";
-import "@fontsource/cairo/500.css";
-import "@fontsource/cairo/600.css";
-import "@fontsource/cairo/700.css";
+import "@fontsource/alexandria/300.css";
+import "@fontsource/alexandria/400.css";
+import "@fontsource/alexandria/500.css";
+import "@fontsource/alexandria/600.css";
+import "@fontsource/alexandria/700.css";
 import "@fontsource/playfair-display/400.css";
 import "@fontsource/playfair-display/500.css";
 import "@fontsource/playfair-display/600.css";
