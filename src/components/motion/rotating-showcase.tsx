@@ -25,14 +25,14 @@ import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 // shows the sequence as a FULL-BLEED video filling the whole
 // screen (like the hero) — NOT a square sprite box. GSAP
 // ScrollTrigger (dynamic import, per the project rule) scrubs the
-// scroll over the 240vh pinned section. Smoothness: TWO stacked
+// scroll over the 160vh pinned section. Smoothness: TWO stacked
 // imgs crossfade — the base frame is scrubbed 1:1 and the NEXT
 // frame fades over it by the fractional progress, so the assembly
 // glides like the video itself instead of stepping between frames
 // (wave 31c — walid: «الحركة تكون سموث أكتر من كده»). The ONLY
 // other element is the SHOP NOW button (fades in as the product
-// completes). Reduced motion → the last frame (fully assembled),
-// static.
+// completes) — it links to the GENERAL catalog (wave 31f).
+// Reduced motion → the last frame (fully assembled), static.
 // ============================================================
 
 const FRAME_COUNT = 239;
@@ -56,7 +56,9 @@ export function RotatingShowcase({
   const dict = getDictionary(locale);
   const isAr = locale === "ar";
   const name = isAr ? product.nameAr : product.nameEn;
-  const href = `/${locale}/product/${product.slug}`;
+  // SHOP NOW goes to the GENERAL catalog — not a specific product
+  // (wave 31f — walid: «توسعق الان تاخدني على الـ SHOP بشكل عام مش منتج معين»).
+  const href = `/${locale}/catalog`;
 
   const { scrollYProgress } = useScroll({
     target: ref as React.RefObject<HTMLElement>,
@@ -125,7 +127,7 @@ export function RotatingShowcase({
   const shopY = useTransform(scrollYProgress, [0.72, 0.9], [26, 0]);
 
   return (
-    <section ref={ref} className="relative h-[240vh]" aria-label={name}>
+    <section ref={ref} className="relative h-[160vh]" aria-label={name}>
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
         {/* FULL-BLEED assembly video — frame-scrubbed by GSAP */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
