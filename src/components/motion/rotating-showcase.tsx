@@ -12,41 +12,29 @@ import { type Product } from "@/features/catalog/data/products";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 
 // ============================================================
-// ASSEMBLY SHOWCASE — full-bleed, frame-scrubbed by GSAP (wave
-// 31b — walid: «احذف أي حاجة تانية من السكشن غير زر SHOP NOW…
-// الأولوية القصوى للفيديو يتعرض بمرونة وياخد عرض الشاشة»).
+// ASSEMBLY SHOWCASE — full-bleed, VIDEO-scrubbed by GSAP.
 //
-// The walid-made assembly video (`Perfume_product_assembly_…mp4`)
-// was turned into ALL its native frames — ffmpeg at the video's
-// native 24fps / 1280×720 (`public/uploads/explode/frames/
-// f0001..f0239.jpg`, ~10.7MB — everything on the 10s of film, so
-// the scroll divides into the finest possible steps, the silkiest
-// scrub). The section
-// shows the sequence FULL-BLEED across the whole width (wave 31i:
-// walid «محتاج ياخد العرض كامل») with soft 3-stop veils at the
-// edges so the video enters/exits the section cleanly. GSAP
-// ScrollTrigger (dynamic import, per the project rule) scrubs the
-// scroll while the 95vh section crosses the viewport, and the
-// assembly COMPLETES exactly when the section is fully in view
-// (wave 31j). Smoothness: TWO stacked imgs crossfade — the base frame is scrubbed 1:1 and the
-// NEXT frame fades over it by the fractional progress, so the
-// assembly glides like the video itself instead of stepping between
-// frames (wave 31c — walid: «الحركة تكون سموث أكتر من كده»).
-// The ONLY other element is the SHOP NOW button (fades in as the
-// product completes) — it links to the GENERAL catalog (wave 31f).
-// Reduced motion → the last frame (fully assembled), static.
+// The walid-made assembly film is played as a REAL `<video>` element
+// (h264) and GSAP ScrollTrigger scrubs its `currentTime` with the
+// wheel — so the eye sees actual 24fps motion, NOT images swapping
+// (wave 31l — walid: «محتاج أحس إني بتفرج على فيديو مش صورة بتتغير
+// مع كل سكرول»). The clip is re-encoded with a keyframe every 12
+// frames (`assembly-scrub.mp4`, ~4.4MB) so seeking is instant and
+// buttery at any scroll speed.
+//
+// Section = 95vh, shorter than the hero; the trigger spans
+// "top bottom → bottom bottom": the assembly COMPLETES exactly when
+// the section is fully in view (wave 31j), then the assembled
+// product + SHOP NOW ride up out of view. The scrub is eased
+// (easeInOutCubic, wave 31k) so it starts soft, flows mid-flight
+// and settles gently. Full width + soft 3-stop veils (waves 31i).
+// SHOP NOW → general catalog (wave 31f). Reduced motion → the last
+// frame (fully assembled), static.
 // ============================================================
 
-const FRAME_COUNT = 239;
-const FRAMES_BASE = "/uploads/explode/frames";
+const VIDEO_SRC = "/uploads/explode/assembly-scrub.mp4";
 
-const frameSrc = (idx: number) =>
-  `${FRAMES_BASE}/f${String(Math.min(FRAME_COUNT, idx + 1)).padStart(4, "0")}.jpg`;
-
-// easeInOutCubic — the assembly starts slow, accelerates mid-flight and
-// SETTLES gently at the end, which reads far smoother/more comfortable
-// than linear scrubbing (wave 31k — walid: «الحركة تكون سموث أكتر مريحة
-// للعين أكتر من كده»).
+// easeInOutCubic — soft start / flow / gentle settle (wave 31k).
 const easeInOut = (t: number) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
@@ -59,8 +47,7 @@ export function RotatingShowcase({
   collectionNames?: Record<string, { nameAr: string; nameEn: string }>;
 }) {
   const ref = useRef<HTMLElement | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const imgNextRef = useRef<HTMLImageElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const reduce = useReducedMotion();
   const dict = getDictionary(locale);
   const isAr = locale === "ar";
@@ -74,16 +61,35 @@ export function RotatingShowcase({
     offset: ["start end", "end end"],
   });
 
-  // GSAP ScrollTrigger — scrub the frame with the wheel (wave 31b).
+  // GSAP ScrollTrigger — scrub the VIDEO's currentTime with the wheel.
   useEffect(() => {
     const section = ref.current;
-    const img = imgRef.current;
-    const imgNext = imgNextRef.current;
-    if (!section || !img || !imgNext) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const video = videoRef.current;
+    if (!section || !video) return;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     let killed = false;
     let st: { kill: () => void } | undefined;
+
+    const seekTo = (time: number) => {
+      // Guard against setting currentTime mid-seek (throws in some
+      // browsers); the browser presents the decoded frame for real.
+      if (video.readyState >= 1 && !video.seeking) {
+        video.currentTime = time;
+      }
+    };
+
+    // Reduced motion → park on the final (fully assembled) frame.
+    if (reduceMotion) {
+      video.addEventListener(
+        "loadedmetadata",
+        () => seekTo(video.duration - 0.02),
+        { once: true },
+      );
+      return;
+    }
 
     (async () => {
       const [{ gsap }, { ScrollTrigger }] = await Promise.all([
@@ -93,16 +99,6 @@ export function RotatingShowcase({
       if (killed) return;
       gsap.registerPlugin(ScrollTrigger);
 
-      // Preload every frame so blended swaps are instant.
-      for (let i = 0; i < FRAME_COUNT; i++) {
-        const pre = new Image();
-        pre.src = frameSrc(i);
-      }
-
-      // Crossfade scrub: img shows the base frame, imgNext is layered
-      // directly ABOVE it with opacity = fractional progress — the
-      // assembly glides between frames instead of stepping.
-      imgNext.style.opacity = "0";
       st = ScrollTrigger.create({
         trigger: section,
         start: "top bottom",
@@ -111,24 +107,15 @@ export function RotatingShowcase({
         // product rides up out of view (wave 31j — walid: «مع انتهاء
         // السكشن يكون كل الانيميشن خلص»).
         end: "bottom bottom",
-        // Longer catch-up glide after the wheel is released + the raw
-        // progress is EASED (easeInOutCubic) so the assembly breathes.
+        // Catch-up glide after the wheel is released (wave 31k).
         scrub: 1.25,
         onUpdate: (self) => {
           // easeInOut reshapes the scroll → the video starts gently,
           // flows mid-flight and settles softly at the assembled frame.
-          const raw = easeInOut(self.progress) * (FRAME_COUNT - 1);
-          const base = Math.min(FRAME_COUNT - 2, Math.max(0, Math.floor(raw)));
-          const frac = Math.min(1, Math.max(0, raw - base));
-          if (img.dataset.idx !== String(base)) {
-            img.dataset.idx = String(base);
-            img.src = frameSrc(base);
+          const t = easeInOut(self.progress);
+          if (video.readyState >= 1 && !video.seeking) {
+            video.currentTime = t * video.duration;
           }
-          if (imgNext.dataset.idx !== String(base + 1)) {
-            imgNext.dataset.idx = String(base + 1);
-            imgNext.src = frameSrc(base + 1);
-          }
-          imgNext.style.opacity = String(frac);
         },
       });
     })();
@@ -157,26 +144,16 @@ export function RotatingShowcase({
       className="relative h-[95vh] w-full overflow-hidden bg-background"
       aria-label={name}
     >
-      {/* FULL-bleed assembly video — full WIDTH again (wave 31i — walid:
-          «محتاج الفيديو ياخد العرض كامل») — object-cover, and the section
-          edges are soft 3-stop fades so the video ENTERS/EXITS the section
-          cleanly instead of a hard crop (walid: «خالص نضيف مع خروجه من السكشن») */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        ref={imgRef}
-        src={frameSrc(FRAME_COUNT - 1)}
-        alt={name}
-        draggable={false}
-        className="absolute inset-0 h-full w-full select-none object-cover"
-      />
-      {/* Crossfade layer — the NEXT frame fades over the base frame */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        ref={imgNextRef}
-        src={frameSrc(FRAME_COUNT - 1)}
-        alt=""
-        aria-hidden
-        draggable={false}
+      {/* REAL video element scrubbed by GSAP — full width (object-cover),
+          no frame-swapping (wave 31l). muted + playsInline for safe
+          programmatic seeking on mobile */}
+      <video
+        ref={videoRef}
+        src={VIDEO_SRC}
+        muted
+        playsInline
+        preload="auto"
+        aria-label={name}
         className="absolute inset-0 h-full w-full select-none object-cover"
       />
 
