@@ -339,6 +339,62 @@ export async function toggleProductActive(id: string) {
 }
 
 // ============================================================
+// Best Sellers (homepage section) — admin controls which perfumes
+// appear and in what order. Toggling ON appends to the end.
+// ============================================================
+
+export async function toggleBestSeller(id: string) {
+  await requirePermission("products");
+  const product = await prisma.product.findUnique({ where: { id } });
+  if (!product) return;
+  if (!product.isBestSeller) {
+    const max = await prisma.product.aggregate({
+      where: { isBestSeller: true },
+      _max: { bestsellerOrder: true },
+    });
+    await prisma.product.update({
+      where: { id },
+      data: {
+        isBestSeller: true,
+        bestsellerOrder: (max._max.bestsellerOrder ?? 0) + 1,
+      },
+    });
+  } else {
+    await prisma.product.update({
+      where: { id },
+      data: { isBestSeller: false },
+    });
+  }
+  revalidatePath("/", "layout");
+}
+
+export async function moveBestSeller(id: string, direction: "up" | "down") {
+  await requirePermission("products");
+  const bestsellers = await prisma.product.findMany({
+    where: { isBestSeller: true },
+    orderBy: { bestsellerOrder: "asc" },
+    select: { id: true, bestsellerOrder: true },
+  });
+  const index = bestsellers.findIndex((b) => b.id === id);
+  if (index === -1) return;
+  const target = direction === "up" ? index - 1 : index + 1;
+  if (target < 0 || target >= bestsellers.length) return;
+  const a = bestsellers[index];
+  const b = bestsellers[target];
+  await prisma.$transaction([
+    prisma.product.update({
+      where: { id: a.id },
+      data: { bestsellerOrder: b.bestsellerOrder },
+    }),
+    prisma.product.update({
+      where: { id: b.id },
+      data: { bestsellerOrder: a.bestsellerOrder },
+    }),
+  ]);
+  revalidatePath("/", "layout");
+}
+
+// ============================================================
 // Orders
 // ============================================================
 

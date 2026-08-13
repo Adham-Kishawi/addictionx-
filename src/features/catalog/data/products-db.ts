@@ -84,6 +84,7 @@ export function productFromRow(db: DbProduct): Product {
     reviewsCount: db.reviewsCount,
     isNew: db.isNew,
     isBestseller: db.isBestSeller,
+    bestsellerOrder: db.bestsellerOrder,
     isSoldOut: stockTotal === 0,
     art,
     image: db.images?.[0]?.url ?? undefined,
@@ -96,7 +97,7 @@ export async function getProducts(): Promise<Product[]> {
     const rows = await prisma.product.findMany({
       where: { isActive: true },
       include,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ bestsellerOrder: "asc" }, { createdAt: "desc" }],
     });
     if (rows.length > 0)
       return rows.map((row) => productFromRow(row as DbProduct));

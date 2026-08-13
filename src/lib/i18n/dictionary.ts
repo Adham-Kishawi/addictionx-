@@ -44,6 +44,7 @@ export const dictionary = {
       pickGo: "يلا بينا",
     },
     home: {
+      featuredEyebrow: "محبوبة الجمهور",
       featuredTitle: "الأكثر طلبًا",
       featuredSubtitle: "العطور التي لا تنتهي من أرففنا",
       collectionsTitle: "مجموعاتنا",
@@ -432,6 +433,18 @@ export const dictionary = {
         "إدارة صلاحيات الأدمن متاحة لصاحب الصلاحيات الكاملة فقط",
       cannotEditSelfPermissions: "لا يمكنك تعديل صلاحيات حسابك",
       permissionUpdated: "تم تحديث الصلاحيات",
+      bestsellers: "الأكثر مبيعًا",
+      bestsellersManage: "إدارة قسم «الأكثر مبيعًا» في الصفحة الرئيسية",
+      bestsellersHint:
+        "فعّل العطور اللي عايزها تظهر في القسم ورتّبها بالأسهم — أول 4 فقط بيظهروا في الصفحة الرئيسية.",
+      bestSellersCount: "عدد العطور المختارة",
+      addToBestSellers: "إضافة",
+      removeFromBestSellers: "إزالة",
+      moveUp: "تحريك لأعلى",
+      moveDown: "تحريك لأسفل",
+      noBestSellers:
+        "لسه مفيش عطور مختارة — فعّل «إضافة» من القائمة تحت عشان تظهر في القسم.",
+      otherProducts: "باقي العطور",
     },
     footer: {
       about: "عن العلامة",
@@ -542,6 +555,7 @@ export const dictionary = {
       pickGo: "Let's Go",
     },
     home: {
+      featuredEyebrow: "Crowd Favorites",
       featuredTitle: "Best Sellers",
       featuredSubtitle: "The scents that never leave our shelves",
       collectionsTitle: "Our Collections",
@@ -935,6 +949,18 @@ export const dictionary = {
         "Managing admin permissions is available to full-access admins only",
       cannotEditSelfPermissions: "You cannot edit your own permissions",
       permissionUpdated: "Permissions updated",
+      bestsellers: "Best Sellers",
+      bestsellersManage: "Manage the homepage Best Sellers section",
+      bestsellersHint:
+        "Toggle which perfumes appear in the section and reorder them with the arrows — only the top 4 are shown on the homepage.",
+      bestSellersCount: "Selected perfumes",
+      addToBestSellers: "Add",
+      removeFromBestSellers: "Remove",
+      moveUp: "Move up",
+      moveDown: "Move down",
+      noBestSellers:
+        "No best sellers selected yet — press Add on the products below to put them in the section.",
+      otherProducts: "Other perfumes",
     },
     footer: {
       about: "About the Brand",

@@ -44,6 +44,7 @@ export default async function AdminLayout({
     "products",
     "orders",
     "collections",
+    "bestsellers",
     "reviews",
     "coupons",
     "users",
@@ -53,7 +54,9 @@ export default async function AdminLayout({
     key === "users"
       ? hasPermission(permissions, "users") ||
         hasPermission(permissions, "admins")
-      : hasPermission(permissions, key as AdminPermission),
+      : key === "bestsellers"
+        ? hasPermission(permissions, "products")
+        : hasPermission(permissions, key as AdminPermission),
   );
 
   const navLabels = {
@@ -66,6 +69,7 @@ export default async function AdminLayout({
     reviews: dict.admin.reviews,
     collections: dict.admin.collections,
     newsletter: dict.admin.newsletter,
+    bestsellers: dict.admin.bestsellers,
   };
 
   return (

@@ -26,6 +26,7 @@ export function toStorefrontProduct(p: DbProductRow): Product {
     reviewsCount: p.reviewsCount,
     isNew: p.isNew,
     isBestseller: p.isBestSeller,
+    bestsellerOrder: p.bestsellerOrder,
     art: (p.art as Product["art"]) ?? defaultArt,
   };
 }

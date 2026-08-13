@@ -27,6 +27,8 @@ export type Product = {
   reviewsCount: number;
   isNew: boolean;
   isBestseller: boolean;
+  // Manual order inside the homepage Best Sellers section (admin-managed)
+  bestsellerOrder?: number;
   isSoldOut?: boolean;
   // If the image is missing, ProductArt with the gradient is shown
   image?: string;

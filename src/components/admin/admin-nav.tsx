@@ -12,6 +12,7 @@ import {
   Star,
   Layers,
   Mail,
+  Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ export function AdminNav({
     reviews: string;
     collections: string;
     newsletter: string;
+    bestsellers: string;
   };
   visible: string[];
 }) {
@@ -60,6 +62,12 @@ export function AdminNav({
       label: labels.collections,
       icon: Layers,
       key: "collections",
+    },
+    {
+      href: `${basePath}/bestsellers`,
+      label: labels.bestsellers,
+      icon: Flame,
+      key: "bestsellers",
     },
     {
       href: `${basePath}/reviews`,

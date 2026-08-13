@@ -147,6 +147,8 @@ model Product {
   isActive      Boolean  @default(true)
   isFeatured    Boolean  @default(false)
   isBestSeller  Boolean  @default(false)
+  // Manual ordering within the homepage Best Sellers section (admin reorders it)
+  bestsellerOrder Int @default(0)
   isNew         Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

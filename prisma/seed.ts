@@ -49,6 +49,8 @@ async function main() {
       isActive: true,
       isFeatured: p.isBestseller,
       isBestSeller: p.isBestseller,
+      // Best sellers keep their array index as the manual section order
+      bestsellerOrder: p.isBestseller ? products.indexOf(p) + 1 : 0,
       isNew: p.isNew,
     };
 

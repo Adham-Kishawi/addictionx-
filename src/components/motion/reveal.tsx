@@ -71,21 +71,38 @@ export function RevealItem({
   children,
   className,
   y = 32,
+  scale = 1,
+  blur = 0,
+  duration = 0.6,
 }: {
   children: ReactNode;
   className?: string;
   y?: number;
+  scale?: number;
+  blur?: number;
+  duration?: number;
 }) {
   const reduce = useReducedMotion();
 
   return (
     <motion.div
       variants={{
-        hidden: reduce ? { opacity: 0 } : { opacity: 0, y },
+        hidden: reduce
+          ? { opacity: 0 }
+          : { opacity: 0, y, scale, filter: blur ? `blur(${blur}px)` : "none" },
         show: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.6, ease: EASE },
+          scale: 1,
+          filter: "none",
+          transition: {
+            duration,
+            ease: EASE,
+            type: "spring",
+            stiffness: 240,
+            damping: 24,
+            mass: 0.9,
+          },
         },
       }}
       className={className}

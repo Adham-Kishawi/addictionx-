@@ -85,6 +85,11 @@
   --hero-veil-2: rgba(0, 0, 0, 0.15);
   --hero-veil-3: rgba(0, 0, 0, 0.35);
   --hero-veil-4: rgba(0, 0, 0, 0.75);
+  /* Metallic shine text — bright silver on the dark canvas */
+  --metallic-1: #5c606b;
+  --metallic-2: #8b8f9a;
+  --metallic-3: #ffffff;
+  --metallic-4: #d6d9e0;
   /* Mood worlds (wave 34f) — the world stage is always dark cinema: warm
      to the atmosphere of each collection's backdrop, black at the edges so
      worlds dissolve into each other and into the page (both themes). */
@@ -141,6 +146,11 @@
   --hero-veil-3: rgba(0, 0, 0, 0.22);
   --hero-veil-4: var(--background);
   --hero-bg: #0d0d0f;
+  /* Metallic shine text — dark chrome so it stays legible on the light canvas */
+  --metallic-1: #6b7280;
+  --metallic-2: #4b5563;
+  --metallic-3: #111827;
+  --metallic-4: #374151;
 }
 
 @layer base {
@@ -194,16 +204,16 @@
     0 4px 24px rgb(0 0 0 / 0.45);
 }
 
-/* Animated metallic moving title (shine sweep) */
+/* Animated metallic moving title (shine sweep) — theme-aware via --metallic-* */
 .text-metallic-shine {
   background-image: linear-gradient(
     115deg,
-    #5c606b 0%,
-    #8b8f9a 25%,
-    #ffffff 45%,
-    #d6d9e0 55%,
-    #8b8f9a 75%,
-    #5c606b 100%
+    var(--metallic-1) 0%,
+    var(--metallic-2) 25%,
+    var(--metallic-3) 45%,
+    var(--metallic-4) 55%,
+    var(--metallic-2) 75%,
+    var(--metallic-1) 100%
   );
   background-size: 250% auto;
   background-position: 100% center;

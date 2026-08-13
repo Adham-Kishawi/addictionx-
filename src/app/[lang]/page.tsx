@@ -19,12 +19,12 @@ import { StatsBand } from "@/components/motion/stats-band";
 import { SectionGlow } from "@/components/motion/section-glow";
 import { RotatingShowcase } from "@/components/motion/rotating-showcase";
 import { LazyMount } from "@/components/motion/lazy-mount";
-import { ExplodedProduct } from "@/components/motion/exploded-product";
 import { MoodWorlds } from "@/components/motion/mood-worlds";
 import { CtaScene } from "@/components/motion/cta-scene";
 import { SignatureScene } from "@/components/motion/signature-scene";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { ProductCarousel } from "@/features/catalog/components/product-carousel";
+import { BestSellerCard } from "@/features/catalog/components/best-seller-card";
 import { type Product } from "@/features/catalog/data/products";
 import {
   getProducts,
@@ -50,7 +50,12 @@ export default async function Home({
     getCollections(),
     getWishlistIds(),
   ]);
-  const bestsellers = allProducts.filter((p) => p.isBestseller).slice(0, 4);
+  // Best sellers: admin-controlled order (bestsellerOrder), top 4 shown.
+  // Equal orders keep getProducts() order (bestsellerOrder asc, createdAt desc).
+  const bestsellers = allProducts
+    .filter((p) => p.isBestseller)
+    .sort((a, b) => (a.bestsellerOrder ?? 0) - (b.bestsellerOrder ?? 0))
+    .slice(0, 4);
   const heroProduct = allProducts[0] ?? null;
 
   // Carousel: one product from each collection — we prefer the product that has an image.
@@ -235,18 +240,18 @@ export default async function Home({
         collectionNames={collectionNames}
       />
 
-      {/* ====== Most wanted — wave 34d: the scents section becomes a
+      {/* ====== Most wanted — wave 34d + wave 35: the scents section becomes a
             storytelling entrance — heading reveals first, then each
-            bestseller rises ONE BY ONE (staggered), over a slow
-            drifting glow layer; ExplodedProduct layers split on hover
-            (see exploded-product.tsx) ====== */}
-      <section className="relative overflow-hidden py-24 [content-visibility:auto] [contain-intrinsic-size:auto_640px]">
+            bestseller RUSHES in ONE BY ONE with a springy rise (scale + blur
+            + y, staggered 0.13) over a drifting glow; the cards themselves
+            idle-float and wake on hover (see best-seller-card.tsx) ====== */}
+      <section className="relative overflow-hidden py-20 [content-visibility:auto] [contain-intrinsic-size:auto_640px]">
         <SectionGlow />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal y={24}>
             <div className="mb-10 flex items-end justify-between gap-4">
               <SectionHeading
-                eyebrow="ADDICTIONX"
+                eyebrow={dict.home.featuredEyebrow}
                 title={dict.home.featuredTitle}
                 subtitle={dict.home.featuredSubtitle}
               />
@@ -260,14 +265,18 @@ export default async function Home({
             </div>
           </Reveal>
 
-          {/* Each card: visible → rises in its turn (stagger 0.14) */}
+          {/* Each card: visible → rushes in its turn (springy scale + blur + rise) */}
           <RevealStagger
-            stagger={0.14}
+            stagger={0.13}
             className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6"
           >
-            {bestsellers.map((product: Product) => (
-              <RevealItem key={product.id} y={56}>
-                <ExplodedProduct product={product} locale={locale} />
+            {bestsellers.map((product: Product, index: number) => (
+              <RevealItem key={product.id} y={64} scale={0.9} blur={10}>
+                <BestSellerCard
+                  product={product}
+                  locale={locale}
+                  rank={index + 1}
+                />
               </RevealItem>
             ))}
           </RevealStagger>
