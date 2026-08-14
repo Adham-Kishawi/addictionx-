@@ -40,10 +40,12 @@ export function AuthForm({
   mode,
   locale,
   callbackUrl,
+  googleEnabled = true,
 }: {
   mode: "login" | "register";
   locale: Locale;
   callbackUrl?: string;
+  googleEnabled?: boolean;
 }) {
   const dict = getDictionary(locale);
   const isLogin = mode === "login";
@@ -190,23 +192,31 @@ export function AuthForm({
         </Button>
       </form>
 
-      <div className="mt-5 flex items-center gap-3">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-xs text-muted-foreground">{dict.account.or}</span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
+      {googleEnabled && (
+        <>
+          <div className="mt-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">
+              {dict.account.or}
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        disabled={googleLoading}
-        onClick={onGoogle}
-        className="mt-5 h-11 w-full rounded-full gap-2"
-      >
-        <GoogleIcon />
-        {googleLoading ? dict.common.loading : dict.account.continueWithGoogle}
-      </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            disabled={googleLoading}
+            onClick={onGoogle}
+            className="mt-5 h-11 w-full rounded-full gap-2"
+          >
+            <GoogleIcon />
+            {googleLoading
+              ? dict.common.loading
+              : dict.account.continueWithGoogle}
+          </Button>
+        </>
+      )}
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {isLogin ? dict.account.noAccount : dict.account.haveAccount}{" "}

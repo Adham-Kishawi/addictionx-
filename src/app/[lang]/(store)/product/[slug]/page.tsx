@@ -220,26 +220,30 @@ export default async function ProductPage({
               )}
             </div>
 
-            {/* Notes — pyramid of notes */}
-            <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card/40 p-5">
-              <span className="mb-1 text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+            {/* Notes — perfume pyramid (top → heart → base) */}
+            <div className="rounded-2xl border border-border bg-card/40 p-5">
+              <span className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                <span className="size-1.5 rounded-full bg-primary" />
                 {dict.product.notes}
               </span>
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-2.5">
                 <NoteRow
-                  label={dict.product.baseNotes}
-                  notes={product.notes.base}
-                  width="w-full"
+                  label={dict.product.topNotes}
+                  notes={product.notes.top}
+                  width="w-4/5"
+                  accent="bg-amber-400"
                 />
                 <NoteRow
                   label={dict.product.heartNotes}
                   notes={product.notes.heart}
-                  width="w-4/5"
+                  width="w-[88%]"
+                  accent="bg-violet-400"
                 />
                 <NoteRow
-                  label={dict.product.topNotes}
-                  notes={product.notes.top}
-                  width="w-3/5"
+                  label={dict.product.baseNotes}
+                  notes={product.notes.base}
+                  width="w-full"
+                  accent="bg-sky-400"
                 />
               </div>
             </div>
@@ -351,27 +355,28 @@ function NoteRow({
   label,
   notes,
   width,
+  accent,
 }: {
   label: string;
   notes: string[];
   width: string;
+  accent: string;
 }) {
+  if (notes.length === 0) return null;
   return (
     <div
-      className={`flex flex-col items-center gap-1 rounded-lg border border-border/60 bg-background/60 px-3 py-2 ${width}`}
+      className={`flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/50 px-3 py-3 ${width}`}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+      <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+        <span aria-hidden className={`size-1.5 rounded-full ${accent}`} />
         {label}
       </span>
-      <ul className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 text-center text-sm text-muted-foreground">
-        {notes.map((note, idx) => (
-          <li key={note} className="flex items-center gap-2">
-            {note}
-            {idx < notes.length - 1 && (
-              <span aria-hidden className="text-border">
-                •
-              </span>
-            )}
+      <ul className="flex flex-wrap justify-center gap-1.5">
+        {notes.map((note) => (
+          <li key={note}>
+            <span className="inline-flex items-center rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-foreground/80">
+              {note}
+            </span>
           </li>
         ))}
       </ul>

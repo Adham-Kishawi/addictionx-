@@ -8,10 +8,13 @@ export default async function RegisterPage({
 }) {
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  const googleEnabled = Boolean(
+    process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET,
+  );
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 pb-24 pt-28">
-      <AuthForm mode="register" locale={locale} />
+      <AuthForm mode="register" locale={locale} googleEnabled={googleEnabled} />
     </main>
   );
 }

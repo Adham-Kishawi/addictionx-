@@ -117,7 +117,7 @@ export default async function AdminPage({
       <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-4xl font-bold">
-            {dict.admin.title}
+            {dict.admin.dashboard}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {dict.admin.welcome}
