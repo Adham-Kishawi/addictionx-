@@ -212,9 +212,18 @@ export default async function Home({
       </div>
 
       {/* ====== Hero separator — visual break between hero and showcase ====== */}
-      <div className="relative flex items-center justify-center overflow-hidden border-y border-border/40 bg-background/80 py-6 backdrop-blur-sm">
+      <div className="relative flex items-center justify-center overflow-hidden border-y border-border/40 bg-background/80 py-8 backdrop-blur-sm">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent" />
-        <HeartbeatLine className="relative h-6 w-32 text-primary/60" />
+        <div className="relative flex flex-col items-center gap-3">
+          <HeartbeatLine className="h-6 w-32 text-primary/60" />
+          <div className="flex items-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/30" />
+            <span className="text-[10px] font-medium tracking-[0.3em] text-muted-foreground/60 uppercase">
+              {dict.home.separatorText || "EXPERIENCE"}
+            </span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-primary/30" />
+          </div>
+        </div>
       </div>
 
       {/* ====== ROTATING SHOWCASE — 95vh stage: the hero product assembles with the
@@ -234,10 +243,18 @@ export default async function Home({
 
       {/* ====== Moving words strip — pinned under the header while the next sections
             slide beneath it (bombon-style sticky layer) ====== */}
-      <Marquee
-        items={dict.home.ticker}
-        className="sticky top-16 z-20 border-y border-border bg-card/40 py-4 backdrop-blur-md"
-      />
+      <div className="relative">
+        <Marquee
+          items={dict.home.ticker}
+          className="sticky top-16 z-20 border-y border-border bg-card/40 py-4 backdrop-blur-md"
+        />
+
+        {/* Decorative accent line under the sticky marquee */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      </div>
+
+      {/* Spacer between marquees for visual breathing room */}
+      <div className="h-6 bg-gradient-to-b from-background/60 to-transparent" />
 
       {/* Second strip — reversed direction + slower (coparadiso-style twin marquees),
             this one scrolls WITH the page under the pinned one ====== */}
@@ -245,8 +262,11 @@ export default async function Home({
         items={[...dict.home.ticker].reverse()}
         reverse
         speed={48}
-        className="border-b border-border/60 bg-background/60 py-3 opacity-70"
+        className="border-y border-border/40 bg-background/40 py-3 opacity-60 backdrop-blur-sm"
       />
+
+      {/* Bottom spacer with fade effect */}
+      <div className="h-8 bg-gradient-to-b from-transparent to-background/20" />
 
       {/* ====== Brand numbers (live counters) — glow drifts slower than the content ====== */}
       <section className="relative overflow-hidden py-16">

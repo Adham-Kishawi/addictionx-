@@ -44,6 +44,7 @@ export const dictionary = {
       pickGo: "يلا بينا",
     },
     home: {
+      separatorText: "التجربة",
       featuredEyebrow: "محبوبة الجمهور",
       featuredTitle: "الأكثر طلبًا",
       featuredSubtitle: "العطور التي لا تنتهي من أرففنا",
@@ -632,6 +633,7 @@ export const dictionary = {
       pickGo: "Let's Go",
     },
     home: {
+      separatorText: "EXPERIENCE",
       featuredEyebrow: "Crowd Favorites",
       featuredTitle: "Best Sellers",
       featuredSubtitle: "The scents that never leave our shelves",
