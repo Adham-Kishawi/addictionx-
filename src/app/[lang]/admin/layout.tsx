@@ -43,6 +43,7 @@ export default async function AdminLayout({
   const visible = [
     "products",
     "orders",
+    "payment-verification",
     "collections",
     "bestsellers",
     "reviews",
@@ -57,13 +58,16 @@ export default async function AdminLayout({
         hasPermission(permissions, "admins")
       : key === "bestsellers" || key === "shipping"
         ? hasPermission(permissions, "products")
-        : hasPermission(permissions, key as AdminPermission),
+        : key === "payment-verification"
+          ? hasPermission(permissions, "orders")
+          : hasPermission(permissions, key as AdminPermission),
   );
 
   const navLabels = {
     dashboard: dict.admin.dashboard,
     products: dict.admin.products,
     orders: dict.admin.orders,
+    "payment-verification": dict.admin.paymentVerification,
     users: dict.admin.users,
     coupons: dict.admin.coupons,
     settings: dict.admin.settings,
