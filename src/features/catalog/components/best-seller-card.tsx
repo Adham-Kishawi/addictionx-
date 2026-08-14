@@ -68,6 +68,8 @@ export function BestSellerCard({
                 src={product.image}
                 alt=""
                 draggable={false}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover"
               />
             ) : (

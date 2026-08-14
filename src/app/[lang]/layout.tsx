@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource/alexandria/300.css";
 import "@fontsource/alexandria/400.css";
 import "@fontsource/alexandria/500.css";
 import "@fontsource/alexandria/600.css";
