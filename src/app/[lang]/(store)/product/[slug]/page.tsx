@@ -156,7 +156,7 @@ export default async function ProductPage({
         {/* Gallery */}
         <Reveal y={40}>
           <div className="relative">
-            <ProductGallery product={product} />
+            <ProductGallery key={product.id} product={product} dict={dict} />
             {/* Badges */}
             <div className="absolute top-4 start-4 z-10 flex flex-col gap-2">
               {product.isNew && (

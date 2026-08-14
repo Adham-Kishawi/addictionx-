@@ -96,6 +96,8 @@ export const dictionary = {
       backToShop: "العودة للتسوق",
       from: "يبدأ من",
       currency: "ج.م",
+      galleryPrev: "الصورة السابقة",
+      galleryNext: "الصورة التالية",
     },
     cart: {
       title: "سلة التسوق",
@@ -617,6 +619,8 @@ export const dictionary = {
       backToShop: "Back to Shop",
       from: "From",
       currency: "EGP",
+      galleryPrev: "Previous image",
+      galleryNext: "Next image",
     },
     cart: {
       title: "Shopping Cart",
