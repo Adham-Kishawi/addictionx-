@@ -213,7 +213,7 @@ export default async function Home({
 
       {/* ====== Hero separator — animated marquee strip between hero and showcase ====== */}
       <Marquee
-        items={dict.home.heroSeparator || dict.home.ticker}
+        items={dict.home.ticker}
         speed={60}
         className="border-y border-primary/30 bg-gradient-to-r from-background via-primary/5 to-background py-3 backdrop-blur-sm"
       />
