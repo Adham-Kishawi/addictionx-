@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Eye, EyeOff } from "lucide-react";
 import { HeartbeatLine } from "@/components/motion/heartbeat-line";
 import { Button } from "@/components/ui/button";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
@@ -52,6 +53,8 @@ export function AuthForm({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Only allow same-site relative callbacks — blocks open-redirect phishing
   // via ?callbackUrl=https://evil.example
@@ -203,14 +206,28 @@ export function AuthForm({
         </Field>
 
         <Field label={dict.account.password} error={errors.password?.message}>
-          <input
-            type="password"
-            {...register("password")}
-            className={inputClass(!!errors.password)}
-            placeholder="••••••••"
-            dir="ltr"
-            autoComplete={isLogin ? "current-password" : "new-password"}
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              {...register("password")}
+              className={cn(inputClass(!!errors.password), "pe-10")}
+              placeholder="••••••••"
+              dir="ltr"
+              autoComplete={isLogin ? "current-password" : "new-password"}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute end-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </button>
+          </div>
         </Field>
 
         {!isLogin && (
@@ -218,14 +235,30 @@ export function AuthForm({
             label={dict.account.confirmPassword}
             error={errors.confirmPassword?.message}
           >
-            <input
-              type="password"
-              {...register("confirmPassword")}
-              className={inputClass(!!errors.confirmPassword)}
-              placeholder="••••••••"
-              dir="ltr"
-              autoComplete="new-password"
-            />
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                {...register("confirmPassword")}
+                className={cn(inputClass(!!errors.confirmPassword), "pe-10")}
+                placeholder="••••••••"
+                dir="ltr"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute end-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={
+                  showConfirmPassword ? "Hide password" : "Show password"
+                }
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="size-4" />
+                ) : (
+                  <Eye className="size-4" />
+                )}
+              </button>
+            </div>
           </Field>
         )}
 

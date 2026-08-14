@@ -1,3 +1,6 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { User } from "lucide-react";
 import type { Session } from "next-auth";
@@ -8,6 +11,7 @@ import { HeaderScroll } from "@/components/layout/header-scroll";
 import { SearchBox } from "@/features/catalog/components/search-box";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
+import { cn } from "@/lib/utils";
 
 export function Header({
   locale,
@@ -19,6 +23,14 @@ export function Header({
   const dict = getDictionary(locale);
   const isAuthed = !!session?.user;
   const isAdmin = session?.user?.role === "ADMIN";
+  const pathname = usePathname();
+
+  const isActive = (path: string) => {
+    if (path === `/${locale}`) {
+      return pathname === path;
+    }
+    return pathname.startsWith(path);
+  };
 
   return (
     <>
@@ -50,26 +62,39 @@ export function Header({
           >
             <Link
               href={`/${locale}`}
-              className="transition-colors hover:text-foreground"
+              className={cn(
+                "transition-colors hover:text-foreground",
+                isActive(`/${locale}`) && "font-medium text-foreground"
+              )}
             >
               {dict.nav.home}
             </Link>
             <Link
               href={`/${locale}/catalog`}
-              className="transition-colors hover:text-foreground"
+              className={cn(
+                "transition-colors hover:text-foreground",
+                isActive(`/${locale}/catalog`) && "font-medium text-foreground"
+              )}
             >
               {dict.nav.shop}
             </Link>
             <Link
               href={`/${locale}/collections`}
-              className="transition-colors hover:text-foreground"
+              className={cn(
+                "transition-colors hover:text-foreground",
+                isActive(`/${locale}/collections`) &&
+                  "font-medium text-foreground"
+              )}
             >
               {dict.nav.collection}
             </Link>
             {isAdmin && (
               <Link
                 href={`/${locale}/admin`}
-                className="font-medium text-primary transition-colors hover:text-primary/70"
+                className={cn(
+                  "font-medium text-primary transition-colors hover:text-primary/70",
+                  isActive(`/${locale}/admin`) && "underline underline-offset-4"
+                )}
               >
                 {dict.header.admin}
               </Link>

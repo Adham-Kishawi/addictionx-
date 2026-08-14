@@ -13,6 +13,7 @@ import {
   Layers,
   Mail,
   Flame,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ export function AdminNav({
     collections: string;
     newsletter: string;
     bestsellers: string;
+    shipping: string;
   };
   visible: string[];
 }) {
@@ -94,9 +96,15 @@ export function AdminNav({
       key: "newsletter",
     },
     {
+      href: `${basePath}/shipping`,
+      label: labels.shipping,
+      icon: Truck,
+      key: "shipping",
+    },
+    {
       href: `${basePath}/settings`,
       label: labels.settings,
-      icon: Truck,
+      icon: Settings,
       key: "settings",
     },
   ];

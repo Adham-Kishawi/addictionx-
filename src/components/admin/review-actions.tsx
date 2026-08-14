@@ -2,19 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X, Trash2 } from "lucide-react";
-import { moderateReview, deleteReview } from "@/features/reviews/actions";
+import { Check, X, Trash2, Eye, EyeOff } from "lucide-react";
+import { moderateReview, deleteReview, toggleReviewVisibility } from "@/features/reviews/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
-// Admin actions on a review: approve / reject / delete.
+// Admin actions on a review: approve / reject / hide/show / delete.
 
 export function ReviewActions({
   reviewId,
   isApproved,
+  isHidden,
   dict,
 }: {
   reviewId: string;
   isApproved: boolean;
+  isHidden: boolean;
   dict: Dictionary;
 }) {
   const router = useRouter();
@@ -54,6 +56,15 @@ export function ReviewActions({
           <X className="size-4" />
         </button>
       )}
+      <button
+        onClick={() => run(() => toggleReviewVisibility(reviewId))}
+        disabled={pending}
+        title={isHidden ? (dict.admin.showReview || "Show") : (dict.admin.hideReview || "Hide")}
+        aria-label={isHidden ? (dict.admin.showReview || "Show") : (dict.admin.hideReview || "Hide")}
+        className="inline-flex size-8 items-center justify-center rounded-lg border border-blue-500/40 text-blue-500 transition-colors hover:bg-blue-500/10 disabled:opacity-50"
+      >
+        {isHidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+      </button>
       <button
         onClick={() => {
           if (!window.confirm(dict.admin.deleteConfirm)) return;

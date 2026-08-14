@@ -73,7 +73,7 @@ export default async function ProductPage({
   const [collections, session] = await Promise.all([getCollections(), auth()]);
 
   const approvedReviews = await prisma.review.findMany({
-    where: { productId: product.id, isApproved: true },
+    where: { productId: product.id, isApproved: true, isHidden: false },
     orderBy: { createdAt: "desc" },
     include: { user: { select: { name: true } } },
   });
@@ -365,16 +365,18 @@ function NoteRow({
   if (notes.length === 0) return null;
   return (
     <div
-      className={`flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/50 px-3 py-3 ${width}`}
+      className={`group relative flex flex-col gap-3 rounded-2xl border border-border/60 bg-gradient-to-br from-background/80 to-background/40 p-4 backdrop-blur-sm transition-all hover:border-border hover:shadow-lg ${width}`}
     >
-      <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-        <span aria-hidden className={`size-1.5 rounded-full ${accent}`} />
-        {label}
-      </span>
-      <ul className="flex flex-wrap justify-center gap-1.5">
+      <div className="flex items-center gap-2">
+        <span aria-hidden className={`size-2 rounded-full ${accent} shadow-lg`} />
+        <span className="text-xs font-bold uppercase tracking-widest text-foreground/90">
+          {label}
+        </span>
+      </div>
+      <ul className="flex flex-wrap gap-2">
         {notes.map((note) => (
           <li key={note}>
-            <span className="inline-flex items-center rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-foreground/80">
+            <span className="inline-flex items-center rounded-lg border border-border/50 bg-card/60 px-3 py-1.5 text-sm font-medium text-foreground/90 shadow-sm transition-colors hover:border-border hover:bg-card">
               {note}
             </span>
           </li>

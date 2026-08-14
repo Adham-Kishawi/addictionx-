@@ -211,6 +211,12 @@ export default async function Home({
         <HeroMelt />
       </div>
 
+      {/* ====== Hero separator — visual break between hero and showcase ====== */}
+      <div className="relative flex items-center justify-center overflow-hidden border-y border-border/40 bg-background/80 py-6 backdrop-blur-sm">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent" />
+        <HeartbeatLine className="relative h-6 w-32 text-primary/60" />
+      </div>
+
       {/* ====== ROTATING SHOWCASE — 95vh stage: the hero product assembles with the
             wheel (full-bleed frame scrub + crossfade), animation COMPLETES when the
             section is fully in view, SHOP NOW (→ general catalog) ======

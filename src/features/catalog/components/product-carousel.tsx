@@ -207,15 +207,12 @@ export function ProductCarousel({
     <section className="relative overflow-hidden border-y border-border bg-card/40 py-6">
       {/* ===== Per-collection identity background (wave 8) =====
             One layer per product, each carrying the collection's glow tint +
-            giant collection name behind the stage. Active index crossfades
-            via CSS opacity — the whole backdrop changes identity when the
-            carousel turns. */}
+            ambient backdrop. Active index crossfades via CSS opacity — the
+            whole backdrop changes identity when the carousel turns. The
+            collection wordmark is NOT here: each perfume now carries its own
+            name behind it, riding the same role as its bottle (below). */}
       {products.map((product, i) => {
         const isActive = active === i;
-        const cn = collectionNames?.[product.collection];
-        const wordmark = isRtl
-          ? (cn?.nameAr ?? product.nameAr)
-          : (cn?.nameEn ?? product.nameEn);
         return (
           <div
             key={`identity-${product.id}`}
@@ -248,20 +245,6 @@ export function ProductCarousel({
                 />
               );
             })()}
-            <div
-              dir={isRtl ? "rtl" : "ltr"}
-              className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 select-none justify-center overflow-hidden whitespace-nowrap"
-            >
-              <span
-                className="font-display text-[14vw] font-bold leading-none lg:text-[10vw]"
-                style={{
-                  color: "transparent",
-                  WebkitTextStroke: `1px ${product.art.glow}40`,
-                }}
-              >
-                {wordmark}
-              </span>
-            </div>
           </div>
         );
       })}
@@ -317,6 +300,10 @@ export function ProductCarousel({
                   const role = roleOf(i);
                   const s = ROLE_STYLES[role];
                   const isCenter = role === "center";
+                  const cn = collectionNames?.[product.collection];
+                  const wordmark = isRtl
+                    ? (cn?.nameAr ?? product.nameAr)
+                    : (cn?.nameEn ?? product.nameEn);
                   return (
                     <div
                       key={product.id}
@@ -336,11 +323,29 @@ export function ProductCarousel({
                           : "auto",
                       }}
                     >
+                      {/* Each perfume carries its own collection name behind
+                          it (not just the main one) — same role scale/blur
+                          so the text rides the bottle it belongs to */}
+                      <div
+                        dir={isRtl ? "rtl" : "ltr"}
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden whitespace-nowrap"
+                      >
+                        <span
+                          className="font-display text-[clamp(1.25rem,5vw,2.75rem)] font-bold leading-none"
+                          style={{
+                            color: "transparent",
+                            WebkitTextStroke: `1px ${product.art.glow}40`,
+                          }}
+                        >
+                          {wordmark}
+                        </span>
+                      </div>
                       {isCenter ? (
                         <Link
                           href={`/${locale}/product/${product.slug}`}
                           aria-label={slideLabel(product)}
-                          className="block h-full w-full focus-visible:outline-none"
+                          className="relative z-10 block h-full w-full focus-visible:outline-none"
                           draggable={false}
                         >
                           <SlideImage product={product} priority />
@@ -351,7 +356,7 @@ export function ProductCarousel({
                           onClick={() => goTo(i)}
                           tabIndex={-1}
                           aria-hidden="true"
-                          className="block h-full w-full cursor-pointer focus-visible:outline-none"
+                          className="relative z-10 block h-full w-full cursor-pointer focus-visible:outline-none"
                         >
                           <SlideImage product={product} />
                         </button>

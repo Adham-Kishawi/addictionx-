@@ -15,7 +15,7 @@ import { prisma } from "@/lib/prisma";
 
 async function recomputeProductStats(productId: string) {
   const agg = await prisma.review.aggregate({
-    where: { productId, isApproved: true },
+    where: { productId, isApproved: true, isHidden: false },
     _avg: { rating: true },
     _count: true,
   });
@@ -114,6 +114,23 @@ export async function deleteReview(reviewId: string): Promise<void> {
   });
   if (!review) return;
   await prisma.review.delete({ where: { id: reviewId } });
+  await recomputeProductStats(review.productId);
+  revalidatePath("/", "layout");
+}
+
+export async function toggleReviewVisibility(
+  reviewId: string,
+): Promise<void> {
+  await requirePermission("reviews");
+  const review = await prisma.review.findUnique({
+    where: { id: reviewId },
+    select: { isHidden: true, productId: true },
+  });
+  if (!review) return;
+  await prisma.review.update({
+    where: { id: reviewId },
+    data: { isHidden: !review.isHidden },
+  });
   await recomputeProductStats(review.productId);
   revalidatePath("/", "layout");
 }

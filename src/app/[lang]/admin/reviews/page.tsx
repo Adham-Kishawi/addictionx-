@@ -59,11 +59,18 @@ export default async function AdminReviewsPage({
                   <StarDisplay value={review.rating} />
                   <span className="font-medium">{review.title}</span>
                 </div>
-                {!review.isApproved && (
-                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-500">
-                    {dict.reviews.pendingBadge}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {!review.isApproved && (
+                    <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-500">
+                      {dict.reviews.pendingBadge}
+                    </span>
+                  )}
+                  {review.isHidden && (
+                    <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-500">
+                      {dict.admin.hiddenBadge || "Hidden"}
+                    </span>
+                  )}
+                </div>
               </div>
               <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
                 {review.content}
@@ -92,6 +99,7 @@ export default async function AdminReviewsPage({
                 <ReviewActions
                   reviewId={review.id}
                   isApproved={review.isApproved}
+                  isHidden={review.isHidden}
                   dict={dict}
                 />
               </div>

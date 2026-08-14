@@ -49,12 +49,13 @@ export default async function AdminLayout({
     "coupons",
     "users",
     "newsletter",
+    "shipping",
     "settings",
   ].filter((key) =>
     key === "users"
       ? hasPermission(permissions, "users") ||
         hasPermission(permissions, "admins")
-      : key === "bestsellers"
+      : key === "bestsellers" || key === "shipping"
         ? hasPermission(permissions, "products")
         : hasPermission(permissions, key as AdminPermission),
   );
@@ -70,6 +71,7 @@ export default async function AdminLayout({
     collections: dict.admin.collections,
     newsletter: dict.admin.newsletter,
     bestsellers: dict.admin.bestsellers,
+    shipping: dict.admin.shipping || "Shipping",
   };
 
   return (
