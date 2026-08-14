@@ -893,6 +893,61 @@ export type ManualOrderResult =
   | { ok: true; orderId: string; orderNumber: string }
   | { ok: false; error: "GENERIC" | "STOCK" | "UNAVAILABLE" | "INVALID" };
 
+// ============================================================
+// Payment Account Settings
+// ============================================================
+
+type PaymentAccountsInput = {
+  instapayNumber: string;
+  instapayName: string;
+  vodafoneCashNumber: string;
+  vodafoneCashName: string;
+};
+
+export async function updatePaymentAccounts(
+  input: PaymentAccountsInput,
+  locale: string,
+) {
+  await requirePermission("settings");
+
+  try {
+    await prisma.$transaction([
+      prisma.storeSetting.upsert({
+        where: { key: "instapay_account_number" },
+        create: { key: "instapay_account_number", value: input.instapayNumber },
+        update: { value: input.instapayNumber },
+      }),
+      prisma.storeSetting.upsert({
+        where: { key: "instapay_account_name" },
+        create: { key: "instapay_account_name", value: input.instapayName },
+        update: { value: input.instapayName },
+      }),
+      prisma.storeSetting.upsert({
+        where: { key: "vodafone_cash_number" },
+        create: {
+          key: "vodafone_cash_number",
+          value: input.vodafoneCashNumber,
+        },
+        update: { value: input.vodafoneCashNumber },
+      }),
+      prisma.storeSetting.upsert({
+        where: { key: "vodafone_cash_name" },
+        create: { key: "vodafone_cash_name", value: input.vodafoneCashName },
+        update: { value: input.vodafoneCashName },
+      }),
+    ]);
+
+    clearConfigCache();
+    revalidatePath(`/${locale}/admin/settings`);
+    revalidatePath(`/${locale}/checkout`);
+
+    return { ok: true };
+  } catch (error) {
+    console.error("Failed to update payment accounts:", error);
+    return { ok: false, error: "UPDATE_FAILED" };
+  }
+}
+
 export async function createManualOrder(
   input: z.infer<typeof manualOrderSchema>,
 ): Promise<ManualOrderResult> {
