@@ -53,7 +53,7 @@ export default async function AccountPage({
     }),
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { createdAt: true },
+      select: { createdAt: true, phone: true, image: true },
     }),
   ]);
 
@@ -88,27 +88,17 @@ export default async function AccountPage({
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            {dict.account.greeting}
-          </p>
-          <h1 className="font-display text-4xl font-bold">
-            {session.user.name ?? session.user.email}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Link
-              href={`/${locale}/admin`}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              <Shield className="size-4" />
-              {dict.admin.title}
-            </Link>
-          )}
-          <SignOutButton locale={locale} />
-        </div>
+      <div className="mb-8 flex items-center justify-end gap-2">
+        {isAdmin && (
+          <Link
+            href={`/${locale}/admin`}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-sm font-medium transition-colors hover:bg-muted"
+          >
+            <Shield className="size-4" />
+            {dict.admin.title}
+          </Link>
+        )}
+        <SignOutButton locale={locale} />
       </div>
 
       <AccountTabs
@@ -117,6 +107,8 @@ export default async function AccountPage({
         user={{
           name: session.user.name ?? null,
           email: session.user.email ?? null,
+          phone: userRow?.phone ?? null,
+          image: userRow?.image ?? null,
           memberSince:
             userRow?.createdAt.toISOString() ?? new Date().toISOString(),
         }}

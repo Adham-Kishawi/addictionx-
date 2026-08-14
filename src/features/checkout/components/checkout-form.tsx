@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Tag,
   X,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductArt } from "@/features/catalog/components/product-art";
@@ -26,11 +27,19 @@ import {
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
 
-type ShippingConfig = {
-  fee: number;
-  freeThreshold: number;
-  carrier: string;
+type Zone = {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  regions: {
+    id: string;
+    nameAr: string;
+    nameEn: string;
+    shippingFee: number;
+  }[];
 };
+
+type PaymentSettings = { cardEnabled: boolean; walletEnabled: boolean };
 
 type CouponState = { code: string; discount: number } | null;
 
@@ -42,9 +51,12 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
   const subtotal = getCartSubtotal(items);
   const count = getCartItemCount(items);
 
-  const [shippingConfig, setShippingConfig] = useState<ShippingConfig | null>(
-    null,
-  );
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
+    cardEnabled: false,
+    walletEnabled: false,
+  });
+  const [freeThreshold, setFreeThreshold] = useState<number | null>(null);
   const [coupon, setCoupon] = useState<CouponState>(null);
   const [couponInput, setCouponInput] = useState("");
   const [couponStatus, setCouponStatus] = useState<
@@ -52,48 +64,95 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
   >("idle");
 
   useEffect(() => {
+    fetch("/api/checkout-config")
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (
+          data: {
+            zones: Zone[];
+            payment: PaymentSettings;
+          } | null,
+        ) => {
+          if (!data) return;
+          setZones(data.zones);
+          setPaymentSettings(data.payment);
+        },
+      )
+      .catch(() => {});
     fetch("/api/shipping-config")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data: ShippingConfig | null) => {
-        if (data) setShippingConfig(data);
+      .then((data: { freeShippingThreshold?: number } | null) => {
+        if (data && typeof data.freeShippingThreshold === "number") {
+          setFreeThreshold(data.freeShippingThreshold);
+        }
       })
       .catch(() => {});
   }, []);
 
-  const shippingFee = shippingConfig?.fee ?? 0;
-  const freeThreshold = shippingConfig?.freeThreshold ?? Infinity;
-  const discount = coupon?.discount ?? 0;
-  const shipping = subtotal - discount >= freeThreshold ? 0 : shippingFee;
-  const total = subtotal - discount + shipping;
-
-  const [paymentMethod, setPaymentMethod] = useState<"cod" | "card">("cod");
+  const [paymentMethod, setPaymentMethod] = useState<
+    "CASH_ON_DELIVERY" | "CARD" | "WALLET"
+  >("CASH_ON_DELIVERY");
   const [placed, setPlaced] = useState<{
     orderId: string;
     orderNumber: string;
   } | null>(null);
   const [error, setError] = useState<
-    "GENERIC" | "UNAVAILABLE" | "STOCK" | "COUPON_INVALID" | null
+    | "GENERIC"
+    | "UNAVAILABLE"
+    | "STOCK"
+    | "COUPON_INVALID"
+    | "PAYMENT_UNAVAILABLE"
+    | "VALIDATION"
+    | null
   >(null);
   const [isPending, startTransition] = useTransition();
+
+  const discount = coupon?.discount ?? 0;
 
   const schema = z.object({
     name: z.string().min(2, dict.checkout.validation.name),
     phone: z
       .string()
       .min(10, dict.checkout.validation.phone)
-      .regex(/^[0-9+\s-]+$/, dict.checkout.validation.phone),
-    governorate: z.string().min(1, dict.checkout.validation.governorate),
+      .refine(
+        (v) => /^(?:\+?20)?01[0125][0-9]{8}$/.test(v.replace(/[\s-]/g, "")),
+        dict.checkout.validation.phone,
+      ),
+    governorateId: z.string().min(1, dict.checkout.validation.governorate),
+    regionId: z.string().min(1, dict.checkout.validation.region),
     address: z.string().min(5, dict.checkout.validation.address),
   });
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", phone: "", governorate: "", address: "" },
+    defaultValues: {
+      name: "",
+      phone: "",
+      governorateId: "",
+      regionId: "",
+      address: "",
+    },
   });
+
+  const selectedGovernorate = watch("governorateId");
+  const selectedRegion = watch("regionId");
+
+  const activeRegions =
+    zones.find((z) => z.id === selectedGovernorate)?.regions ?? [];
+  const activeRegion = activeRegions.find((r) => r.id === selectedRegion);
+
+  // Shipping fee: per-region when available, else flat; free above threshold.
+  const shippingFee =
+    freeThreshold !== null && subtotal - discount >= freeThreshold
+      ? 0
+      : (activeRegion?.shippingFee ?? 0);
+
+  const total = subtotal - discount + shippingFee;
 
   if (placed) {
     return (
@@ -169,9 +228,14 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
         items,
         name: data.name,
         phone: data.phone,
-        governorate: data.governorate,
+        governorateId: data.governorateId,
+        regionId: data.regionId,
         address: data.address,
-        paymentMethod: "CASH_ON_DELIVERY",
+        paymentMethod,
+        idempotencyKey:
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         couponCode: coupon?.code,
       });
       if (result.ok) {
@@ -197,7 +261,12 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
               {
                 dict.checkout.errors[
                   error.toLowerCase() as
-                    "generic" | "unavailable" | "stock" | "coupon_invalid"
+                    | "generic"
+                    | "unavailable"
+                    | "stock"
+                    | "coupon_invalid"
+                    | "payment_unavailable"
+                    | "validation"
                 ]
               }
             </span>
@@ -216,7 +285,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
                 type="text"
                 {...register("name")}
                 className={inputClass(!!errors.name)}
-                placeholder="Ahmed Ali"
+                placeholder={dict.account.namePlaceholder}
               />
             </Field>
             <Field label={dict.checkout.phone} error={errors.phone?.message}>
@@ -226,37 +295,51 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
                 {...register("phone")}
                 className={inputClass(!!errors.phone)}
                 placeholder="+20 100 000 0000"
+                dir="ltr"
               />
             </Field>
           </div>
 
-          <Field
-            label={dict.checkout.governorate}
-            error={errors.governorate?.message}
-          >
-            <select
-              {...register("governorate")}
-              className={inputClass(!!errors.governorate)}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label={dict.checkout.governorate}
+              error={errors.governorateId?.message}
             >
-              <option value="">—</option>
-              {[
-                "Cairo",
-                "Giza",
-                "Alexandria",
-                "Mansoura",
-                "Tanta",
-                "Assiut",
-                "Aswan",
-                "Luxor",
-                "Port Said",
-                "Suez",
-              ].map((g) => (
-                <option key={g} value={g}>
-                  {g}
+              <select
+                {...register("governorateId")}
+                className={inputClass(!!errors.governorateId)}
+              >
+                <option value="">
+                  {locale === "ar" ? "اختر المحافظة" : "Select governorate"}
                 </option>
-              ))}
-            </select>
-          </Field>
+                {zones.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {locale === "ar" ? g.nameAr : g.nameEn}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field
+              label={dict.checkout.region}
+              error={errors.regionId?.message}
+            >
+              <select
+                {...register("regionId")}
+                className={inputClass(!!errors.regionId)}
+                disabled={!selectedGovernorate}
+              >
+                <option value="">
+                  {locale === "ar" ? "اختر المنطقة" : "Select region / area"}
+                </option>
+                {activeRegions.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {locale === "ar" ? r.nameAr : r.nameEn}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
 
           <Field label={dict.checkout.address} error={errors.address?.message}>
             <textarea
@@ -343,19 +426,27 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
           </legend>
 
           <PaymentOption
-            active={paymentMethod === "cod"}
-            onClick={() => setPaymentMethod("cod")}
+            active={paymentMethod === "CASH_ON_DELIVERY"}
+            onClick={() => setPaymentMethod("CASH_ON_DELIVERY")}
             icon={<Banknote className="size-5" />}
             title={dict.checkout.cashOnDelivery}
             hint={dict.checkout.cashOnDeliveryHint}
           />
           <PaymentOption
-            active={paymentMethod === "card"}
-            onClick={() => setPaymentMethod("card")}
+            active={paymentMethod === "CARD"}
+            onClick={() => setPaymentMethod("CARD")}
             icon={<CreditCard className="size-5" />}
             title={dict.checkout.card}
             hint={dict.checkout.cardHint}
-            disabled
+            disabled={!paymentSettings.cardEnabled}
+          />
+          <PaymentOption
+            active={paymentMethod === "WALLET"}
+            onClick={() => setPaymentMethod("WALLET")}
+            icon={<Wallet className="size-5" />}
+            title={dict.checkout.wallet}
+            hint={dict.checkout.walletHint}
+            disabled={!paymentSettings.walletEnabled}
           />
         </fieldset>
 
@@ -418,7 +509,9 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
           <div className="flex justify-between text-muted-foreground">
             <span>{dict.cart.shipping}</span>
             <span>
-              {shipping === 0 ? dict.cart.shippingFree : formatPrice(shipping)}
+              {shippingFee === 0
+                ? dict.cart.shippingFree
+                : formatPrice(shippingFee)}
             </span>
           </div>
           <div className="flex justify-between border-t border-border pt-2 text-base font-bold">

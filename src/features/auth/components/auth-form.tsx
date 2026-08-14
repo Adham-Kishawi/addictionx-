@@ -53,17 +53,51 @@ export function AuthForm({
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const targetUrl = callbackUrl || `/${locale}/account`;
+  // Only allow same-site relative callbacks — blocks open-redirect phishing
+  // via ?callbackUrl=https://evil.example
+  const safeCallbackUrl =
+    callbackUrl &&
+    callbackUrl.startsWith("/") &&
+    !callbackUrl.startsWith("//") &&
+    !callbackUrl.startsWith("/\\")
+      ? callbackUrl
+      : undefined;
+  const targetUrl = safeCallbackUrl || `/${locale}/account`;
 
-  const schema = z.object({
-    name: isLogin
-      ? z.string().optional()
-      : z.string().min(2, dict.checkout.validation.name),
-    email: z.string().min(1, dict.account.email).email(),
-    password: z.string().min(6, dict.checkout.validation.phone),
-  });
+  const passwordRule = (v: string) => /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(v);
 
-  const { register, handleSubmit } = useForm<z.infer<typeof schema>>({
+  const schema = z
+    .object({
+      name: isLogin
+        ? z.string().optional()
+        : z.string().min(2, dict.account.fieldNameError).max(120),
+      email: z
+        .string()
+        .min(1, dict.account.fieldRequired)
+        .email(dict.account.fieldEmailError),
+      password: isLogin
+        ? z.string().min(1, dict.account.fieldRequired)
+        : z
+            .string()
+            .min(8, dict.account.fieldPasswordError)
+            .refine(passwordRule, dict.account.fieldPasswordStrength),
+      confirmPassword: isLogin
+        ? z.string().optional()
+        : z.string().min(1, dict.account.fieldRequired),
+    })
+    .refine(
+      (v) => isLogin || !v.confirmPassword || v.password === v.confirmPassword,
+      {
+        message: dict.account.fieldPasswordMismatch,
+        path: ["confirmPassword"],
+      },
+    );
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
   });
 
@@ -107,7 +141,9 @@ export function AuthForm({
       setFormError(
         result?.error === "EMAIL_EXISTS"
           ? dict.account.errorEmailExists
-          : dict.account.errorGeneric,
+          : result?.error === "WEAK_PASSWORD"
+            ? dict.account.fieldPasswordStrength
+            : dict.account.errorGeneric,
       );
     }
     setLoading(false);
@@ -146,35 +182,52 @@ export function AuthForm({
         noValidate
       >
         {!isLogin && (
-          <Field label={dict.account.name} error={undefined}>
+          <Field label={dict.account.name} error={errors.name?.message}>
             <input
               type="text"
               {...register("name")}
-              className={inputClass(false)}
-              placeholder="Ahmed Ali"
+              className={inputClass(!!errors.name)}
+              placeholder={dict.account.namePlaceholder}
             />
           </Field>
         )}
 
-        <Field label={dict.account.email} error={undefined}>
+        <Field label={dict.account.email} error={errors.email?.message}>
           <input
             type="email"
             {...register("email")}
-            className={inputClass(false)}
-            placeholder="you@example.com"
+            className={inputClass(!!errors.email)}
+            placeholder={dict.account.emailPlaceholder}
             dir="ltr"
           />
         </Field>
 
-        <Field label={dict.account.password} error={undefined}>
+        <Field label={dict.account.password} error={errors.password?.message}>
           <input
             type="password"
             {...register("password")}
-            className={inputClass(false)}
+            className={inputClass(!!errors.password)}
             placeholder="••••••••"
             dir="ltr"
+            autoComplete={isLogin ? "current-password" : "new-password"}
           />
         </Field>
+
+        {!isLogin && (
+          <Field
+            label={dict.account.confirmPassword}
+            error={errors.confirmPassword?.message}
+          >
+            <input
+              type="password"
+              {...register("confirmPassword")}
+              className={inputClass(!!errors.confirmPassword)}
+              placeholder="••••••••"
+              dir="ltr"
+              autoComplete="new-password"
+            />
+          </Field>
+        )}
 
         {formError && <p className="text-sm text-destructive">{formError}</p>}
 

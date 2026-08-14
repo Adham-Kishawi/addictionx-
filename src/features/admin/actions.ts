@@ -485,12 +485,15 @@ export async function updateOrderStatus(orderId: string, status: string) {
   if (order.user?.email) {
     await sendEmail({
       to: order.user.email,
-      subject: `تحديث طلبك ${order.orderNumber}`,
-      html: orderStatusEmail(
-        order.orderNumber,
-        next,
-        next === "SHIPPED" ? "تم شحن طلبك وهو في الطريق إليك الآن." : undefined,
-      ),
+      subject: orderStatusEmail("en").subject(order.orderNumber),
+      html: orderStatusEmail("en").html({
+        orderNumber: order.orderNumber,
+        status: next,
+        extra:
+          next === "SHIPPED"
+            ? "Your order has been shipped and is on its way to you."
+            : undefined,
+      }),
     });
   }
 }
@@ -529,8 +532,8 @@ export async function updateShipment(
   if (order.user?.email) {
     await sendEmail({
       to: order.user.email,
-      subject: `بيانات تتبع شحن طلبك ${order.orderNumber}`,
-      html: shippingInfoEmail({
+      subject: shippingInfoEmail("en").subject(order.orderNumber),
+      html: shippingInfoEmail("en").html({
         orderNumber: order.orderNumber,
         carrier: data.carrier.trim() || "Bosta",
         trackingNumber: data.trackingNumber.trim() || null,
@@ -972,8 +975,8 @@ export async function createManualOrder(
     // Notify the admin about a new manual order (same new-order template)
     await sendEmail({
       to: process.env.ADMIN_EMAIL || siteConfig.adminEmail,
-      subject: `طلب يدوي جديد ${order.orderNumber} — ${siteConfig.name}`,
-      html: adminNewOrderEmail({
+      subject: adminNewOrderEmail("en").subject(order.orderNumber),
+      html: adminNewOrderEmail("en").html({
         orderNumber: order.orderNumber,
         totalQirsh: order.total,
         items: orderLines.map((l) => ({

@@ -10,9 +10,9 @@ export default async function AdminBestSellersPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
-  await requirePermission("products");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("products", locale);
   const dict = getDictionary(locale);
 
   const products = await prisma.product.findMany({

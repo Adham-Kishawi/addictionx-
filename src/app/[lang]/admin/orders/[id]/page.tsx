@@ -22,9 +22,9 @@ export default async function AdminOrderDetailPage({
 }: {
   params: Promise<{ lang: string; id: string }>;
 }) {
-  await requirePermission("orders");
   const { lang, id } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("orders", locale);
   const dict = getDictionary(locale);
 
   const order = await prisma.order.findUnique({

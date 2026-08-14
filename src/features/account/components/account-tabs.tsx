@@ -9,9 +9,12 @@ import {
   LayoutGrid,
   ChevronLeft,
   Clock,
+  Settings,
+  UserRound,
 } from "lucide-react";
 import { ProductCard } from "@/features/catalog/components/product-card";
 import { AddressManager } from "@/features/account/components/address-manager";
+import { ProfileSettings } from "@/features/account/components/profile-settings";
 import { statusLabel, statusStyles } from "@/features/admin/status";
 import { formatPrice } from "@/features/catalog/data/products";
 import type { Dictionary, Locale } from "@/lib/i18n/dictionary";
@@ -52,7 +55,13 @@ export function AccountTabs({
 }: {
   locale: Locale;
   dict: Dictionary;
-  user: { name: string | null; email: string | null; memberSince: string };
+  user: {
+    name: string | null;
+    email: string | null;
+    phone: string | null;
+    image: string | null;
+    memberSince: string;
+  };
   orders: AccountOrder[];
   addresses: AccountAddress[];
   wishlist: Product[];
@@ -63,27 +72,44 @@ export function AccountTabs({
     { key: "orders", label: dict.account.tabOrders, icon: Package },
     { key: "addresses", label: dict.account.tabAddresses, icon: MapPin },
     { key: "wishlist", label: dict.account.tabWishlist, icon: Heart },
+    { key: "settings", label: dict.account.tabSettings, icon: Settings },
   ];
 
   const totalSpent = orders.reduce((sum, o) => sum + o.total, 0);
 
   return (
     <div>
-      <div className="mb-8">
-        <p className="text-sm text-muted-foreground">{dict.account.greeting}</p>
-        <h1 className="font-display text-4xl font-bold">
-          {user.name ?? user.email}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground" dir="ltr">
-          {user.email}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {dict.account.memberSince} ·{" "}
-          {new Date(user.memberSince).toLocaleDateString(
-            locale === "ar" ? "ar-EG" : "en-EG",
-            { year: "numeric", month: "long" },
-          )}
-        </p>
+      <div className="mb-8 flex flex-wrap items-center gap-5">
+        {user.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={user.image}
+            alt={dict.account.profilePicture}
+            className="size-20 shrink-0 rounded-full border border-border object-cover"
+          />
+        ) : (
+          <span className="flex size-20 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground">
+            <UserRound className="size-9" />
+          </span>
+        )}
+        <div className="min-w-0">
+          <p className="text-sm text-muted-foreground">
+            {dict.account.greeting}
+          </p>
+          <h1 className="font-display text-4xl font-bold">
+            {user.name ?? user.email}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground" dir="ltr">
+            {user.email}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {dict.account.memberSince} ·{" "}
+            {new Date(user.memberSince).toLocaleDateString(
+              locale === "ar" ? "ar-EG" : "en-EG",
+              { year: "numeric", month: "long" },
+            )}
+          </p>
+        </div>
       </div>
 
       <div className="mb-8 flex flex-wrap gap-2">
@@ -157,6 +183,18 @@ export function AccountTabs({
             </div>
           )}
         </div>
+      )}
+
+      {tab === "settings" && (
+        <ProfileSettings
+          dict={dict}
+          user={{
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            image: user.image,
+          }}
+        />
       )}
     </div>
   );
@@ -248,4 +286,4 @@ function OrdersList({
   );
 }
 
-type TabKey = "overview" | "orders" | "addresses" | "wishlist";
+type TabKey = "overview" | "orders" | "addresses" | "wishlist" | "settings";

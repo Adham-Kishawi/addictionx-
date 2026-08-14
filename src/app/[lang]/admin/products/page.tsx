@@ -17,10 +17,10 @@ export default async function AdminProductsPage({
   params: Promise<{ lang: string }>;
   searchParams: Promise<{ q?: string; sale?: string }>;
 }) {
-  await requirePermission("products");
   const [{ lang }, st] = await Promise.all([params, searchParams]);
   const { q, sale } = st;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("products", locale);
   const dict = getDictionary(locale);
   const query = (q ?? "").trim();
   const saleOnly = sale === "1" || sale === "true";

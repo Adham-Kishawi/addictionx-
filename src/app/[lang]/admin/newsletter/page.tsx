@@ -15,9 +15,9 @@ export default async function AdminNewsletterPage({
   params: Promise<{ lang: string }>;
   searchParams: Promise<{ page?: string }>;
 }) {
-  await requirePermission("newsletter");
   const [{ lang }, { page }] = await Promise.all([params, searchParams]);
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("newsletter", locale);
   const dict = getDictionary(locale);
 
   const currentPage = Math.max(1, Number(page) || 1);

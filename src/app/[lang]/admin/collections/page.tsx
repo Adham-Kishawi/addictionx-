@@ -11,9 +11,9 @@ export default async function AdminCollectionsPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
-  await requirePermission("collections");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("collections", locale);
   const dict = getDictionary(locale);
 
   const collections = await prisma.collection.findMany({

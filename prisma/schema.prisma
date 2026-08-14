@@ -189,6 +189,9 @@ model UploadedImage {
   id        String   @id @default(cuid())
   data      Bytes
   mimeType  String
+  // Private images (e.g. customer avatars) are only served to their owner.
+  isPrivate Boolean  @default(false)
+  ownerId   String?
   createdAt DateTime @default(now())
 
   @@map("uploaded_images")
@@ -265,12 +268,28 @@ enum PaymentMethod {
   WALLET
 }
 
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
 model Order {
-  id            String      @id @default(cuid())
-  orderNumber   String      @unique
+  id            String        @id @default(cuid())
+  orderNumber   String        @unique
   userId        String?
-  status        OrderStatus @default(PENDING)
+  status        OrderStatus   @default(PENDING)
   paymentMethod PaymentMethod
+  // Server-tracked payment lifecycle — never set from the client. COD orders
+  // start PENDING (to be collected on delivery); online payments are verified
+  // by the gateway/webhook and the admin. See the Transaction model below.
+  paymentStatus PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+  // Client-generated key that makes order creation idempotent: re-submitting
+  // the same checkout (double click / retry / second tab) reuses the existing
+  // order instead of placing a duplicate. Stored as @unique to enforce it.
+  idempotencyKey String?      @unique
   subtotal      Int // in piasters
   shippingFee   Int
   discount      Int         @default(0)
@@ -422,6 +441,46 @@ model Collection {
   updatedAt DateTime @updatedAt
 
   @@map("collections")
+}
+
+// ============================================================
+// Shipping zones — governorate → regions, each with its own fee.
+// Checkout picks a governorate + region; the fee is read from the
+// Region row server-side (never trusted from the client). The flat
+// shipping_fee setting is only a fallback when no zones exist.
+// ============================================================
+
+model Governorate {
+  id        String   @id @default(cuid())
+  nameAr    String
+  nameEn    String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  regions Region[]
+
+  @@index([isActive])
+  @@map("governorates")
+}
+
+model Region {
+  id            String      @id @default(cuid())
+  governorateId String
+  nameAr        String
+  nameEn        String
+  // Delivery fee for this region, in piasters
+  shippingFee   Int
+  sortOrder     Int         @default(0)
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  governorate Governorate @relation(fields: [governorateId], references: [id], onDelete: Cascade)
+
+  @@index([governorateId, isActive])
+  @@map("regions")
 }
 
 // ============================================================

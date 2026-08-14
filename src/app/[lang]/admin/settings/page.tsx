@@ -1,9 +1,12 @@
-import { Truck, Layers } from "lucide-react";
+import { Truck, Layers, MapPinned, CreditCard } from "lucide-react";
 import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { getShippingConfig, getHomeSectionsConfig } from "@/lib/store-config";
+import { getAllGovernorates, getPaymentSettings } from "@/lib/shipping";
 import { ShippingSettingsForm } from "@/components/admin/shipping-settings-form";
 import { HomeSectionsForm } from "@/components/admin/home-sections-form";
+import { PaymentSettingsForm } from "@/components/admin/payment-settings-form";
+import { ShippingZonesManager } from "@/components/admin/shipping-zones-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -12,14 +15,16 @@ export default async function AdminSettingsPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
-  await requirePermission("settings");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("settings", locale);
   const dict = getDictionary(locale);
 
-  const [config, homeSections] = await Promise.all([
+  const [config, homeSections, zones, payment] = await Promise.all([
     getShippingConfig(),
     getHomeSectionsConfig(),
+    getAllGovernorates(),
+    getPaymentSettings(),
   ]);
 
   return (
@@ -39,6 +44,22 @@ export default async function AdminSettingsPage({
           thresholdEgp={config.freeShippingThreshold / 100}
           carrier={config.carrier}
         />
+      </section>
+
+      <section className="mb-6 rounded-2xl border border-border bg-card/40 p-6">
+        <div className="mb-5 flex items-center gap-2 text-sm font-semibold">
+          <MapPinned className="size-4 text-primary" />
+          {dict.admin.shippingZones}
+        </div>
+        <ShippingZonesManager dict={dict} locale={locale} zones={zones} />
+      </section>
+
+      <section className="mb-6 rounded-2xl border border-border bg-card/40 p-6">
+        <div className="mb-5 flex items-center gap-2 text-sm font-semibold">
+          <CreditCard className="size-4 text-primary" />
+          {dict.admin.paymentSettings}
+        </div>
+        <PaymentSettingsForm dict={dict} initial={payment} />
       </section>
 
       <section className="rounded-2xl border border-border bg-card/40 p-6">

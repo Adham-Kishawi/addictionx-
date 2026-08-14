@@ -12,9 +12,9 @@ export default async function AdminCouponsPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
-  await requirePermission("coupons");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("coupons", locale);
   const dict = getDictionary(locale);
 
   const coupons = await prisma.coupon.findMany({

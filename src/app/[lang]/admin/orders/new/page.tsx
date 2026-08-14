@@ -13,9 +13,9 @@ export default async function NewOrderPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
-  await requirePermission("orders");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("orders", locale);
   const dict = getDictionary(locale);
 
   const rows = await prisma.product.findMany({

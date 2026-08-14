@@ -22,7 +22,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID ?? "",
       clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
-      allowDangerousEmailAccountLinking: true,
+      // Deliberately NOT enabling allowDangerousEmailAccountLinking: without
+      // email verification it would let an attacker link a Google account to a
+      // victim's existing credentials account (account takeover).
     }),
     Credentials({
       credentials: {

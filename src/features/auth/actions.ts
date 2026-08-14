@@ -3,11 +3,12 @@
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { isValidPassword } from "@/lib/validation";
 
 const registerSchema = z.object({
-  name: z.string().trim().min(2),
+  name: z.string().trim().min(2).max(120),
   email: z.string().trim().toLowerCase().email(),
-  password: z.string().min(6),
+  password: z.string().min(8).refine(isValidPassword, "WEAK_PASSWORD"),
 });
 
 export type RegisterState = { error?: string; success?: boolean };
@@ -23,7 +24,13 @@ export async function registerAction(
   });
 
   if (!parsed.success) {
-    return { error: "INVALID_INPUT" };
+    const firstIssue = parsed.error.issues[0];
+    return {
+      error:
+        firstIssue?.message === "WEAK_PASSWORD"
+          ? "WEAK_PASSWORD"
+          : "INVALID_INPUT",
+    };
   }
 
   const { name, email, password } = parsed.data;

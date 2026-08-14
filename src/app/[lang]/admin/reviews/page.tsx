@@ -16,9 +16,9 @@ export default async function AdminReviewsPage({
   params: Promise<{ lang: string }>;
   searchParams: Promise<{ page?: string }>;
 }) {
-  await requirePermission("reviews");
   const [{ lang }, { page }] = await Promise.all([params, searchParams]);
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("reviews", locale);
   const dict = getDictionary(locale);
 
   const currentPage = Math.max(1, Number(page) || 1);

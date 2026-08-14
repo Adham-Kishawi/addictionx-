@@ -8,9 +8,9 @@ export default async function NewProductPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
-  await requirePermission("products");
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("products", locale);
   const dict = getDictionary(locale);
   const collections = await getCollections();
 

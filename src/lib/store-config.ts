@@ -37,12 +37,15 @@ export async function getShippingConfig(): Promise<ShippingConfig> {
       readSetting("default_carrier"),
     ]);
     return {
-      shippingFee: rawFee
-        ? Number(rawFee) || DEFAULT_SHIPPING_FEE
-        : DEFAULT_SHIPPING_FEE,
-      freeShippingThreshold: rawThreshold
-        ? Number(rawThreshold) || DEFAULT_FREE_SHIPPING_THRESHOLD
-        : DEFAULT_FREE_SHIPPING_THRESHOLD,
+      // null = setting missing; a stored "0" is a valid zero (never fall back)
+      shippingFee:
+        rawFee !== null
+          ? Number(rawFee) || DEFAULT_SHIPPING_FEE
+          : DEFAULT_SHIPPING_FEE,
+      freeShippingThreshold:
+        rawThreshold !== null
+          ? Number(rawThreshold) || DEFAULT_FREE_SHIPPING_THRESHOLD
+          : DEFAULT_FREE_SHIPPING_THRESHOLD,
       carrier: carrier || DEFAULT_CARRIER,
     };
   } catch {

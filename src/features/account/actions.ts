@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { compare, hash } from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { orderCancelledEmail, sendEmail } from "@/lib/email";
+import { isValidEgyptianPhone, isValidPassword } from "@/lib/validation";
 
 async function requireUser() {
   const session = await auth();
@@ -49,7 +51,7 @@ export async function removeWishlistItem(productId: string) {
 
 const addressSchema = z.object({
   fullName: z.string().trim().min(2).max(100),
-  phone: z.string().trim().min(8).max(20),
+  phone: z.string().trim().min(10).refine(isValidEgyptianPhone, "PHONE"),
   governorate: z.string().trim().min(1).max(60),
   city: z.string().trim().min(1).max(60),
   district: z.string().trim().max(60),
@@ -206,10 +208,123 @@ export async function cancelOrder(orderId: string): Promise<{
   if (order.user?.email) {
     await sendEmail({
       to: order.user.email,
-      subject: `إلغاء الطلب ${order.orderNumber}`,
-      html: orderCancelledEmail(order.orderNumber),
+      subject: orderCancelledEmail("en").subject(order.orderNumber),
+      html: orderCancelledEmail("en").html(order.orderNumber),
     });
   }
 
+  return { success: true };
+}
+
+// ============================================================
+// Profile & password management (customer account)
+// ============================================================
+
+export type ProfileState = {
+  error?: "NAME" | "PHONE" | "EMAIL_TAKEN" | "GENERIC";
+  success?: boolean;
+};
+
+const profileSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  phone: z
+    .string()
+    .trim()
+    .optional()
+    .refine((v) => !v || isValidEgyptianPhone(v), "PHONE"),
+});
+
+export async function updateProfile(
+  _prev: ProfileState | undefined,
+  fd: FormData,
+): Promise<ProfileState> {
+  const userId = await requireUser();
+  const parsed = profileSchema.safeParse({
+    name: fd.get("name"),
+    phone: fd.get("phone"),
+  });
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return { error: issue?.message === "PHONE" ? "PHONE" : "NAME" };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: parsed.data.name,
+        phone: parsed.data.phone || null,
+      },
+    });
+  } catch {
+    return { error: "GENERIC" };
+  }
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+export type PasswordState = {
+  error?: "WRONG_PASSWORD" | "WEAK" | "GENERIC";
+  success?: boolean;
+};
+
+const passwordSchema = z.object({
+  current: z.string().min(1),
+  next: z.string().min(8).refine(isValidPassword, "WEAK"),
+});
+
+export async function changePassword(
+  _prev: PasswordState | undefined,
+  fd: FormData,
+): Promise<PasswordState> {
+  const userId = await requireUser();
+  const parsed = passwordSchema.safeParse({
+    current: fd.get("current"),
+    next: fd.get("next"),
+  });
+  if (!parsed.success) return { error: "WEAK" };
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { passwordHash: true },
+  });
+  if (!user?.passwordHash) return { error: "GENERIC" };
+
+  const ok = await compare(parsed.data.current, user.passwordHash);
+  if (!ok) return { error: "WRONG_PASSWORD" };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: await hash(parsed.data.next, 10) },
+  });
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+export async function removeAvatar(): Promise<{
+  success?: boolean;
+  error?: "GENERIC";
+}> {
+  const userId = await requireUser();
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { image: true },
+    });
+    if (user?.image) {
+      const id = user.image.match(/\/api\/account\/avatar\/([^/?#]+)/)?.[1];
+      await prisma.$transaction([
+        prisma.user.update({ where: { id: userId }, data: { image: null } }),
+        id
+          ? prisma.uploadedImage.deleteMany({ where: { id, ownerId: userId } })
+          : prisma.uploadedImage.deleteMany({ where: { id: "none" } }),
+      ]);
+    }
+  } catch {
+    return { error: "GENERIC" };
+  }
+  revalidatePath("/", "layout");
   return { success: true };
 }

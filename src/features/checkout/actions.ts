@@ -6,22 +6,33 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/config/site";
-import { getShippingConfig } from "@/lib/store-config";
 import {
   orderConfirmationEmail,
   adminNewOrderEmail,
   sendEmail,
   notifyLowStock,
 } from "@/lib/email";
+import {
+  computeShippingFee,
+  getPaymentSettings,
+  nameFor,
+} from "@/lib/shipping";
+import { isValidEgyptianPhone } from "@/lib/validation";
 import type { CartItem } from "@/stores/cart-store";
-import type { Locale } from "@/lib/i18n/dictionary";
+import { isLocale, type Locale } from "@/lib/i18n/dictionary";
 
 // ============================================================
-// Create an order from the cart — prices are read from the DB, the client's price is never trusted
+// Create an order from the cart.
+// - Prices, stock, coupon discount and shipping are all read from the DB.
+//   The client's price/coupon/shipping numbers are never trusted.
+// - Payment status is recorded server-side only; it is never set from the
+//   client (prevents fake/manipulated "paid" states).
+// - An idempotencyKey makes double submits safe: a duplicate key reuses the
+//   first order instead of placing a second one.
 // ============================================================
 
 const inputSchema = z.object({
-  locale: z.string().min(2),
+  locale: z.string().refine(isLocale),
   items: z
     .array(
       z.object({
@@ -32,15 +43,13 @@ const inputSchema = z.object({
     )
     .min(1)
     .max(50),
-  name: z.string().trim().min(2),
-  phone: z
-    .string()
-    .trim()
-    .min(10)
-    .regex(/^[0-9+\s-]+$/),
-  governorate: z.string().trim().min(1),
-  address: z.string().trim().min(5),
-  paymentMethod: z.literal("CASH_ON_DELIVERY"),
+  name: z.string().trim().min(2).max(120),
+  phone: z.string().trim().min(10).refine(isValidEgyptianPhone, "PHONE"),
+  governorateId: z.string().trim().min(1).max(60),
+  regionId: z.string().trim().min(1).max(60),
+  address: z.string().trim().min(5).max(300),
+  paymentMethod: z.enum(["CASH_ON_DELIVERY", "CARD", "WALLET"]),
+  idempotencyKey: z.string().trim().min(8).max(80),
   couponCode: z.string().trim().toUpperCase().optional().default(""),
 });
 
@@ -49,17 +58,31 @@ export type CreateOrderInput = {
   items: CartItem[];
   name: string;
   phone: string;
-  governorate: string;
+  governorateId: string;
+  regionId: string;
   address: string;
-  paymentMethod: "CASH_ON_DELIVERY";
+  paymentMethod: "CASH_ON_DELIVERY" | "CARD" | "WALLET";
+  idempotencyKey: string;
   couponCode?: string;
 };
 
 export type CreateOrderResult =
-  | { ok: true; orderId: string; orderNumber: string; discount: number }
+  | {
+      ok: true;
+      orderId: string;
+      orderNumber: string;
+      discount: number;
+      duplicate?: boolean;
+    }
   | {
       ok: false;
-      error: "GENERIC" | "UNAVAILABLE" | "STOCK" | "COUPON_INVALID";
+      error:
+        | "GENERIC"
+        | "UNAVAILABLE"
+        | "STOCK"
+        | "COUPON_INVALID"
+        | "PAYMENT_UNAVAILABLE"
+        | "VALIDATION";
     };
 
 export async function createOrder(
@@ -76,13 +99,31 @@ export async function createOrder(
 
   const parsed = inputSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, error: "GENERIC" };
+    return { ok: false, error: "VALIDATION" };
   }
 
-  const { items, name, phone, governorate, address, couponCode } = parsed.data;
-  const config = await getShippingConfig();
+  const {
+    items,
+    name,
+    phone,
+    governorateId,
+    regionId,
+    address,
+    paymentMethod,
+    idempotencyKey,
+    couponCode,
+  } = parsed.data;
+  const locale = parsed.data.locale;
 
   try {
+    const paymentSettings = await getPaymentSettings();
+    if (
+      (paymentMethod === "CARD" && !paymentSettings.cardEnabled) ||
+      (paymentMethod === "WALLET" && !paymentSettings.walletEnabled)
+    ) {
+      return { ok: false, error: "PAYMENT_UNAVAILABLE" };
+    }
+
     const ids = items.map((i) => i.productId);
     const products = await prisma.product.findMany({
       where: { id: { in: ids }, isActive: true },
@@ -105,9 +146,8 @@ export async function createOrder(
       const product = products.find((p) => p.id === item.productId);
       if (!product) return { ok: false, error: "UNAVAILABLE" };
 
-      const variant =
-        product.variants.find((v) => v.sizeMl === item.sizeMl) ??
-        product.variants[0];
+      // Strict match on the requested size — never silently charge another size.
+      const variant = product.variants.find((v) => v.sizeMl === item.sizeMl);
       if (!variant) return { ok: false, error: "UNAVAILABLE" };
 
       const lineTotal = variant.price * item.quantity;
@@ -123,10 +163,13 @@ export async function createOrder(
       });
     }
 
-    // Validate the coupon and compute the discount — from the DB only
+    if (subtotal <= 0) return { ok: false, error: "GENERIC" };
+
+    // Validate the coupon and compute the discount — from the DB only.
     let discount = 0;
     let appliedCouponCode: string | null = null;
     let couponId: string | null = null;
+    let couponMaxUses: number | null = null;
     if (couponCode) {
       const coupon = await prisma.coupon.findUnique({
         where: { code: couponCode },
@@ -135,6 +178,7 @@ export async function createOrder(
       const valid =
         coupon &&
         coupon.isActive &&
+        (!coupon.startsAt || coupon.startsAt <= now) &&
         (!coupon.expiresAt || coupon.expiresAt > now) &&
         (!coupon.maxUses || coupon.usedCount < coupon.maxUses) &&
         subtotal >= (coupon.minOrderAmount ?? 0);
@@ -149,64 +193,127 @@ export async function createOrder(
       }
       appliedCouponCode = coupon.code;
       couponId = coupon.id;
+      couponMaxUses = coupon.maxUses;
     }
 
-    const shippingFee =
-      subtotal - discount >= config.freeShippingThreshold
-        ? 0
-        : config.shippingFee;
+    // Shipping is computed from the DB shipping zones (or the flat fallback).
+    const quote = await computeShippingFee({
+      governorateId,
+      regionId,
+      subtotal: subtotal - discount,
+    });
+    const shippingFee = quote.fee;
     const total = subtotal - discount + shippingFee;
     const orderNumber = `ADDX-${Date.now().toString(36).toUpperCase()}-${Math.random()
       .toString(36)
       .slice(2, 6)
       .toUpperCase()}`;
 
-    const order = await prisma.$transaction(async (tx) => {
-      // Decrement stock atomically — if the stock is insufficient the whole order fails
-      for (const line of lines) {
-        const updated = await tx.productVariant.updateMany({
-          where: { id: line.variantId, stock: { gte: line.quantity } },
-          data: { stock: { decrement: line.quantity } },
-        });
-        if (updated.count === 0) {
-          throw new Error("STOCK");
+    const governorateNameAr = quote.governorateAr ?? null;
+    const governorateNameEn = quote.governorateEn ?? null;
+    const regionNameAr = quote.regionAr ?? null;
+    const regionNameEn = quote.regionEn ?? null;
+
+    const govName = nameFor(locale, governorateNameAr, governorateNameEn);
+    const regName = nameFor(locale, regionNameAr, regionNameEn);
+
+    let order: Awaited<ReturnType<typeof prisma.order.create>> | null = null;
+
+    try {
+      order = await prisma.$transaction(async (tx) => {
+        // Decrement stock atomically — if the stock is insufficient the whole order fails
+        for (const line of lines) {
+          const updated = await tx.productVariant.updateMany({
+            where: { id: line.variantId, stock: { gte: line.quantity } },
+            data: { stock: { decrement: line.quantity } },
+          });
+          if (updated.count === 0) {
+            throw new Error("STOCK");
+          }
         }
-      }
 
-      if (couponId) {
-        await tx.coupon.update({
-          where: { id: couponId },
-          data: { usedCount: { increment: 1 } },
+        if (couponId) {
+          // Atomic maxUses enforcement — the check and increment share one conditional update.
+          if (couponMaxUses != null) {
+            const updated = await tx.coupon.updateMany({
+              where: { id: couponId, usedCount: { lt: couponMaxUses } },
+              data: { usedCount: { increment: 1 } },
+            });
+            if (updated.count === 0) throw new Error("COUPON");
+          } else {
+            await tx.coupon.update({
+              where: { id: couponId },
+              data: { usedCount: { increment: 1 } },
+            });
+          }
+        }
+
+        const addressRow = await tx.address.create({
+          data: {
+            userId: session.user.id,
+            fullName: name,
+            phone,
+            governorate: govName,
+            city: regName,
+            district: null,
+            street: address,
+          },
         });
+
+        const created = await tx.order.create({
+          data: {
+            orderNumber,
+            userId: session.user.id,
+            status: "PENDING",
+            paymentMethod,
+            paymentStatus: "PENDING",
+            idempotencyKey,
+            subtotal,
+            shippingFee,
+            discount,
+            total,
+            couponCode: appliedCouponCode,
+            addressId: addressRow.id,
+            items: { create: lines },
+            // Every order gets an immutable audit row — the payment lifecycle is tracked here.
+            transactions: {
+              create: {
+                provider:
+                  paymentMethod === "CASH_ON_DELIVERY" ? "COD" : paymentMethod,
+                status: "PENDING",
+                amount: total,
+              },
+            },
+          },
+        });
+        return created;
+      });
+    } catch (txErr) {
+      // Idempotency: a duplicate submit for the same checkout key reuses the first order.
+      if (
+        txErr instanceof Error &&
+        (txErr as { code?: string }).code === "P2002" &&
+        String(
+          (txErr as { meta?: { target?: unknown } }).meta?.target ?? "",
+        ).includes("idempotencyKey")
+      ) {
+        const existing = await prisma.order.findUnique({
+          where: { idempotencyKey },
+          select: { id: true, orderNumber: true, discount: true },
+        });
+        if (existing) {
+          return {
+            ok: true,
+            orderId: existing.id,
+            orderNumber: existing.orderNumber,
+            discount: existing.discount,
+            duplicate: true,
+          };
+        }
+        return { ok: false, error: "GENERIC" };
       }
-
-      const addressRow = await tx.address.create({
-        data: {
-          userId: session.user.id,
-          fullName: name,
-          phone,
-          governorate,
-          city: governorate,
-          street: address,
-        },
-      });
-
-      return tx.order.create({
-        data: {
-          orderNumber,
-          userId: session.user.id,
-          status: "PENDING",
-          paymentMethod: "CASH_ON_DELIVERY",
-          subtotal,
-          shippingFee,
-          discount,
-          total,
-          couponCode: appliedCouponCode,
-          addressId: addressRow.id,
-          items: { create: lines },
-        },
-      });
-    });
+      throw txErr;
+    }
 
     revalidatePath("/", "layout");
 
@@ -228,14 +335,14 @@ export async function createOrder(
       user?.email
         ? sendEmail({
             to: user.email,
-            subject: `تأكيد طلبك ${order.orderNumber} — ${siteConfig.name}`,
-            html: orderConfirmationEmail(mailInfo),
+            subject: orderConfirmationEmail(locale).subject(order.orderNumber),
+            html: orderConfirmationEmail(locale).html(mailInfo),
           })
         : Promise.resolve(),
       sendEmail({
         to: process.env.ADMIN_EMAIL || siteConfig.adminEmail,
-        subject: `طلب جديد ${order.orderNumber} — ${siteConfig.name}`,
-        html: adminNewOrderEmail(mailInfo),
+        subject: adminNewOrderEmail(locale).subject(order.orderNumber),
+        html: adminNewOrderEmail(locale).html(mailInfo),
       }),
       notifyLowStock(lines.map((l) => l.variantId)),
     ]);
@@ -249,6 +356,9 @@ export async function createOrder(
   } catch (err) {
     if (err instanceof Error && err.message === "STOCK") {
       return { ok: false, error: "STOCK" };
+    }
+    if (err instanceof Error && err.message === "COUPON") {
+      return { ok: false, error: "COUPON_INVALID" };
     }
     return { ok: false, error: "GENERIC" };
   }
@@ -264,7 +374,7 @@ export async function validateCoupon(
 ): Promise<{
   ok: boolean;
   discount?: number;
-  reason?: "INVALID" | "MIN_ORDER" | "EXPIRED" | "USES";
+  reason?: "INVALID" | "MIN_ORDER" | "EXPIRED" | "NOT_STARTED" | "USES";
 }> {
   const parsed = z.string().trim().min(3).max(30).safeParse(code);
   if (!parsed.success) return { ok: false, reason: "INVALID" };
@@ -279,6 +389,9 @@ export async function validateCoupon(
     (coupon.expiresAt && coupon.expiresAt <= now)
   ) {
     return { ok: false, reason: "INVALID" };
+  }
+  if (coupon.startsAt && coupon.startsAt > now) {
+    return { ok: false, reason: "NOT_STARTED" };
   }
   if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
     return { ok: false, reason: "USES" };

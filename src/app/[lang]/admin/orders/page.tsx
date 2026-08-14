@@ -23,12 +23,12 @@ export default async function AdminOrdersPage({
   params: Promise<{ lang: string }>;
   searchParams: Promise<{ status?: string; page?: string }>;
 }) {
-  await requirePermission("orders");
   const [{ lang }, { status, page }] = await Promise.all([
     params,
     searchParams,
   ]);
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("orders", locale);
   const dict = getDictionary(locale);
 
   const selectedStatus = ORDER_STATUSES.includes(status as PrismaOrderStatus)

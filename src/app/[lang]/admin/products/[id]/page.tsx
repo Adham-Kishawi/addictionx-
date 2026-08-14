@@ -16,9 +16,9 @@ export default async function EditProductPage({
 }: {
   params: Promise<{ lang: string; id: string }>;
 }) {
-  await requirePermission("products");
   const { lang, id } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requirePermission("products", locale);
   const dict = getDictionary(locale);
   const collections = await getCollections();
 

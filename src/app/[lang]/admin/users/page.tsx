@@ -15,9 +15,9 @@ export default async function AdminUsersPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
-  await requireAnyPermission(["users", "admins"]);
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
+  await requireAnyPermission(["users", "admins"], locale);
   const dict = getDictionary(locale);
 
   const [users, session] = await Promise.all([

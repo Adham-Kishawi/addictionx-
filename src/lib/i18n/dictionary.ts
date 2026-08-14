@@ -122,12 +122,15 @@ export const dictionary = {
       fullName: "الاسم الكامل",
       phone: "رقم الهاتف",
       governorate: "المحافظة",
+      region: "المنطقة / الحي",
       address: "العنوان بالتفصيل",
       payment: "طريقة الدفع",
       cashOnDelivery: "الدفع عند الاستلام",
       cashOnDeliveryHint: "ادفع بالكاش عند وصول الطلب",
       card: "بطاقة بنكية",
       cardHint: "Visa / Mastercard",
+      wallet: "محفظة إلكترونية",
+      walletHint: "محفظة موبايل (فودافون كاش، انستاباي...)",
       placeOrder: "تأكيد الطلب",
       orderSummary: "ملخص الطلب",
       successTitle: "تم استلام طلبك!",
@@ -139,6 +142,8 @@ export const dictionary = {
         unavailable: "أحد المنتجات في السلة لم يعد متوفرًا",
         stock: "الكمية المطلوبة تتجاوز المخزون المتاح",
         coupon_invalid: "كود الخصم غير صالح، حاول مرة أخرى",
+        payment_unavailable: "طريقة الدفع هذه غير متاحة حاليًا",
+        validation: "تحقق من الحقول المحددة وحاول مرة أخرى",
       },
       couponTitle: "كود الخصم",
       couponPlaceholder: "CODE10",
@@ -149,6 +154,7 @@ export const dictionary = {
         name: "الاسم مطلوب",
         phone: "رقم هاتف صحيح مطلوب",
         governorate: "اختر المحافظة",
+        region: "اختر المنطقة / الحي",
         address: "العنوان مطلوب",
       },
     },
@@ -196,10 +202,40 @@ export const dictionary = {
       errorInvalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
       errorEmailExists: "هذا البريد الإلكتروني مسجّل بالفعل",
       errorGeneric: "حدث خطأ ما، حاول مرة أخرى",
+      confirmPassword: "تأكيد كلمة المرور",
+      namePlaceholder: "أحمد علي",
+      emailPlaceholder: "you@example.com",
+      fieldRequired: "هذا الحقل مطلوب",
+      fieldNameError: "يجب ألا يقل الاسم عن حرفين",
+      fieldEmailError: "أدخل بريدًا إلكترونيًا صحيحًا",
+      fieldPasswordError: "كلمة المرور يجب ألا تقل عن 8 أحرف",
+      fieldPasswordStrength:
+        "كلمة المرور يجب ألا تقل عن 8 أحرف وتحتوي على حرف ورقم",
+      fieldPasswordMismatch: "كلمتا المرور غير متطابقتين",
       tabOverview: "نظرة عامة",
       tabOrders: "طلباتي",
       tabAddresses: "عناويني",
       tabWishlist: "مفضلتي",
+      tabSettings: "الإعدادات",
+      settings: "الإعدادات",
+      profileSettings: "إعدادات الحساب",
+      profilePicture: "الصورة الشخصية",
+      uploadPicture: "رفع صورة",
+      changePicture: "تغيير الصورة",
+      removePicture: "إزالة الصورة",
+      pictureBadType: "يُسمح فقط بصور JPG أو PNG أو WebP",
+      pictureTooLarge: "الصورة كبيرة جدًا — الحد الأقصى 5MB",
+      pictureError: "تعذّر رفع الصورة — حاول مرة أخرى",
+      changePassword: "تغيير كلمة المرور",
+      currentPassword: "كلمة المرور الحالية",
+      newPassword: "كلمة المرور الجديدة",
+      confirmNewPassword: "تأكيد كلمة المرور الجديدة",
+      updateProfile: "حفظ التغييرات",
+      profileUpdated: "تم تحديث الحساب",
+      updateProfileError: "تعذّر حفظ التغييرات — حاول مرة أخرى",
+      passwordChanged: "تم تغيير كلمة المرور بنجاح",
+      passwordChangeError: "تعذّر تغيير كلمة المرور — حاول مرة أخرى",
+      wrongCurrentPassword: "كلمة المرور الحالية غير صحيحة",
       wishlist: "المفضلة",
       noWishlist: "لا توجد منتجات في المفضلة بعد",
       addToWishlist: "أضف إلى المفضلة",
@@ -380,6 +416,31 @@ export const dictionary = {
       shippingSettings: "إعدادات الشحن",
       freeShippingThreshold: "حد الشحن المجاني",
       defaultCarrier: "شركة الشحن الافتراضية",
+      paymentSettings: "إعدادات الدفع",
+      paymentSettingsDesc: "اختر طرق الدفع المتاحة للعملاء عند إتمام الطلب",
+      enableCashOnDelivery: "الدفع عند الاستلام",
+      enableCard: "بطاقة بنكية (Visa / Mastercard)",
+      enableWallet: "محفظة إلكترونية",
+      paymentNotes: "تعليمات الدفع (تظهر للعميل)",
+      paymentSettingsSaved: "تم حفظ إعدادات الدفع",
+      shippingZones: "مناطق الشحن",
+      shippingZonesDesc:
+        "حدد رسوم التوصيل لكل محافظة ومنطقة — يتراجع المتجر للرسوم الافتراضية عند عدم التطابق.",
+      addGovernorate: "إضافة محافظة",
+      editGovernorate: "تعديل المحافظة",
+      addRegion: "إضافة منطقة",
+      editRegion: "تعديل المنطقة",
+      governorateNameAr: "الاسم بالعربية",
+      governorateNameEn: "الاسم بالإنجليزية",
+      regionNameAr: "اسم المنطقة بالعربية",
+      regionNameEn: "اسم المنطقة بالإنجليزية",
+      regionFeeEgp: "رسوم التوصيل (جنيه)",
+      governorateActive: "نشطة",
+      noGovernorates: "لا توجد محافظات بعد — أضف أول محافظة.",
+      noRegions: "لا توجد مناطق بعد.",
+      zoneSaved: "تم الحفظ",
+      zoneSaveError: "فشل الحفظ — تحقق من البيانات",
+      feeEgp: "الرسوم (جنيه)",
       couponCode: "كود الخصم",
       couponType: "نوع الخصم",
       couponTypePercent: "نسبة مئوية",
@@ -646,12 +707,15 @@ export const dictionary = {
       fullName: "Full Name",
       phone: "Phone Number",
       governorate: "Governorate",
+      region: "Region / Area",
       address: "Full Address",
       payment: "Payment Method",
       cashOnDelivery: "Cash on Delivery",
       cashOnDeliveryHint: "Pay in cash when your order arrives",
       card: "Card",
       cardHint: "Visa / Mastercard",
+      wallet: "Wallet",
+      walletHint: "Mobile wallet (Vodafone Cash, Instapay...)",
       placeOrder: "Place Order",
       orderSummary: "Order Summary",
       successTitle: "Order Received!",
@@ -664,6 +728,8 @@ export const dictionary = {
         unavailable: "One of the items in your cart is no longer available.",
         stock: "The requested quantity exceeds the available stock.",
         coupon_invalid: "This coupon code is no longer valid.",
+        payment_unavailable: "This payment method is not available right now.",
+        validation: "Please check the highlighted fields and try again.",
       },
       couponTitle: "Discount Code",
       couponPlaceholder: "CODE10",
@@ -674,6 +740,7 @@ export const dictionary = {
         name: "Name is required",
         phone: "A valid phone number is required",
         governorate: "Select a governorate",
+        region: "Select a region / area",
         address: "Address is required",
       },
     },
@@ -722,10 +789,40 @@ export const dictionary = {
       errorInvalidCredentials: "Invalid email or password",
       errorEmailExists: "This email is already registered",
       errorGeneric: "Something went wrong, please try again",
+      confirmPassword: "Confirm Password",
+      namePlaceholder: "Ahmed Ali",
+      emailPlaceholder: "you@example.com",
+      fieldRequired: "This field is required",
+      fieldNameError: "Name must be at least 2 characters",
+      fieldEmailError: "Enter a valid email address",
+      fieldPasswordError: "Password must be at least 8 characters",
+      fieldPasswordStrength:
+        "Password must be at least 8 characters and include a letter and a number",
+      fieldPasswordMismatch: "Passwords do not match",
       tabOverview: "Overview",
       tabOrders: "My Orders",
       tabAddresses: "My Addresses",
       tabWishlist: "My Wishlist",
+      tabSettings: "Settings",
+      settings: "Settings",
+      profileSettings: "Profile Settings",
+      profilePicture: "Profile Picture",
+      uploadPicture: "Upload picture",
+      changePicture: "Change picture",
+      removePicture: "Remove picture",
+      pictureBadType: "Only JPG, PNG or WebP images are allowed",
+      pictureTooLarge: "The image is too large — max 5MB",
+      pictureError: "Could not upload the picture — try again",
+      changePassword: "Change Password",
+      currentPassword: "Current Password",
+      newPassword: "New Password",
+      confirmNewPassword: "Confirm New Password",
+      updateProfile: "Save Changes",
+      profileUpdated: "Profile updated",
+      updateProfileError: "Could not save changes — try again",
+      passwordChanged: "Password changed successfully",
+      passwordChangeError: "Could not change password — try again",
+      wrongCurrentPassword: "The current password is incorrect",
       wishlist: "Wishlist",
       noWishlist: "No products in your wishlist yet",
       addToWishlist: "Add to wishlist",
@@ -907,6 +1004,32 @@ export const dictionary = {
       shippingSettings: "Shipping Settings",
       freeShippingThreshold: "Free Shipping Threshold",
       defaultCarrier: "Default Carrier",
+      paymentSettings: "Payment Settings",
+      paymentSettingsDesc:
+        "Choose which payment methods customers can use at checkout",
+      enableCashOnDelivery: "Cash on Delivery",
+      enableCard: "Card (Visa / Mastercard)",
+      enableWallet: "Mobile wallet",
+      paymentNotes: "Payment instructions (shown to the customer)",
+      paymentSettingsSaved: "Payment settings saved",
+      shippingZones: "Shipping Zones",
+      shippingZonesDesc:
+        "Set a delivery fee for each governorate and region — the store falls back to the flat fee when there is no match.",
+      addGovernorate: "Add Governorate",
+      editGovernorate: "Edit Governorate",
+      addRegion: "Add Region",
+      editRegion: "Edit Region",
+      governorateNameAr: "Arabic Name",
+      governorateNameEn: "English Name",
+      regionNameAr: "Region Arabic Name",
+      regionNameEn: "Region English Name",
+      regionFeeEgp: "Delivery Fee (EGP)",
+      governorateActive: "Active",
+      noGovernorates: "No governorates yet — add your first one.",
+      noRegions: "No regions yet.",
+      zoneSaved: "Saved",
+      zoneSaveError: "Failed to save — check the data",
+      feeEgp: "Fee (EGP)",
       couponCode: "Coupon Code",
       couponType: "Discount Type",
       couponTypePercent: "Percentage",
@@ -1057,8 +1180,41 @@ export const dictionary = {
 
 export type Dictionary = (typeof dictionary)[Locale];
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// Deep-merge `source` on top of `base`. Missing keys in `source` fall back
+// to `base` — so an incomplete Arabic dictionary always degrades to English
+// instead of rendering "undefined".
+function deepMerge<T extends Record<string, unknown>>(
+  base: T,
+  source: Partial<T>,
+): T {
+  const out: Record<string, unknown> = { ...base };
+  for (const key of Object.keys(source)) {
+    const baseValue = base[key];
+    const sourceValue = source[key];
+    if (isPlainObject(baseValue) && isPlainObject(sourceValue)) {
+      out[key] = deepMerge(
+        baseValue as Record<string, unknown>,
+        sourceValue as Record<string, unknown>,
+      );
+    } else if (sourceValue !== undefined) {
+      out[key] = sourceValue;
+    }
+  }
+  return out as T;
+}
+
 export function getDictionary(locale: Locale): Dictionary {
-  return dictionary[locale];
+  if (locale === "ar") {
+    return deepMerge(
+      dictionary.en as unknown as Record<string, unknown>,
+      dictionary.ar as unknown as Record<string, unknown>,
+    ) as Dictionary;
+  }
+  return dictionary.en;
 }
 
 export function isLocale(value: string): value is Locale {

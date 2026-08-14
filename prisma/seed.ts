@@ -102,6 +102,72 @@ async function main() {
   }
   console.log(`✅ Seeded ${collections.length} collections`);
 
+  // ---------- Shipping zones (governorates + default region) ----------
+  const governorates = [
+    { en: "Cairo", ar: "القاهرة" },
+    { en: "Giza", ar: "الجيزة" },
+    { en: "Alexandria", ar: "الإسكندرية" },
+    { en: "Port Said", ar: "بورسعيد" },
+    { en: "Suez", ar: "السويس" },
+    { en: "Ismailia", ar: "الإسماعيلية" },
+    { en: "Damietta", ar: "دمياط" },
+    { en: "Dakahlia", ar: "الدقهلية" },
+    { en: "Sharqia", ar: "الشرقية" },
+    { en: "Qalyubia", ar: "القليوبية" },
+    { en: "Kafr El Sheikh", ar: "كفر الشيخ" },
+    { en: "Gharbia", ar: "الغربية" },
+    { en: "Menoufia", ar: "المنوفية" },
+    { en: "Beheira", ar: "البحيرة" },
+    { en: "Fayoum", ar: "الفيوم" },
+    { en: "Beni Suef", ar: "بني سويف" },
+    { en: "Minya", ar: "المنيا" },
+    { en: "Asyut", ar: "أسيوط" },
+    { en: "Sohag", ar: "سوهاج" },
+    { en: "Qena", ar: "قنا" },
+    { en: "Luxor", ar: "الأقصر" },
+    { en: "Aswan", ar: "أسوان" },
+    { en: "Red Sea", ar: "البحر الأحمر" },
+    { en: "New Valley", ar: "الوادي الجديد" },
+    { en: "Matrouh", ar: "مطروح" },
+    { en: "North Sinai", ar: "شمال سيناء" },
+    { en: "South Sinai", ar: "جنوب سيناء" },
+  ];
+  const DEFAULT_REGION_FEE = Number(
+    process.env.DEFAULT_SHIPPING_FEE_QIRSH || 5000,
+  );
+  for (const [i, g] of governorates.entries()) {
+    const gov = await prisma.governorate.upsert({
+      where: { id: `gov-${g.en.toLowerCase().replace(/\s+/g, "-")}` },
+      update: { nameAr: g.ar, nameEn: g.en, sortOrder: (i + 1) * 10 },
+      create: {
+        id: `gov-${g.en.toLowerCase().replace(/\s+/g, "-")}`,
+        nameAr: g.ar,
+        nameEn: g.en,
+        sortOrder: (i + 1) * 10,
+      },
+    });
+    await prisma.region.upsert({
+      where: {
+        id: `reg-${gov.id}-standard`,
+      },
+      update: {
+        nameAr: "المنطقة الرئيسية",
+        nameEn: "Main Area",
+        shippingFee: DEFAULT_REGION_FEE,
+      },
+      create: {
+        id: `reg-${gov.id}-standard`,
+        governorateId: gov.id,
+        nameAr: "المنطقة الرئيسية",
+        nameEn: "Main Area",
+        shippingFee: DEFAULT_REGION_FEE,
+      },
+    });
+  }
+  console.log(
+    `✅ Seeded ${governorates.length} governorates with a default region`,
+  );
+
   console.log("⚠ غيّر كلمة مرور الأدمن إذا لم تضبط ADMIN_PASSWORD.");
 }
 
