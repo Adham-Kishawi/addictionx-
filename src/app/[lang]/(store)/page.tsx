@@ -211,20 +211,12 @@ export default async function Home({
         <HeroMelt />
       </div>
 
-      {/* ====== Hero separator — visual break between hero and showcase ====== */}
-      <div className="relative flex items-center justify-center overflow-hidden border-y border-border/40 bg-background/80 py-8 backdrop-blur-sm">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent" />
-        <div className="relative flex flex-col items-center gap-3">
-          <HeartbeatLine className="h-6 w-32 text-primary/60" />
-          <div className="flex items-center gap-2">
-            <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/30" />
-            <span className="text-[10px] font-medium tracking-[0.3em] text-muted-foreground/60 uppercase">
-              {dict.home.separatorText || "EXPERIENCE"}
-            </span>
-            <div className="h-px w-8 bg-gradient-to-l from-transparent to-primary/30" />
-          </div>
-        </div>
-      </div>
+      {/* ====== Hero separator — animated marquee strip between hero and showcase ====== */}
+      <Marquee
+        items={dict.home.heroSeparator || dict.home.ticker}
+        speed={60}
+        className="border-y border-primary/30 bg-gradient-to-r from-background via-primary/5 to-background py-3 backdrop-blur-sm"
+      />
 
       {/* ====== ROTATING SHOWCASE — 95vh stage: the hero product assembles with the
             wheel (full-bleed frame scrub + crossfade), animation COMPLETES when the

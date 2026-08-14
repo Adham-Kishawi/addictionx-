@@ -45,6 +45,14 @@ export const dictionary = {
     },
     home: {
       separatorText: "التجربة",
+      heroSeparator: [
+        "عطور فاخرة",
+        "Feel the Rush",
+        "توصيل سريع",
+        "منتجات أصلية",
+        "ضمان الجودة",
+        "ADDICTIONX",
+      ],
       featuredEyebrow: "محبوبة الجمهور",
       featuredTitle: "الأكثر طلبًا",
       featuredSubtitle: "العطور التي لا تنتهي من أرففنا",
@@ -634,6 +642,14 @@ export const dictionary = {
     },
     home: {
       separatorText: "EXPERIENCE",
+      heroSeparator: [
+        "Luxury Fragrances",
+        "Feel the Rush",
+        "Fast Delivery",
+        "Authentic Products",
+        "Quality Guaranteed",
+        "ADDICTIONX",
+      ],
       featuredEyebrow: "Crowd Favorites",
       featuredTitle: "Best Sellers",
       featuredSubtitle: "The scents that never leave our shelves",
