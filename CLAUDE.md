@@ -486,6 +486,50 @@ walid's request: **the customer must be visually amazed** — every storefront s
 - **`notifyLowStock(variantIds, threshold=5)`** in `src/lib/email.ts` — dynamic import for prisma; checks whether any variant reached `stock<=5` and sends an admin email `lowStockEmail`. Called after `createOrder` and after `createManualOrder` within `Promise.allSettled`.
 - Dictionary keys: `dict.admin.newOrder/createOrder/selectProduct/selectSize/addLine/orderLines/orderCreated/orderCreateError/emptyLines/orderTotal` AR/EN.
 
+### 22. Rate Limiting (Security - Wave 41)
+
+**Complete IP-based and user-based rate limiting system to protect against brute-force attacks and abuse:**
+
+- **Infrastructure (`src/lib/rate-limit.ts`):**
+  - Built on `@upstash/ratelimit` + `@upstash/redis` (Upstash serverless Redis)
+  - Sliding window algorithm for accurate rate limiting
+  - Four tiers with different limits:
+    - `login`: 5 attempts per 15 minutes per IP (strict - protects auth endpoints)
+    - `order`: 10 orders per hour per user (medium - prevents order spam)
+    - `api`: 100 requests per minute per IP (lenient - for public API reads)
+    - `admin`: 30 actions per minute per admin (medium - protects admin operations)
+  - **Graceful degradation:** If Redis is not configured (no `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`), all rate limiters return `null` and `checkRateLimit` allows all requests (dev mode fallback)
+  - `getClientIp(headers)` extracts client IP from `x-forwarded-for` or `x-real-ip` (works with Vercel/proxies)
+
+- **Protected Endpoints:**
+  - `registerAction` (`src/features/auth/actions.ts`): 5 registration attempts per 15 minutes per IP
+  - `createOrder` (`src/features/checkout/actions.ts`): 10 orders per hour per user
+  - Returns `TOO_MANY_ATTEMPTS` error when limit exceeded
+
+- **User-Facing Errors:**
+  - Dictionary keys: `dict.auth.errorTooManyAttempts` (AR/EN) — "عدد محاولات كثيرة جداً، حاول مرة أخرى بعد 15 دقيقة" / "Too many attempts, please try again in 15 minutes"
+  - `dict.checkout.errors.too_many_attempts` (AR/EN) — "عدد محاولات كثيرة جداً، حاول مرة أخرى بعد قليل" / "Too many attempts, please try again later"
+  - Checkout form displays rate limit error alongside other checkout errors
+
+- **Environment Variables (Required for Production):**
+  - `UPSTASH_REDIS_REST_URL` — Upstash Redis REST endpoint
+  - `UPSTASH_REDIS_REST_TOKEN` — Upstash authentication token
+  - Without these, rate limiting is disabled (dev mode)
+
+- **Why Upstash Redis:**
+  - Serverless architecture (no server management, pay-per-request)
+  - Global edge caching (low latency worldwide)
+  - Native Vercel integration (works out of the box on deployment)
+  - Free tier: 10,000 commands/day (sufficient for MVP)
+
+- **Security Benefits:**
+  - Blocks credential stuffing attacks on login/registration
+  - Prevents order spam and coupon enumeration
+  - Protects admin endpoints from automated abuse
+  - Rate limit analytics (tracks attempts, can identify attack patterns)
+
+**Implementation Status:** ✅ Complete (Wave 41) — all endpoints protected, graceful fallback for dev, user-facing errors in both languages
+
 ---
 
 ## Project structure (Feature-Based)

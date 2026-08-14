@@ -313,6 +313,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
                     | "stock"
                     | "coupon_invalid"
                     | "payment_unavailable"
+                    | "too_many_attempts"
                     | "validation"
                 ]
               }

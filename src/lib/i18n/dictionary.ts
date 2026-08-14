@@ -823,6 +823,7 @@ export const dictionary = {
         stock: "The requested quantity exceeds the available stock.",
         coupon_invalid: "This coupon code is no longer valid.",
         payment_unavailable: "This payment method is not available right now.",
+        too_many_attempts: "Too many attempts, please try again later.",
         validation: "Please check the highlighted fields and try again.",
       },
       couponTitle: "Discount Code",
@@ -1214,6 +1215,16 @@ export const dictionary = {
       sliderRemove: "Remove slide",
       sliderProductInactive:
         "This product is currently hidden — the slide won't show on the site until you activate the product",
+      sliderPreview: "Live preview",
+      sliderPreviewHint:
+        "How the slider looks on the homepage — hidden slides or slides whose product is hidden don't appear here",
+      sliderStatsVisible: "visible",
+      sliderStatsHidden: "hidden",
+      sliderStatsInactive: "inactive product",
+      sliderSearch: "Search products...",
+      sliderNoMatch: "No matching products",
+      sliderAlreadyAdded: "Already added",
+      sliderDragHint: "Drag a card to reorder it, or use the arrows",
       deleteCollectionChoice:
         "This collection has products — choose what happens to them",
       deleteMoveProducts: "Move products to another collection",
