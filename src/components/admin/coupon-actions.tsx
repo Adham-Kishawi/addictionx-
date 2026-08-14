@@ -20,17 +20,23 @@ export function CouponActions({
 
   const onToggle = async () => {
     setPending(true);
-    await toggleCoupon(couponId);
-    router.refresh();
-    setPending(false);
+    try {
+      await toggleCoupon(couponId);
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
   };
 
   const onDelete = async () => {
     if (!window.confirm(dict.admin.deleteConfirm)) return;
     setPending(true);
-    await deleteCoupon(couponId);
-    router.refresh();
-    setPending(false);
+    try {
+      await deleteCoupon(couponId);
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
   };
 
   return (

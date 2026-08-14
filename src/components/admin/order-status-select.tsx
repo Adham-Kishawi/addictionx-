@@ -21,9 +21,12 @@ export function OrderStatusSelect({
 
   const onChange = async (value: string) => {
     setPending(true);
-    await updateOrderStatus(orderId, value);
-    router.refresh();
-    setPending(false);
+    try {
+      await updateOrderStatus(orderId, value);
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
   };
 
   return (

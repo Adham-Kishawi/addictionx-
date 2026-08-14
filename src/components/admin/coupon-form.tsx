@@ -20,13 +20,16 @@ export function CouponForm({ dict }: { dict: Dictionary }) {
     e.preventDefault();
     setPending(true);
     setState({});
-    const fd = new FormData(e.currentTarget);
-    const res = await createCoupon(undefined, fd);
-    setState(res);
-    setPending(false);
-    if (res.success) {
-      e.currentTarget.reset();
-      router.refresh();
+    try {
+      const fd = new FormData(e.currentTarget);
+      const res = await createCoupon(undefined, fd);
+      setState(res);
+      if (res.success) {
+        e.currentTarget.reset();
+        router.refresh();
+      }
+    } finally {
+      setPending(false);
     }
   };
 

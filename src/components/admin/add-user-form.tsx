@@ -26,15 +26,18 @@ export function AddUserForm({
     if (!canCreate) return;
     setPending(true);
     setState({});
-    const fd = new FormData(e.currentTarget);
-    // A limited admin may only create customers — force the role.
-    if (limited) fd.set("role", "CUSTOMER");
-    const res = await createUser(undefined, fd);
-    setState(res);
-    setPending(false);
-    if (res.success) {
-      e.currentTarget.reset();
-      router.refresh();
+    try {
+      const fd = new FormData(e.currentTarget);
+      // A limited admin may only create customers — force the role.
+      if (limited) fd.set("role", "CUSTOMER");
+      const res = await createUser(undefined, fd);
+      setState(res);
+      if (res.success) {
+        e.currentTarget.reset();
+        router.refresh();
+      }
+    } finally {
+      setPending(false);
     }
   };
 

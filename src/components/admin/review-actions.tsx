@@ -23,9 +23,12 @@ export function ReviewActions({
   const run = async (fn: () => Promise<void>) => {
     if (pending) return;
     setPending(true);
-    await fn();
-    router.refresh();
-    setPending(false);
+    try {
+      await fn();
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
   };
 
   return (

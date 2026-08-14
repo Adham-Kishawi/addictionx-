@@ -1,23 +1,36 @@
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { NewsletterActions } from "@/components/admin/newsletter-actions";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 20;
+
 export default async function AdminNewsletterPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ lang: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   await requirePermission("newsletter");
-  const { lang } = await params;
+  const [{ lang }, { page }] = await Promise.all([params, searchParams]);
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
-  const entries = await prisma.newsletterEntry.findMany({
-    orderBy: { createdAt: "desc" },
-  });
+  const currentPage = Math.max(1, Number(page) || 1);
+
+  const [entries, totalEntries] = await Promise.all([
+    prisma.newsletterEntry.findMany({
+      orderBy: { createdAt: "desc" },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.newsletterEntry.count(),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalEntries / PAGE_SIZE));
 
   return (
     <div>
@@ -34,8 +47,12 @@ export default async function AdminNewsletterPage({
           <table className="w-full min-w-[520px] text-sm">
             <thead>
               <tr className="border-b border-border text-start text-xs text-muted-foreground">
-                <th className="px-4 py-3 text-start font-medium">Email</th>
-                <th className="px-4 py-3 text-start font-medium">Date</th>
+                <th className="px-4 py-3 text-start font-medium">
+                  {dict.account.email}
+                </th>
+                <th className="px-4 py-3 text-start font-medium">
+                  {dict.admin.date}
+                </th>
                 <th className="px-4 py-3 text-start font-medium">
                   {dict.admin.status}
                 </th>
@@ -82,6 +99,24 @@ export default async function AdminNewsletterPage({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <Link
+              key={p}
+              href={`/${locale}/admin/newsletter${p > 1 ? `?page=${p}` : ""}`}
+              className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
+                currentPage === p
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              }`}
+            >
+              {p}
+            </Link>
+          ))}
         </div>
       )}
     </div>

@@ -185,7 +185,8 @@ export function ManualOrderForm({
                     >
                       {product?.variants.map((v) => (
                         <option key={v.id} value={v.id}>
-                          {v.sizeMl}ml — {formatPrice(v.price)} ({v.stock})
+                          {v.sizeMl}ml — {formatPrice(v.price, locale)} (
+                          {v.stock})
                         </option>
                       ))}
                     </select>
@@ -226,7 +227,7 @@ export function ManualOrderForm({
         <div className="mt-4 flex items-center justify-between text-sm">
           <span className="text-muted-foreground">{dict.admin.orderTotal}</span>
           <span className="font-semibold text-primary">
-            {formatPrice(totalQirsh)}
+            {formatPrice(totalQirsh, locale)}
           </span>
         </div>
       </section>
@@ -273,6 +274,10 @@ function Field({
   );
 }
 
-function formatPrice(qirsh: number) {
-  return `${(qirsh / 100).toLocaleString("en-EG")} ج.م`;
+function formatPrice(qirsh: number, locale: Locale) {
+  const pounds = qirsh / 100;
+  const symbol = locale === "ar" ? " ج.م" : " EGP";
+  return `${pounds.toLocaleString(locale === "ar" ? "ar-EG" : "en-US", {
+    maximumFractionDigits: 0,
+  })}${symbol}`;
 }

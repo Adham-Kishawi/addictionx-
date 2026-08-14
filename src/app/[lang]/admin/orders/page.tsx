@@ -14,27 +14,40 @@ import type { OrderStatus as PrismaOrderStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 20;
+
 export default async function AdminOrdersPage({
   params,
   searchParams,
 }: {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string }>;
 }) {
   await requirePermission("orders");
-  const [{ lang }, { status }] = await Promise.all([params, searchParams]);
+  const [{ lang }, { status, page }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
   const selectedStatus = ORDER_STATUSES.includes(status as PrismaOrderStatus)
     ? (status as PrismaOrderStatus)
     : null;
+  const currentPage = Math.max(1, Number(page) || 1);
+  const where = selectedStatus ? { status: selectedStatus } : undefined;
 
-  const orders = await prisma.order.findMany({
-    where: selectedStatus ? { status: selectedStatus } : undefined,
-    include: { user: true, items: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const [orders, totalOrders] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      include: { user: true, items: true },
+      orderBy: { createdAt: "desc" },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.order.count({ where }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalOrders / PAGE_SIZE));
 
   return (
     <div>
@@ -127,6 +140,19 @@ export default async function AdminOrdersPage({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <FilterChip
+              key={p}
+              href={`/${locale}/admin/orders?${selectedStatus ? `status=${selectedStatus}&` : ""}page=${p}`}
+              active={currentPage === p}
+              label={String(p)}
+            />
+          ))}
         </div>
       )}
     </div>

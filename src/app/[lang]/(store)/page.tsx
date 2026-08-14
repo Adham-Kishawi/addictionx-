@@ -38,6 +38,7 @@ import {
 } from "@/features/catalog/data/collection-assets";
 import { getWishlistIds } from "@/features/account/data";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
+import { getHomeSectionsConfig } from "@/lib/store-config";
 
 export const dynamic = "force-dynamic";
 
@@ -50,10 +51,11 @@ export default async function Home({
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
-  const [allProducts, collections, wishlist] = await Promise.all([
+  const [allProducts, collections, wishlist, homeSections] = await Promise.all([
     getProducts(),
     getCollections(),
     getWishlistIds(),
+    getHomeSectionsConfig(),
   ]);
   // Best sellers: admin-controlled order (bestsellerOrder), top 4 shown.
   // Equal orders keep getProducts() order (bestsellerOrder asc, createdAt desc).
@@ -323,47 +325,59 @@ export default async function Home({
             lit shelf; spotlight cone + floor reflection + mouse tilt on the
             active card, arrows/tabs/drag to switch (see collection-shelf.tsx).
             The bottle renders are walid's fresh generations (public/shelf/*)
-            — until they land, the mood backdrops carry the cards ====== */}
-      <section className="relative">
-        <div className="mx-auto max-w-7xl px-4 pt-20 sm:px-6 lg:px-8">
-          <div className="mb-6 text-center">
-            <SectionHeading
-              eyebrow="Feel the Rush"
-              title={dict.home.collectionsTitle}
-              subtitle={dict.home.collectionsSubtitle}
-            />
+            — until they land, the mood backdrops carry the cards. The section
+            is dashboard-controllable (show/hide + copy, see settings) ====== */}
+      {homeSections.showCollections && collections.length > 0 ? (
+        <section className="relative">
+          <div className="mx-auto max-w-7xl px-4 pt-20 sm:px-6 lg:px-8">
+            <div className="mb-6 text-center">
+              <SectionHeading
+                eyebrow={
+                  homeSections.collectionsEyebrow[locale] || "Feel the Rush"
+                }
+                title={
+                  homeSections.collectionsTitle[locale] ||
+                  dict.home.collectionsTitle
+                }
+                subtitle={
+                  homeSections.collectionsSubtitle[locale] ||
+                  dict.home.collectionsSubtitle
+                }
+              />
+            </div>
           </div>
-        </div>
 
-        <CollectionShelf
-          rtl={locale === "ar"}
-          cards={collections.map((collection) => {
-            const collectionProducts = allProducts.filter(
-              (p) => p.collection === collection.slug,
-            );
-            const cover = collectionProducts[0] ?? {
-              image: undefined,
-              art: { from: "#1e1b4b", to: "#020617", glow: "#6366f1" },
-            };
-            const tagline =
-              locale === "ar"
-                ? (cover?.descriptionAr ?? "")
-                : (cover?.descriptionEn ?? "");
-            return {
-              key: collection.slug,
-              name: locale === "ar" ? collection.nameAr : collection.nameEn,
-              nameEn: collection.nameEn,
-              nameAr: collection.nameAr,
-              tagline,
-              href: `/${locale}/collections/${collection.slug}`,
-              bottle: shelfBottle(collection.slug),
-              image: collectionBackdrop(collection.slug) ?? null,
-              tint: shelfTint(collection.slug) ?? cover.art?.glow ?? "#ef4444",
-              hrefLabel: dict.home.signatureCta,
-            };
-          })}
-        />
-      </section>
+          <CollectionShelf
+            rtl={locale === "ar"}
+            cards={collections.map((collection) => {
+              const collectionProducts = allProducts.filter(
+                (p) => p.collection === collection.slug,
+              );
+              const cover = collectionProducts[0] ?? {
+                image: undefined,
+                art: { from: "#1e1b4b", to: "#020617", glow: "#6366f1" },
+              };
+              const tagline =
+                locale === "ar"
+                  ? (cover?.descriptionAr ?? "")
+                  : (cover?.descriptionEn ?? "");
+              return {
+                key: collection.slug,
+                name: locale === "ar" ? collection.nameAr : collection.nameEn,
+                nameEn: collection.nameEn,
+                nameAr: collection.nameAr,
+                tagline,
+                href: `/${locale}/collections/${collection.slug}`,
+                bottle: shelfBottle(collection.slug),
+                image: collectionBackdrop(collection.slug) ?? null,
+                tint:
+                  shelfTint(collection.slug) ?? cover.art?.glow ?? "#ef4444",
+                hrefLabel: dict.home.signatureCta,
+              };
+            })}
+          />
+        </section>
+      ) : null}
 
       {/* ====== Closing CTA — layered depth scene: watermark parallax (z-0) →
             glow (z-1) → drifting orbs (z-2) → sparks (z-5) → glass card

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { defaultLocale } from "@/lib/i18n/dictionary";
 import {
   ADMIN_PERMISSIONS,
   hasPermission,
@@ -28,17 +29,17 @@ export {
 export async function requirePermission(permission: AdminPermission) {
   const session = await auth();
   if (!session?.user) {
-    redirect("/login");
+    redirect(`/${defaultLocale}/login`);
   }
   if (session.user.role !== "ADMIN") {
-    redirect("/account");
+    redirect(`/${defaultLocale}/account`);
   }
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { permissions: true },
   });
   if (!user || !hasPermission(user.permissions, permission)) {
-    redirect("/admin");
+    redirect(`/${defaultLocale}/admin`);
   }
 }
 
@@ -47,17 +48,17 @@ export async function requirePermission(permission: AdminPermission) {
 export async function requireAdmin() {
   const session = await auth();
   if (!session?.user) {
-    redirect("/login");
+    redirect(`/${defaultLocale}/login`);
   }
   if (session.user.role !== "ADMIN") {
-    redirect("/account");
+    redirect(`/${defaultLocale}/account`);
   }
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { permissions: true },
   });
   if (!user) {
-    redirect("/account");
+    redirect(`/${defaultLocale}/account`);
   }
 }
 
@@ -65,16 +66,16 @@ export async function requireAdmin() {
 export async function requireAnyPermission(permissions: AdminPermission[]) {
   const session = await auth();
   if (!session?.user) {
-    redirect("/login");
+    redirect(`/${defaultLocale}/login`);
   }
   if (session.user.role !== "ADMIN") {
-    redirect("/account");
+    redirect(`/${defaultLocale}/account`);
   }
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { permissions: true },
   });
   if (!user || !permissions.some((p) => hasPermission(user.permissions, p))) {
-    redirect("/admin");
+    redirect(`/${defaultLocale}/admin`);
   }
 }

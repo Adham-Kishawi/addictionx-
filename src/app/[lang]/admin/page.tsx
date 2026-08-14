@@ -6,6 +6,8 @@ import {
   Wallet,
   ExternalLink,
   AlertTriangle,
+  Clock,
+  TrendingUp,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -34,27 +36,64 @@ export default async function AdminPage({
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
-  const [userCount, orderCount, productCount, revenue, recentOrders, lowStock] =
-    await Promise.all([
-      prisma.user.count(),
-      prisma.order.count(),
-      prisma.product.count(),
-      prisma.order.aggregate({
-        _sum: { total: true },
-        where: { status: { notIn: ["CANCELLED", "REFUNDED"] } },
-      }),
-      prisma.order.findMany({
-        take: 8,
-        orderBy: { createdAt: "desc" },
-        include: { user: true, items: true },
-      }),
-      prisma.productVariant.findMany({
-        where: { stock: { lte: 5 } },
-        take: 8,
-        orderBy: { stock: "asc" },
-        include: { product: true },
-      }),
-    ]);
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
+  const startOfChart = new Date(now.getTime() - 13 * 24 * 60 * 60 * 1000);
+  startOfChart.setHours(0, 0, 0, 0);
+
+  const [
+    userCount,
+    orderCount,
+    productCount,
+    revenue,
+    recentOrders,
+    lowStock,
+    pendingCount,
+    todayOrders,
+    chartOrders,
+    paidOrderCount,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.order.count(),
+    prisma.product.count(),
+    prisma.order.aggregate({
+      _sum: { total: true },
+      where: { status: { notIn: ["CANCELLED", "REFUNDED"] } },
+    }),
+    prisma.order.findMany({
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      include: { user: true, items: true },
+    }),
+    prisma.productVariant.findMany({
+      where: { stock: { lte: 5 } },
+      take: 8,
+      orderBy: { stock: "asc" },
+      include: { product: true },
+    }),
+    prisma.order.count({ where: { status: "PENDING" } }),
+    prisma.order.count({
+      where: { createdAt: { gte: startOfToday } },
+    }),
+    prisma.order.findMany({
+      where: {
+        status: { notIn: ["CANCELLED", "REFUNDED"] },
+        createdAt: { gte: startOfChart },
+      },
+      select: { total: true, createdAt: true },
+    }),
+    prisma.order.count({
+      where: { status: { notIn: ["CANCELLED", "REFUNDED"] } },
+    }),
+  ]);
+
+  const revenueTotal = revenue._sum.total ?? 0;
+  const avgOrderValue =
+    paidOrderCount > 0 ? Math.round(revenueTotal / paidOrderCount) : 0;
 
   const stats = [
     { label: dict.admin.users, value: userCount, icon: Users },
@@ -62,10 +101,16 @@ export default async function AdminPage({
     { label: dict.admin.products, value: productCount, icon: Package },
     {
       label: dict.admin.revenue,
-      value: formatPrice(revenue._sum.total ?? 0),
+      value: formatPrice(revenueTotal),
       icon: Wallet,
     },
   ];
+
+  const chart = buildChartData(
+    chartOrders,
+    startOfChart,
+    dict.admin.ordersToday,
+  );
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
@@ -110,7 +155,86 @@ export default async function AdminPage({
         ))}
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+      {/* Secondary stats + revenue chart */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <section className="rounded-2xl border border-border bg-card/40 p-6 lg:col-span-2">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <TrendingUp className="size-5 text-primary" />
+              {dict.admin.revenueChart}
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {dict.admin.avgOrder}: {formatPrice(avgOrderValue)}
+            </span>
+          </div>
+
+          {chart.data.length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              {dict.admin.revenueChartEmpty}
+            </p>
+          ) : (
+            <div className="flex h-40 items-end gap-1.5">
+              {chart.data.map((day, i) => {
+                const isToday = i === chart.data.length - 1;
+                return (
+                  <div
+                    key={day.label}
+                    className="group flex flex-1 flex-col items-center justify-end gap-1.5"
+                    title={`${day.label}: ${formatPrice(day.value)}`}
+                  >
+                    <span className="text-[10px] font-medium tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                      {formatPrice(day.value)}
+                    </span>
+                    <div
+                      className={`w-full rounded-t-md transition-all ${
+                        isToday
+                          ? "bg-primary"
+                          : day.value > 0
+                            ? "bg-primary/50 group-hover:bg-primary"
+                            : "bg-muted"
+                      }`}
+                      style={{ height: `${day.height}%` }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div className="mt-2 flex gap-1.5">
+            {chart.data.map((day) => (
+              <span
+                key={day.label}
+                className="flex-1 text-center text-[9px] text-muted-foreground"
+              >
+                {day.short}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        {/* Pending orders */}
+        <section className="flex flex-col justify-center rounded-2xl border border-border bg-card/40 p-6">
+          <div className="mb-3 flex items-center gap-2">
+            <Clock className="size-5 text-amber-500" />
+            <h2 className="text-lg font-semibold">
+              {dict.admin.pendingOrders}
+            </h2>
+          </div>
+          <p className="text-4xl font-bold">{pendingCount}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {dict.admin.pendingOrdersHint} · {dict.admin.ordersToday}:{" "}
+            {todayOrders}
+          </p>
+          <Link
+            href={`/${locale}/admin/orders`}
+            className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+          >
+            {dict.admin.orders}
+          </Link>
+        </section>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
         {/* Latest orders */}
         <section className="rounded-2xl border border-border bg-card/40 p-6 lg:col-span-2">
           <h2 className="mb-4 text-lg font-semibold">
@@ -218,4 +342,42 @@ function statusLabel(
     REFUNDED: adminDict.statusRefunded,
   };
   return map[status];
+}
+
+type ChartDay = {
+  label: string;
+  short: string;
+  value: number;
+  height: number;
+};
+
+function buildChartData(
+  orders: { total: number; createdAt: Date }[],
+  start: Date,
+  todayLabel: string,
+): { data: ChartDay[] } {
+  const days: ChartDay[] = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+    const dateKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const total = orders
+      .filter(
+        (o) =>
+          `${o.createdAt.getFullYear()}-${o.createdAt.getMonth()}-${o.createdAt.getDate()}` ===
+          dateKey,
+      )
+      .reduce((sum, o) => sum + o.total, 0);
+    days.push({
+      label: d.toLocaleDateString(),
+      short:
+        i === 13 ? todayLabel : `${String(d.getMonth() + 1)}/${d.getDate()}`,
+      value: total,
+      height: 0,
+    });
+  }
+  const max = Math.max(...days.map((d) => d.value), 1);
+  for (const day of days) {
+    day.height = day.value === 0 ? 3 : Math.round((day.value / max) * 100);
+  }
+  return { data: days };
 }

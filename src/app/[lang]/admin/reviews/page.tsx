@@ -7,23 +7,35 @@ import { ReviewActions } from "@/components/admin/review-actions";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 20;
+
 export default async function AdminReviewsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ lang: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   await requirePermission("reviews");
-  const { lang } = await params;
+  const [{ lang }, { page }] = await Promise.all([params, searchParams]);
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
-  const reviews = await prisma.review.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      product: { select: { slug: true, name: true, nameEn: true } },
-      user: { select: { name: true, email: true } },
-    },
-  });
+  const currentPage = Math.max(1, Number(page) || 1);
+
+  const [reviews, totalReviews] = await Promise.all([
+    prisma.review.findMany({
+      orderBy: { createdAt: "desc" },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: {
+        product: { select: { slug: true, name: true, nameEn: true } },
+        user: { select: { name: true, email: true } },
+      },
+    }),
+    prisma.review.count(),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalReviews / PAGE_SIZE));
 
   return (
     <div>
@@ -84,6 +96,24 @@ export default async function AdminReviewsPage({
                 />
               </div>
             </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <Link
+              key={p}
+              href={`/${locale}/admin/reviews${p > 1 ? `?page=${p}` : ""}`}
+              className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
+                currentPage === p
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              }`}
+            >
+              {p}
+            </Link>
           ))}
         </div>
       )}

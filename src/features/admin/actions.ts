@@ -406,10 +406,14 @@ export async function updateOrderStatus(orderId: string, status: string) {
     where: { id: orderId },
     select: {
       orderNumber: true,
+      status: true,
       user: { select: { email: true } },
     },
   });
   if (!order) return;
+
+  const cancelledOrRefunded = (s: OrderStatus) =>
+    s === "CANCELLED" || s === "REFUNDED";
 
   await prisma.$transaction(async (tx) => {
     await tx.order.update({
@@ -446,18 +450,31 @@ export async function updateOrderStatus(orderId: string, status: string) {
       }
     }
 
-    if (next === "CANCELLED" || next === "REFUNDED") {
+    const items = await tx.orderItem.findMany({
+      where: { orderId },
+      select: { variantId: true, quantity: true },
+    });
+
+    // Entering CANCELLED/REFUNDED: restore the reserved stock exactly once.
+    // Leaving CANCELLED/REFUNDED back to a live status: re-reserve it.
+    const wasCancelled = cancelledOrRefunded(order.status);
+    const isCancelled = cancelledOrRefunded(next);
+
+    if (isCancelled && !wasCancelled) {
       await tx.shipment.deleteMany({ where: { orderId } });
-      // Restore the stock reserved in createOrder so it isn't lost on cancellation
-      const items = await tx.orderItem.findMany({
-        where: { orderId },
-        select: { variantId: true, quantity: true },
-      });
       for (const item of items) {
         if (!item.variantId) continue;
         await tx.productVariant.update({
           where: { id: item.variantId },
           data: { stock: { increment: item.quantity } },
+        });
+      }
+    } else if (!isCancelled && wasCancelled) {
+      for (const item of items) {
+        if (!item.variantId) continue;
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: { stock: { decrement: item.quantity } },
         });
       }
     }
@@ -691,8 +708,61 @@ export async function updateShippingSettings(
 }
 
 // ============================================================
-// Coupons
+// Homepage sections (Our Collections visibility + copy)
 // ============================================================
+
+const homeSectionsSchema = z.object({
+  showCollections: z.boolean(),
+  collectionsEyebrowAr: z.string().trim().max(80).optional().default(""),
+  collectionsEyebrowEn: z.string().trim().max(80).optional().default(""),
+  collectionsTitleAr: z.string().trim().max(120).optional().default(""),
+  collectionsTitleEn: z.string().trim().max(120).optional().default(""),
+  collectionsSubtitleAr: z.string().trim().max(200).optional().default(""),
+  collectionsSubtitleEn: z.string().trim().max(200).optional().default(""),
+});
+
+export async function updateHomeSections(
+  _prev: UserActionState | undefined,
+  fd: FormData,
+): Promise<UserActionState> {
+  await requirePermission("settings");
+
+  const parsed = homeSectionsSchema.safeParse({
+    showCollections: fd.get("showCollections") === "on",
+    collectionsEyebrowAr: fd.get("collectionsEyebrowAr") ?? "",
+    collectionsEyebrowEn: fd.get("collectionsEyebrowEn") ?? "",
+    collectionsTitleAr: fd.get("collectionsTitleAr") ?? "",
+    collectionsTitleEn: fd.get("collectionsTitleEn") ?? "",
+    collectionsSubtitleAr: fd.get("collectionsSubtitleAr") ?? "",
+    collectionsSubtitleEn: fd.get("collectionsSubtitleEn") ?? "",
+  });
+  if (!parsed.success) return { error: "INVALID" };
+
+  const d = parsed.data;
+  const entries: { key: string; value: string }[] = [
+    { key: "home_show_collections", value: d.showCollections ? "1" : "0" },
+    { key: "home_collections_eyebrow_ar", value: d.collectionsEyebrowAr },
+    { key: "home_collections_eyebrow_en", value: d.collectionsEyebrowEn },
+    { key: "home_collections_title_ar", value: d.collectionsTitleAr },
+    { key: "home_collections_title_en", value: d.collectionsTitleEn },
+    { key: "home_collections_subtitle_ar", value: d.collectionsSubtitleAr },
+    { key: "home_collections_subtitle_en", value: d.collectionsSubtitleEn },
+  ];
+
+  await prisma.$transaction(
+    entries.map((e) =>
+      prisma.storeSetting.upsert({
+        where: { key: e.key },
+        create: e,
+        update: { value: e.value },
+      }),
+    ),
+  );
+
+  clearConfigCache();
+  revalidatePath("/", "layout");
+  return { success: true };
+}
 
 const couponSchema = z.object({
   code: z.string().trim().min(3).max(30).toUpperCase(),

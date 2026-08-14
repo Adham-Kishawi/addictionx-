@@ -88,9 +88,7 @@ export function ProductForm({
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
 
-  const handleImageUpload = async (file: File) => {
-    setError(null);
-    setUploading(true);
+  const handleImageUpload = async (file: File): Promise<string | null> => {
     try {
       const fd = new FormData();
       fd.set("file", file);
@@ -100,14 +98,29 @@ export function ProductForm({
         credentials: "same-origin",
       });
       const data = await res.json();
-      if (!res.ok || !data?.url) {
-        setError(dict.admin.uploadError);
-        return;
-      }
-      // Append to the gallery — first image becomes the primary.
-      set("images", [...form.images, data.url]);
+      if (!res.ok || !data?.url) return null;
+      return data.url as string;
     } catch {
-      setError(dict.admin.uploadError);
+      return null;
+    }
+  };
+
+  const uploadImages = async (files: File[]) => {
+    setError(null);
+    setUploading(true);
+    try {
+      const urls: string[] = [];
+      for (const file of files) {
+        const url = await handleImageUpload(file);
+        if (url) urls.push(url);
+      }
+      if (files.length > 0 && urls.length === 0) {
+        setError(dict.admin.uploadError);
+      } else if (urls.length > 0) {
+        // Append all uploaded URLs in one shot — avoids the stale-closure
+        // race that dropped every image but the last when picking multiple.
+        setForm((f) => ({ ...f, images: [...f.images, ...urls] }));
+      }
     } finally {
       setUploading(false);
     }
@@ -449,7 +462,7 @@ export function ProductForm({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" className="h-full w-full object-cover" />
                 {i === 0 && (
-                  <span className="absolute left-0 top-0 rounded-br-lg bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                  <span className="absolute start-0 top-0 rounded-ee-lg bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
                     {dict.admin.primaryImage}
                   </span>
                 )}
@@ -490,7 +503,7 @@ export function ProductForm({
                   disabled={uploading}
                   onChange={(e) => {
                     const files = Array.from(e.target.files ?? []);
-                    files.forEach((file) => handleImageUpload(file));
+                    if (files.length > 0) uploadImages(files);
                     e.target.value = "";
                   }}
                 />

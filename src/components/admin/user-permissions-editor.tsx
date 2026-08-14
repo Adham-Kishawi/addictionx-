@@ -54,11 +54,14 @@ export function UserPermissionsEditor({
     if (pending) return;
     setPending(true);
     setDone(false);
-    await updateUserPermissions(userId, selected);
-    setPending(false);
-    setDone(true);
-    router.refresh();
-    setTimeout(() => setDone(false), 2500);
+    try {
+      await updateUserPermissions(userId, selected);
+      router.refresh();
+      setDone(true);
+      setTimeout(() => setDone(false), 2500);
+    } finally {
+      setPending(false);
+    }
   };
 
   const isSuper = selected.length === 0;

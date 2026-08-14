@@ -26,17 +26,20 @@ export function ProductActions({
   const run = async (fn: () => Promise<{ error?: string } | void>) => {
     setPending(true);
     setError(null);
-    const res = await fn();
-    if (res && "error" in res) {
-      setError(
-        res.error === "HAS_ORDERS"
-          ? dict.admin.productHasOrders
-          : dict.admin.productDeleteError,
-      );
-    } else {
-      router.refresh();
+    try {
+      const res = await fn();
+      if (res && "error" in res) {
+        setError(
+          res.error === "HAS_ORDERS"
+            ? dict.admin.productHasOrders
+            : dict.admin.productDeleteError,
+        );
+      } else {
+        router.refresh();
+      }
+    } finally {
+      setPending(false);
     }
-    setPending(false);
   };
 
   return (

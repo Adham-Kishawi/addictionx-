@@ -24,9 +24,12 @@ export function UserRoleSelect({
 
   const onChange = async (value: string) => {
     setPending(true);
-    await updateUserRole(userId, value as Role);
-    router.refresh();
-    setPending(false);
+    try {
+      await updateUserRole(userId, value as Role);
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
   };
 
   return (

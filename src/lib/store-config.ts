@@ -54,6 +54,47 @@ export async function getShippingConfig(): Promise<ShippingConfig> {
   }
 }
 
+// ============================================================
+// Homepage sections — dashboard-controlled visibility + copy.
+// The Our Collections (shelf) section can be hidden entirely and
+// its eyebrow/title/subtitle overridden per language.
+// ============================================================
+
+export type HomeSectionsConfig = {
+  showCollections: boolean;
+  collectionsEyebrow: { ar: string; en: string };
+  collectionsTitle: { ar: string; en: string };
+  collectionsSubtitle: { ar: string; en: string };
+};
+
+export async function getHomeSectionsConfig(): Promise<HomeSectionsConfig> {
+  try {
+    const [visible, eyebrowAr, eyebrowEn, titleAr, titleEn, subAr, subEn] =
+      await Promise.all([
+        readSetting("home_show_collections"),
+        readSetting("home_collections_eyebrow_ar"),
+        readSetting("home_collections_eyebrow_en"),
+        readSetting("home_collections_title_ar"),
+        readSetting("home_collections_title_en"),
+        readSetting("home_collections_subtitle_ar"),
+        readSetting("home_collections_subtitle_en"),
+      ]);
+    return {
+      showCollections: visible !== "0",
+      collectionsEyebrow: { ar: eyebrowAr ?? "", en: eyebrowEn ?? "" },
+      collectionsTitle: { ar: titleAr ?? "", en: titleEn ?? "" },
+      collectionsSubtitle: { ar: subAr ?? "", en: subEn ?? "" },
+    };
+  } catch {
+    return {
+      showCollections: true,
+      collectionsEyebrow: { ar: "", en: "" },
+      collectionsTitle: { ar: "", en: "" },
+      collectionsSubtitle: { ar: "", en: "" },
+    };
+  }
+}
+
 // Clear the cache when settings change from the dashboard
 export function clearConfigCache() {
   cache.clear();
