@@ -252,6 +252,22 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
   const onSubmit = handleSubmit((data) => {
     setError(null);
     startTransition(async () => {
+      // Convert receipt file to base64 if present
+      let receiptDataUrl: string | undefined;
+      if (receiptFile) {
+        try {
+          const reader = new FileReader();
+          receiptDataUrl = await new Promise<string>((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(receiptFile);
+          });
+        } catch {
+          // If conversion fails, proceed without receipt
+          receiptDataUrl = undefined;
+        }
+      }
+
       const result = await createOrder({
         locale,
         items,
@@ -266,6 +282,8 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
             ? crypto.randomUUID()
             : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         couponCode: coupon?.code,
+        receiptData: receiptDataUrl,
+        transactionRef: transactionRef || undefined,
       });
       if (result.ok) {
         clearCart();

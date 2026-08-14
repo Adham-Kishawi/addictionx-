@@ -57,6 +57,8 @@ const inputSchema = z.object({
   ]),
   idempotencyKey: z.string().trim().min(8).max(80),
   couponCode: z.string().trim().toUpperCase().optional().default(""),
+  receiptData: z.string().optional(),
+  transactionRef: z.string().trim().max(100).optional().default(""),
 });
 
 export type CreateOrderInput = {
@@ -71,6 +73,8 @@ export type CreateOrderInput = {
     "CASH_ON_DELIVERY" | "CARD" | "WALLET" | "INSTAPAY" | "VODAFONE_CASH";
   idempotencyKey: string;
   couponCode?: string;
+  receiptData?: string;
+  transactionRef?: string;
 };
 
 export type CreateOrderResult =
@@ -119,6 +123,8 @@ export async function createOrder(
     paymentMethod,
     idempotencyKey,
     couponCode,
+    receiptData,
+    transactionRef,
   } = parsed.data;
   const locale = parsed.data.locale;
 
@@ -293,6 +299,37 @@ export async function createOrder(
             },
           },
         });
+
+        // For InstaPay/Vodafone Cash, create PaymentProof if receipt was uploaded
+        if (
+          (paymentMethod === "INSTAPAY" || paymentMethod === "VODAFONE_CASH") &&
+          receiptData
+        ) {
+          // Save receipt image to UploadedImage
+          const buffer = Buffer.from(receiptData.split(",")[1], "base64");
+          const mimeType = receiptData.split(";")[0].split(":")[1];
+
+          const uploadedImage = await tx.uploadedImage.create({
+            data: {
+              data: buffer,
+              mimeType,
+              isPrivate: true,
+              ownerId: session.user.id,
+            },
+          });
+
+          // Create PaymentProof record
+          await tx.paymentProof.create({
+            data: {
+              orderId: created.id,
+              receiptUrl: `/api/uploads/${uploadedImage.id}`,
+              transactionRef: transactionRef || null,
+              paymentMethod,
+              status: "PENDING",
+            },
+          });
+        }
+
         return created;
       });
     } catch (txErr) {
