@@ -54,100 +54,87 @@ export default async function AdminUsersPage({
         />
       </div>
 
-      <p className="mb-4 rounded-xl border border-border bg-card/40 px-4 py-3 text-sm text-muted-foreground">
-        {dict.admin.permissionsHint}
-      </p>
+      <div className="mb-4 rounded-xl border border-blue-500/20 bg-blue-500/5 px-4 py-3 text-sm text-blue-600 dark:text-blue-400">
+        <p className="font-medium">{dict.admin.permissionsHint}</p>
+      </div>
 
       {users.length === 0 ? (
         <p className="py-16 text-center text-sm text-muted-foreground">
           {dict.admin.noUsers}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card/40">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead>
-              <tr className="border-b border-border text-start text-xs text-muted-foreground">
-                <th className="px-4 py-3 text-start font-medium">
-                  {dict.admin.name}
-                </th>
-                <th className="px-4 py-3 text-start font-medium">
-                  {dict.account.email}
-                </th>
-                <th className="px-4 py-3 text-start font-medium">
-                  {dict.admin.joined}
-                </th>
-                <th className="px-4 py-3 text-start font-medium">
-                  {dict.admin.changeRole}
-                </th>
-                {canManageAdmins && (
-                  <th className="px-4 py-3 text-start font-medium">
-                    {dict.admin.permissions}
-                  </th>
-                )}
-                <th className="px-4 py-3 text-end font-medium">
-                  {dict.admin.actions}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  className="border-b border-border/60 last:border-0"
-                >
-                  <td className="px-4 py-3 font-medium">
-                    {user.name ?? "—"}
-                    {session?.user?.id === user.id && (
-                      <span className="ms-2 text-xs text-muted-foreground">
-                        ({dict.admin.goToAccount})
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground" dir="ltr">
-                    {user.email ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(user.createdAt).toLocaleDateString(
-                      locale === "ar" ? "ar-EG" : "en-EG",
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-start">
-                    {user.role === "ADMIN" && !canManageAdmins ? (
-                      <span className="text-xs text-muted-foreground">
+        <div className="space-y-4">
+          {users.map((user) => {
+            const isSelf = session?.user?.id === user.id;
+            const isAdmin = user.role === "ADMIN";
+
+            return (
+              <div
+                key={user.id}
+                className="rounded-2xl border border-border bg-card/40 p-5 transition-all hover:border-border hover:shadow-md"
+              >
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="mb-1 flex items-center gap-2">
+                      <h3 className="text-lg font-semibold">
+                        {user.name ?? "—"}
+                      </h3>
+                      {isSelf && (
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                          {dict.admin.goToAccount}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground" dir="ltr">
+                      {user.email ?? "—"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {dict.admin.joined}:{" "}
+                      {new Date(user.createdAt).toLocaleDateString(
+                        locale === "ar" ? "ar-EG" : "en-EG",
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {isAdmin && !canManageAdmins ? (
+                      <span className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground">
                         {dict.admin.adminRole}
                       </span>
                     ) : (
                       <UserRoleSelect
                         userId={user.id}
                         role={user.role}
-                        self={session?.user?.id === user.id}
+                        self={isSelf}
                         dict={dict}
                         disabled={!canManageAdmins}
                       />
                     )}
-                  </td>
-                  {canManageAdmins && (
-                    <td className="max-w-[260px] px-4 py-3">
-                      <UserPermissionsEditor
-                        userId={user.id}
-                        role={user.role}
-                        permissions={user.permissions}
-                        self={session?.user?.id === user.id}
-                        dict={dict}
-                      />
-                    </td>
-                  )}
-                  <td className="px-4 py-3 text-end">
                     <DeleteUserButton
                       userId={user.id}
-                      self={session?.user?.id === user.id}
+                      self={isSelf}
                       dict={dict}
                     />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+
+                {canManageAdmins && isAdmin && (
+                  <div className="border-t border-border/60 pt-4">
+                    <h4 className="mb-3 text-sm font-semibold text-foreground">
+                      {dict.admin.permissions}
+                    </h4>
+                    <UserPermissionsEditor
+                      userId={user.id}
+                      role={user.role}
+                      permissions={user.permissions}
+                      self={isSelf}
+                      dict={dict}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
