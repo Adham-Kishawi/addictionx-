@@ -238,11 +238,13 @@ export function ProductCarousel({
               const bg = collectionBackdrop(product.collection);
               if (!bg) return null;
               return (
-                <img
+                <Image
                   src={bg}
                   alt=""
+                  fill
+                  sizes="100vw"
+                  className="object-cover opacity-40 [mask-image:radial-gradient(80%_70%_at_50%_45%,black_30%,transparent_75%)]"
                   draggable={false}
-                  className="absolute inset-0 h-full w-full object-cover opacity-40 [mask-image:radial-gradient(80%_70%_at_50%_45%,black_30%,transparent_75%)]"
                 />
               );
             })()}

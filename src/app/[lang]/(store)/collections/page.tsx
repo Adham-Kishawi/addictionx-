@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { ProductArt } from "@/features/catalog/components/product-art";
 import { ProductCard } from "@/features/catalog/components/product-card";
@@ -77,11 +78,13 @@ export default async function CollectionsPage({
                       (() => {
                         const bg = collectionBackdrop(collection.slug);
                         return bg ? (
-                          <img
+                          <Image
                             src={bg}
                             alt=""
+                            fill
+                            sizes="(min-width:1024px) 320px, (min-width:640px) 50vw, 90vw"
+                            className="object-cover"
                             draggable={false}
-                            className="absolute inset-0 h-full w-full object-cover"
                           />
                         ) : (
                           <div className="h-full w-full bg-card" />
