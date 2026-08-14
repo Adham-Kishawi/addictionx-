@@ -102,3 +102,39 @@ export async function getHomeSectionsConfig(): Promise<HomeSectionsConfig> {
 export function clearConfigCache() {
   cache.clear();
 }
+
+// ============================================================
+// Payment settings — InstaPay & Vodafone Cash account numbers
+// ============================================================
+
+export type PaymentAccountsConfig = {
+  instapayNumber: string;
+  instapayName: string;
+  vodafoneCashNumber: string;
+  vodafoneCashName: string;
+};
+
+export async function getPaymentAccountsConfig(): Promise<PaymentAccountsConfig> {
+  try {
+    const [instapayNum, instapayName, vodafoneNum, vodafoneName] =
+      await Promise.all([
+        readSetting("instapay_account_number"),
+        readSetting("instapay_account_name"),
+        readSetting("vodafone_cash_number"),
+        readSetting("vodafone_cash_name"),
+      ]);
+    return {
+      instapayNumber: instapayNum ?? "",
+      instapayName: instapayName ?? "ADDICTIONX",
+      vodafoneCashNumber: vodafoneNum ?? "",
+      vodafoneCashName: vodafoneName ?? "ADDICTIONX",
+    };
+  } catch {
+    return {
+      instapayNumber: "",
+      instapayName: "ADDICTIONX",
+      vodafoneCashNumber: "",
+      vodafoneCashName: "ADDICTIONX",
+    };
+  }
+}

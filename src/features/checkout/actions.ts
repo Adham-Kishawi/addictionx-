@@ -48,7 +48,13 @@ const inputSchema = z.object({
   governorateId: z.string().trim().min(1).max(60),
   regionId: z.string().trim().min(1).max(60),
   address: z.string().trim().min(5).max(300),
-  paymentMethod: z.enum(["CASH_ON_DELIVERY", "CARD", "WALLET"]),
+  paymentMethod: z.enum([
+    "CASH_ON_DELIVERY",
+    "CARD",
+    "WALLET",
+    "INSTAPAY",
+    "VODAFONE_CASH",
+  ]),
   idempotencyKey: z.string().trim().min(8).max(80),
   couponCode: z.string().trim().toUpperCase().optional().default(""),
 });
@@ -61,7 +67,8 @@ export type CreateOrderInput = {
   governorateId: string;
   regionId: string;
   address: string;
-  paymentMethod: "CASH_ON_DELIVERY" | "CARD" | "WALLET";
+  paymentMethod:
+    "CASH_ON_DELIVERY" | "CARD" | "WALLET" | "INSTAPAY" | "VODAFONE_CASH";
   idempotencyKey: string;
   couponCode?: string;
 };

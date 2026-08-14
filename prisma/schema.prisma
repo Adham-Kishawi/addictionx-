@@ -35,6 +35,7 @@ model User {
   wishlistItems     WishlistItem[]
   newsletterEntries NewsletterEntry[]
   passwordHash      String?
+  verifiedPayments  PaymentProof[] @relation("PaymentVerifier")
 
   @@map("users")
 }
@@ -267,6 +268,8 @@ enum PaymentMethod {
   CASH_ON_DELIVERY
   CARD
   WALLET
+  INSTAPAY
+  VODAFONE_CASH
 }
 
 enum PaymentStatus {
@@ -306,6 +309,7 @@ model Order {
   items       OrderItem[]
   shipment    Shipment?
   transactions Transaction[]
+  paymentProofs PaymentProof[]
 
   @@index([userId])
   @@index([status])
@@ -346,6 +350,33 @@ model Shipment {
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("shipments")
+}
+
+model PaymentProof {
+  id             String   @id @default(cuid())
+  orderId        String
+  // Receipt image URL (from UploadedImage or external storage)
+  receiptUrl     String?
+  // Transaction reference number (optional - user can enter it manually)
+  transactionRef String?
+  // Payment method used (INSTAPAY or VODAFONE_CASH)
+  paymentMethod  PaymentMethod
+  // Verification status
+  status         String   @default("PENDING") // PENDING | VERIFIED | REJECTED
+  // Admin who verified/rejected
+  verifiedBy     String?
+  verifiedAt     DateTime?
+  // Rejection reason (if rejected)
+  rejectionNote  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  verifier   User?  @relation("PaymentVerifier", fields: [verifiedBy], references: [id])
+
+  @@index([orderId])
+  @@index([status])
+  @@map("payment_proofs")
 }
 
 model Transaction {

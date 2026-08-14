@@ -14,6 +14,7 @@ import {
   Tag,
   X,
   Wallet,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductArt } from "@/features/catalog/components/product-art";
@@ -26,6 +27,7 @@ import {
 } from "@/stores/cart-store";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
+import { PaymentProofUpload } from "@/components/checkout/payment-proof-upload";
 
 type Zone = {
   id: string;
@@ -40,6 +42,13 @@ type Zone = {
 };
 
 type PaymentSettings = { cardEnabled: boolean; walletEnabled: boolean };
+
+type PaymentAccountsConfig = {
+  instapayNumber: string;
+  instapayName: string;
+  vodafoneCashNumber: string;
+  vodafoneCashName: string;
+};
 
 type CouponState = { code: string; discount: number } | null;
 
@@ -56,12 +65,24 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
     cardEnabled: false,
     walletEnabled: false,
   });
+  const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccountsConfig>(
+    {
+      instapayNumber: "",
+      instapayName: "ADDICTIONX",
+      vodafoneCashNumber: "",
+      vodafoneCashName: "ADDICTIONX",
+    },
+  );
   const [freeThreshold, setFreeThreshold] = useState<number | null>(null);
   const [coupon, setCoupon] = useState<CouponState>(null);
   const [couponInput, setCouponInput] = useState("");
   const [couponStatus, setCouponStatus] = useState<
     "idle" | "checking" | "error" | "applied"
   >("idle");
+
+  // Payment proof state (for InstaPay and Vodafone Cash)
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [transactionRef, setTransactionRef] = useState("");
 
   useEffect(() => {
     fetch("/api/checkout-config")
@@ -87,10 +108,18 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
         }
       })
       .catch(() => {});
+    fetch("/api/payment-accounts")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: PaymentAccountsConfig | null) => {
+        if (data) {
+          setPaymentAccounts(data);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const [paymentMethod, setPaymentMethod] = useState<
-    "CASH_ON_DELIVERY" | "CARD" | "WALLET"
+    "CASH_ON_DELIVERY" | "CARD" | "WALLET" | "INSTAPAY" | "VODAFONE_CASH"
   >("CASH_ON_DELIVERY");
   const [placed, setPlaced] = useState<{
     orderId: string;
@@ -433,6 +462,20 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
             hint={dict.checkout.cashOnDeliveryHint}
           />
           <PaymentOption
+            active={paymentMethod === "INSTAPAY"}
+            onClick={() => setPaymentMethod("INSTAPAY")}
+            icon={<Smartphone className="size-5" />}
+            title={dict.checkout.instapay}
+            hint={dict.checkout.instapayHint}
+          />
+          <PaymentOption
+            active={paymentMethod === "VODAFONE_CASH"}
+            onClick={() => setPaymentMethod("VODAFONE_CASH")}
+            icon={<Smartphone className="size-5" />}
+            title={dict.checkout.vodafoneCash}
+            hint={dict.checkout.vodafoneCashHint}
+          />
+          <PaymentOption
             active={paymentMethod === "CARD"}
             onClick={() => setPaymentMethod("CARD")}
             icon={<CreditCard className="size-5" />}
@@ -448,6 +491,57 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
             hint={dict.checkout.walletHint}
             disabled={!paymentSettings.walletEnabled}
           />
+
+          {/* Payment instructions for InstaPay and Vodafone Cash */}
+          {(paymentMethod === "INSTAPAY" ||
+            paymentMethod === "VODAFONE_CASH") && (
+            <div className="mt-4 space-y-4 rounded-xl border border-primary/30 bg-primary/5 p-4">
+              <h3 className="text-sm font-semibold text-primary">
+                {dict.checkout.paymentInstructions}
+              </h3>
+              <div className="space-y-2 text-sm">
+                <p className="text-muted-foreground">
+                  {dict.checkout.transferTo}
+                </p>
+                <div className="rounded-lg bg-background/60 p-3 font-mono">
+                  <div className="flex justify-between gap-2">
+                    <span className="text-muted-foreground">
+                      {dict.checkout.accountNumber}:
+                    </span>
+                    <span className="font-semibold" dir="ltr">
+                      {paymentMethod === "INSTAPAY"
+                        ? paymentAccounts.instapayNumber || "—"
+                        : paymentAccounts.vodafoneCashNumber || "—"}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex justify-between gap-2">
+                    <span className="text-muted-foreground">
+                      {dict.checkout.accountName}:
+                    </span>
+                    <span className="font-semibold">
+                      {paymentMethod === "INSTAPAY"
+                        ? paymentAccounts.instapayName
+                        : paymentAccounts.vodafoneCashName}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {dict.checkout.paymentPendingHint}
+                </p>
+              </div>
+
+              <PaymentProofUpload
+                onReceiptChange={setReceiptFile}
+                onTransactionRefChange={setTransactionRef}
+                labels={{
+                  uploadReceipt: dict.checkout.uploadReceipt,
+                  uploadReceiptHint: dict.checkout.uploadReceiptHint,
+                  transactionRef: dict.checkout.transactionRef,
+                  transactionRefHint: dict.checkout.transactionRefHint,
+                }}
+              />
+            </div>
+          )}
         </fieldset>
 
         <Button
