@@ -161,6 +161,7 @@ model Product {
   reviews      Review[]
   wishlistItems WishlistItem[]
   orderItems   OrderItem[]
+  homeSlides   HomeSlide[]
 
   @@index([categoryId])
   @@index([brandId])
@@ -196,6 +197,31 @@ model UploadedImage {
   createdAt DateTime @default(now())
 
   @@map("uploaded_images")
+}
+
+// ============================================================
+// Home slider slides — dashboard-controlled (admin → Slider).
+// Each slide points at a product from the catalog and may override
+// its image with a custom one (UploadedImage URL or any URL). The
+// storefront shows active slides in `position` order; when no
+// slides are configured it falls back to the collection carousel.
+// ============================================================
+model HomeSlide {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  // Custom slide image — overrides the product's own image on the slide
+  image     String?
+  // Slide caption overrides (AR/EN) — falls back to product/collection text
+  captionAr String?
+  captionEn String?
+  position  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@map("home_slides")
 }
 
 model ProductVariant {
@@ -467,10 +493,16 @@ model Collection {
   slug      String   @unique
   nameAr    String
   nameEn    String
-  sortOrder Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Representative image — shown on the home slider and the collections hub
+  // (an UploadedImage URL like /api/uploads/<id>, or any absolute URL)
+  image        String?
+  // Slider / collection caption (dashboard-controlled, AR + EN)
+  descriptionAr String?
+  descriptionEn String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("collections")
 }

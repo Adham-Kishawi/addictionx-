@@ -156,6 +156,17 @@ export function ProductForm({
       return;
     }
 
+    // Every variant row must have a size and a price — invalid rows are dropped
+    // by the server, so catch them here before the admin thinks they saved them.
+    const hasInvalidVariant = variants.some(
+      (v) =>
+        !v.sizeMl || Number(v.sizeMl) <= 0 || !v.price || Number(v.price) <= 0,
+    );
+    if (variants.length === 0 || hasInvalidVariant) {
+      setError(dict.admin.errorInvalidVariant);
+      return;
+    }
+
     const fd = new FormData();
     fd.set("locale", locale);
     fd.set("name", form.name);

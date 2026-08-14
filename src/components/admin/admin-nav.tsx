@@ -14,6 +14,7 @@ import {
   Mail,
   Flame,
   Settings,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export function AdminNav({
   labels: {
     dashboard: string;
     products: string;
+    slider: string;
     orders: string;
     users: string;
     coupons: string;
@@ -52,6 +54,12 @@ export function AdminNav({
       label: labels.products,
       icon: Package,
       key: "products",
+    },
+    {
+      href: `${basePath}/slider`,
+      label: labels.slider,
+      icon: Images,
+      key: "slider",
     },
     {
       href: `${basePath}/orders`,

@@ -98,6 +98,15 @@ export default async function CollectionPage({
             <h1 className="font-display text-4xl font-bold">
               {isRtl ? collection.nameAr : collection.nameEn}
             </h1>
+            {(() => {
+              const caption = isRtl
+                ? collection.descriptionAr
+                : collection.descriptionEn;
+              if (!caption) return null;
+              return (
+                <p className="max-w-2xl text-muted-foreground">{caption}</p>
+              );
+            })()}
             <p className="text-muted-foreground">
               {products.length}{" "}
               {products.length === 1

@@ -13,6 +13,9 @@ export interface CollectionRow {
   slug: string;
   nameAr: string;
   nameEn: string;
+  image?: string | null;
+  descriptionAr?: string | null;
+  descriptionEn?: string | null;
 }
 
 // Collections are managed from the dashboard. The storefront still has a local
@@ -20,8 +23,18 @@ export interface CollectionRow {
 export async function getCollections(): Promise<CollectionRow[]> {
   try {
     const rows = await prisma.collection.findMany({
+      // isActive = "show this collection on the site" — the dashboard can hide
+      // a collection (and its home-slider slide) without deleting it.
+      where: { isActive: true },
       orderBy: { sortOrder: "asc" },
-      select: { slug: true, nameAr: true, nameEn: true },
+      select: {
+        slug: true,
+        nameAr: true,
+        nameEn: true,
+        image: true,
+        descriptionAr: true,
+        descriptionEn: true,
+      },
     });
     if (rows.length > 0) return rows;
   } catch {
@@ -32,7 +45,44 @@ export async function getCollections(): Promise<CollectionRow[]> {
     slug: c.slug,
     nameAr: c.nameAr,
     nameEn: c.nameEn,
+    image: undefined,
+    descriptionAr: undefined,
+    descriptionEn: undefined,
   }));
+}
+
+// ============================================================
+// Home slider slides — dashboard-controlled (admin → Slider).
+// One row per slide: a product reference + optional custom image
+// + optional caption overrides. The storefront joins these with
+// the products and falls back to the collection carousel when no
+// slides are configured.
+// ============================================================
+
+export interface HomeSlideRow {
+  id: string;
+  productId: string;
+  image?: string | null;
+  captionAr?: string | null;
+  captionEn?: string | null;
+}
+
+export async function getHomeSlides(): Promise<HomeSlideRow[]> {
+  try {
+    return await prisma.homeSlide.findMany({
+      where: { isActive: true, product: { isActive: true } },
+      orderBy: { position: "asc" },
+      select: {
+        id: true,
+        productId: true,
+        image: true,
+        captionAr: true,
+        captionEn: true,
+      },
+    });
+  } catch {
+    return [];
+  }
 }
 
 const include = {

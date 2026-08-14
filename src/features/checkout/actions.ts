@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/config/site";
@@ -18,6 +19,7 @@ import {
   nameFor,
 } from "@/lib/shipping";
 import { isValidEgyptianPhone } from "@/lib/validation";
+import { rateLimiters, checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { CartItem } from "@/stores/cart-store";
 import { isLocale, type Locale } from "@/lib/i18n/dictionary";
 
@@ -106,6 +108,16 @@ export async function createOrder(
         `/${input.locale}/checkout`,
       )}`,
     );
+  }
+
+  // Rate limit: 10 orders per hour per user
+  const rateLimit = await checkRateLimit(
+    rateLimiters.order,
+    `order:${session.user.id}`,
+  );
+
+  if (!rateLimit.success) {
+    return { ok: false, error: "GENERIC" };
   }
 
   const parsed = inputSchema.safeParse(input);

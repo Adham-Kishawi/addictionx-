@@ -74,12 +74,20 @@ export function ProductCarousel({
   wishlistIds,
   dict,
   collectionNames,
+  slideMeta,
+  slideCaptionsByProductId,
 }: {
   products: Product[];
   locale: Locale;
   wishlistIds: string[] | null;
   dict: Dictionary;
   collectionNames?: Record<string, { nameAr: string; nameEn: string }>;
+  slideMeta?: Record<
+    string,
+    { image?: string; descriptionAr?: string; descriptionEn?: string }
+  >;
+  // Per-product caption overrides (dashboard slider) — win over slideMeta.
+  slideCaptionsByProductId?: Record<string, { ar?: string; en?: string }>;
 }) {
   const reduce = useReducedMotion();
 
@@ -416,6 +424,22 @@ export function ProductCarousel({
               <h3 className="font-display text-lg font-bold sm:text-xl">
                 {locale === "ar" ? activeProduct.nameAr : activeProduct.nameEn}
               </h3>
+              {(() => {
+                const direct = slideCaptionsByProductId?.[activeProduct.id];
+                const meta = slideMeta?.[activeProduct.collection];
+                const caption =
+                  locale === "ar"
+                    ? (direct?.ar ?? meta?.descriptionAr)
+                    : (direct?.en ?? meta?.descriptionEn);
+                if (caption) {
+                  return (
+                    <p className="max-w-md text-xs text-muted-foreground sm:text-sm">
+                      {caption}
+                    </p>
+                  );
+                }
+                return null;
+              })()}
               <p className="text-xs text-muted-foreground sm:text-sm">
                 {formatPrice(activeProduct.price)} {dict.product.currency}
               </p>

@@ -68,7 +68,16 @@ export default async function CollectionsPage({
                     href={`/${locale}/collections/${collection.slug}`}
                     className="group relative block aspect-[4/5] overflow-hidden rounded-3xl border border-border transition-shadow duration-500 hover:border-primary/40 hover:shadow-[0_0_45px_-14px_oklch(0.6_0.22_22/0.6)]"
                   >
-                    {cover ? (
+                    {collection.image ? (
+                      <Image
+                        src={collection.image}
+                        alt={isRtl ? collection.nameAr : collection.nameEn}
+                        fill
+                        sizes="(min-width:1024px) 320px, (min-width:640px) 50vw, 90vw"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        draggable={false}
+                      />
+                    ) : cover ? (
                       <ProductArt
                         product={cover}
                         showName={false}
@@ -108,6 +117,17 @@ export default async function CollectionsPage({
                       <h2 className="font-display text-2xl font-bold text-white">
                         {isRtl ? collection.nameAr : collection.nameEn}
                       </h2>
+                      {(() => {
+                        const caption = isRtl
+                          ? collection.descriptionAr
+                          : collection.descriptionEn;
+                        if (!caption) return null;
+                        return (
+                          <p className="line-clamp-2 text-sm text-white/80">
+                            {caption}
+                          </p>
+                        );
+                      })()}
                       <span className="flex items-center gap-1 text-sm text-white/85 transition-colors group-hover:text-primary">
                         {collectionProducts.length}{" "}
                         {dict.collectionsPage.products}

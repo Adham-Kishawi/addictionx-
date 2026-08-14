@@ -30,6 +30,7 @@ import { type Product } from "@/features/catalog/data/products";
 import {
   getProducts,
   getCollections,
+  getHomeSlides,
 } from "@/features/catalog/data/products-db";
 import {
   collectionBackdrop,
@@ -51,12 +52,14 @@ export default async function Home({
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
 
-  const [allProducts, collections, wishlist, homeSections] = await Promise.all([
-    getProducts(),
-    getCollections(),
-    getWishlistIds(),
-    getHomeSectionsConfig(),
-  ]);
+  const [allProducts, collections, wishlist, homeSections, homeSlides] =
+    await Promise.all([
+      getProducts(),
+      getCollections(),
+      getWishlistIds(),
+      getHomeSectionsConfig(),
+      getHomeSlides(),
+    ]);
   // Best sellers: admin-controlled order (bestsellerOrder), top 4 shown.
   // Equal orders keep getProducts() order (bestsellerOrder asc, createdAt desc).
   const bestsellers = allProducts
@@ -65,23 +68,59 @@ export default async function Home({
     .slice(0, 4);
   const heroProduct = allProducts[0] ?? null;
 
-  // Carousel: one product from each collection — we prefer the product that has an image.
-  // The slider images are fixed per collection (the three bottle icons) and are shown
-  // first; if the collection is missing from the map we fall back to the product image then ProductArt.
+  // Carousel: dashboard-controlled (admin → Slider). Each slide points at a
+  // product and may override its image + caption. When no slides are configured
+  // we fall back to one slide per collection (the collection's own image wins,
+  // then the old fixed /slider/* icons, then the product image), with captions
+  // from the collection's descriptionAr/En.
   const carouselImages: Record<string, string> = {
     rush: "/slider/rush.png",
     noir: "/slider/noir.png",
     gold: "/slider/gold.png",
   };
-  const carouselProducts = collections
-    .map((c) => {
-      const inCollection = allProducts.filter((p) => p.collection === c.slug);
-      if (inCollection.length === 0) return null;
-      const first = inCollection.find((p) => p.image) ?? inCollection[0];
-      const slider = carouselImages[c.slug];
-      return slider ? { ...first, image: slider } : first;
-    })
-    .filter((p): p is Product => p !== null);
+  const slideMeta = Object.fromEntries(
+    collections.map((c) => [
+      c.slug,
+      {
+        image: c.image ?? undefined,
+        descriptionAr: c.descriptionAr ?? undefined,
+        descriptionEn: c.descriptionEn ?? undefined,
+      },
+    ]),
+  );
+
+  let carouselProducts: Product[] = [];
+  // Per-product caption overrides (keyed by product id) from the slider slides.
+  const slideCaptionsByProductId: Record<string, { ar?: string; en?: string }> =
+    {};
+  if (homeSlides.length > 0) {
+    const productById = new Map(allProducts.map((p) => [p.id, p]));
+    carouselProducts = homeSlides
+      .map((s) => {
+        const product = productById.get(s.productId);
+        if (!product) return null;
+        if (s.captionAr || s.captionEn) {
+          slideCaptionsByProductId[s.productId] = {
+            ar: s.captionAr ?? undefined,
+            en: s.captionEn ?? undefined,
+          };
+        }
+        return s.image ? { ...product, image: s.image } : product;
+      })
+      .filter((p): p is Product => p !== null);
+  }
+
+  if (carouselProducts.length === 0) {
+    carouselProducts = collections
+      .map((c) => {
+        const inCollection = allProducts.filter((p) => p.collection === c.slug);
+        if (inCollection.length === 0) return null;
+        const first = inCollection.find((p) => p.image) ?? inCollection[0];
+        const slider = c.image ?? carouselImages[c.slug];
+        return slider ? { ...first, image: slider } : first;
+      })
+      .filter((p): p is Product => p !== null);
+  }
   // Collection identity for the carousel backdrop + showcase strip (wave 8)
   const collectionNames = Object.fromEntries(
     collections.map((c) => [c.slug, { nameAr: c.nameAr, nameEn: c.nameEn }]),
@@ -279,6 +318,8 @@ export default async function Home({
         wishlistIds={wishlist}
         dict={dict}
         collectionNames={collectionNames}
+        slideMeta={slideMeta}
+        slideCaptionsByProductId={slideCaptionsByProductId}
       />
 
       {/* ====== Most wanted — wave 34d + wave 35: the scents section becomes a
@@ -377,8 +418,8 @@ export default async function Home({
               };
               const tagline =
                 locale === "ar"
-                  ? (cover?.descriptionAr ?? "")
-                  : (cover?.descriptionEn ?? "");
+                  ? (collection.descriptionAr ?? cover?.descriptionAr ?? "")
+                  : (collection.descriptionEn ?? cover?.descriptionEn ?? "");
               return {
                 key: collection.slug,
                 name: locale === "ar" ? collection.nameAr : collection.nameEn,
@@ -387,7 +428,10 @@ export default async function Home({
                 tagline,
                 href: `/${locale}/collections/${collection.slug}`,
                 bottle: shelfBottle(collection.slug),
-                image: collectionBackdrop(collection.slug) ?? null,
+                image:
+                  collection.image ??
+                  collectionBackdrop(collection.slug) ??
+                  null,
                 tint:
                   shelfTint(collection.slug) ?? cover.art?.glow ?? "#ef4444",
                 hrefLabel: dict.home.signatureCta,

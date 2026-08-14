@@ -75,7 +75,7 @@ function parseVariants(raw: FormDataEntryValue | null): VariantData[] {
   try {
     const parsed = JSON.parse(String(raw));
     if (!Array.isArray(parsed)) return [];
-    return parsed
+    const rows = parsed
       .filter((v) => v && typeof v === "object")
       .map((v) => ({
         sizeMl: Math.round(Number(v.sizeMl)),
@@ -90,9 +90,23 @@ function parseVariants(raw: FormDataEntryValue | null): VariantData[] {
           Number.isFinite(v.price) &&
           v.price > 0,
       );
+    // A size may appear only once — keep the last row for each size.
+    return [...new Map(rows.map((v) => [v.sizeMl, v])).values()];
   } catch {
     return [];
   }
+}
+
+// SKUs are globally unique in the DB. When the admin leaves one blank we derive
+// it from the product slug + size so a save can never trip the unique index.
+function ensureVariantSkus(
+  variants: VariantData[],
+  slug: string,
+): VariantData[] {
+  return variants.map((v) => ({
+    ...v,
+    sku: v.sku || `${slug}-${v.sizeMl}ml`,
+  }));
 }
 
 function readProductForm(fd: FormData) {
@@ -220,7 +234,7 @@ export async function createProduct(
                 })),
               }
             : undefined,
-        variants: { create: variants },
+        variants: { create: ensureVariantSkus(variants, parsed.slug) },
       },
     });
   } catch {
@@ -270,8 +284,65 @@ export async function updateProduct(
         (v): v is string => Boolean(v) && !keptStoredIds.has(v as string),
       );
 
+    // Variants are upserted on the (productId, sizeMl) unique key instead of
+    // delete+recreate: the variant ids must survive an edit so past order items
+    // keep their link. Sizes removed from the form are deleted only if no order
+    // item references them; otherwise they are hidden (isActive=false) so order
+    // history stays intact and the size simply disappears from the store.
+    const currentVariants = await prisma.productVariant.findMany({
+      where: { productId: id },
+    });
+    const incoming = ensureVariantSkus(variants, parsed.slug);
+    const incomingSizes = new Set(incoming.map((v) => v.sizeMl));
+    const removed = currentVariants.filter((v) => !incomingSizes.has(v.sizeMl));
+    let referencedIds: string[] = [];
+    if (removed.length > 0) {
+      const referenced = await prisma.orderItem.findMany({
+        where: { variantId: { in: removed.map((v) => v.id) } },
+        select: { variantId: true },
+      });
+      referencedIds = referenced
+        .map((o) => o.variantId)
+        .filter((v): v is string => Boolean(v));
+    }
+    const deleteIds = removed
+      .filter((v) => !referencedIds.includes(v.id))
+      .map((v) => v.id);
+    const hideIds = removed
+      .filter((v) => referencedIds.includes(v.id))
+      .map((v) => v.id);
+
     await prisma.$transaction([
-      prisma.productVariant.deleteMany({ where: { productId: id } }),
+      // Sync variants — update existing sizes in place, delete removed ones.
+      ...incoming.map((v) =>
+        prisma.productVariant.upsert({
+          where: { productId_sizeMl: { productId: id, sizeMl: v.sizeMl } },
+          update: {
+            price: v.price,
+            stock: v.stock,
+            sku: v.sku,
+            // The admin explicitly has this size in the form — (re)activate it.
+            // An id is never recreated, so the size keeps any order-item links.
+            isActive: true,
+          },
+          create: { ...v, productId: id },
+        }),
+      ),
+      ...(deleteIds.length > 0
+        ? [
+            prisma.productVariant.deleteMany({
+              where: { id: { in: deleteIds } },
+            }),
+          ]
+        : []),
+      ...(hideIds.length > 0
+        ? [
+            prisma.productVariant.updateMany({
+              where: { id: { in: hideIds } },
+              data: { isActive: false },
+            }),
+          ]
+        : []),
       prisma.productImage.deleteMany({ where: { productId: id } }),
       prisma.product.update({
         where: { id },
@@ -286,9 +357,6 @@ export async function updateProduct(
             position: i,
           },
         }),
-      ),
-      ...variants.map((v) =>
-        prisma.productVariant.create({ data: { ...v, productId: id } }),
       ),
       ...(oldStoredIds.length > 0
         ? [

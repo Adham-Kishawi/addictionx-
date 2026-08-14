@@ -42,6 +42,7 @@ export default async function AdminLayout({
   // Which sections this admin may access — dashboard is always visible.
   const visible = [
     "products",
+    "slider",
     "orders",
     "payment-verification",
     "collections",
@@ -56,7 +57,7 @@ export default async function AdminLayout({
     key === "users"
       ? hasPermission(permissions, "users") ||
         hasPermission(permissions, "admins")
-      : key === "bestsellers" || key === "shipping"
+      : key === "bestsellers" || key === "shipping" || key === "slider"
         ? hasPermission(permissions, "products")
         : key === "payment-verification"
           ? hasPermission(permissions, "orders")
@@ -66,6 +67,7 @@ export default async function AdminLayout({
   const navLabels = {
     dashboard: dict.admin.dashboard,
     products: dict.admin.products,
+    slider: dict.admin.slider,
     orders: dict.admin.orders,
     "payment-verification": dict.admin.paymentVerification,
     users: dict.admin.users,

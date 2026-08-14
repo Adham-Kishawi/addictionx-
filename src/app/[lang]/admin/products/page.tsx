@@ -125,7 +125,12 @@ export default async function AdminProductsPage({
                   0,
                 );
                 const minPrice =
-                  product.variants[0]?.price ?? product.basePrice;
+                  product.variants.length > 0
+                    ? product.variants.reduce(
+                        (min, v) => (v.price < min ? v.price : min),
+                        Infinity,
+                      )
+                    : product.basePrice;
                 return (
                   <tr
                     key={product.id}
