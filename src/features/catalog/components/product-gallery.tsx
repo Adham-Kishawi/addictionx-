@@ -11,11 +11,10 @@ import type { Dictionary } from "@/lib/i18n/dictionary";
 // ProductArt with the active image injected, so products without real photos
 // still render their gradient art as the visible fallback.
 //
-// Multi-angle: every product automatically gets the studio set — front
-// (prodact.png or the product's own photo) + back + side (walid's back.png
-// + side.png) — so the customer sees the bottle from several angles.
-// Real per-product uploads (product.images from the DB) come first and
-// override the fallbacks.
+// All of the admin's uploaded photos (product.images from the DB) show, in
+// order — no cap. Only when a product has no real photos at all does the
+// gallery fall back to the studio set (front prodact.png + walid's back +
+// side) so the customer still sees the bottle from several angles.
 //
 // Prev/next arrows flip through the views and wrap around; keyboard
 // ArrowLeft/ArrowRight works when the main visual is focused.
@@ -30,13 +29,13 @@ export function ProductGallery({
   product: ProductArtSource & { images?: string[]; id: string };
   dict: Dictionary;
 }) {
+  const hasUploads = (product.images ?? []).length > 0;
+  const fallbackViews = hasUploads
+    ? []
+    : [product.image ?? FRONT_FALLBACK, ...FALLBACK_VIEWS];
   const views = Array.from(
-    new Set([
-      ...(product.images ?? []),
-      product.image ?? FRONT_FALLBACK,
-      ...FALLBACK_VIEWS,
-    ]),
-  ).slice(0, 3);
+    new Set([...(product.images ?? []), ...fallbackViews]),
+  );
   const [active, setActive] = useState(0);
   const count = views.length;
 
