@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Plus, CheckCircle2, AlertCircle, X } from "lucide-react";
-import Image from "next/image";
+import { Loader2, Plus, CheckCircle2, AlertCircle } from "lucide-react";
 import {
   createCollection,
   type CollectionActionState,
 } from "@/features/admin/collections-actions";
 import { Button } from "@/components/ui/button";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
 // Form to add a new collection from the dashboard (image + slider captions AR/EN).
+// The picture is required — every collection must have an expressive image.
 
 export function CollectionForm({ dict }: { dict: Dictionary }) {
   const [nameAr, setNameAr] = useState("");
@@ -19,7 +20,6 @@ export function CollectionForm({ dict }: { dict: Dictionary }) {
   const [image, setImage] = useState("");
   const [descriptionAr, setDescriptionAr] = useState("");
   const [descriptionEn, setDescriptionEn] = useState("");
-  const [uploading, setUploading] = useState(false);
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<CollectionActionState>({});
 
@@ -29,32 +29,6 @@ export function CollectionForm({ dict }: { dict: Dictionary }) {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
-
-  const handleImageUpload = async (file: File) => {
-    try {
-      const fd = new FormData();
-      fd.set("file", file);
-      const res = await fetch("/api/admin/upload-image", {
-        method: "POST",
-        body: fd,
-        credentials: "same-origin",
-      });
-      const data = await res.json();
-      if (!res.ok || !data?.url) return null;
-      return data.url as string;
-    } catch {
-      return null;
-    }
-  };
-
-  const onPickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const url = await handleImageUpload(file);
-    setUploading(false);
-    if (url) setImage(url);
-  };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -130,55 +104,15 @@ export function CollectionForm({ dict }: { dict: Dictionary }) {
             className="h-10 rounded-lg border border-border bg-background px-3 font-mono text-sm text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
         </label>
-        <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-          {dict.admin.collectionImage}
-          <input
-            type="text"
+        <div className="sm:col-span-2">
+          <ImageUploader
             value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="/api/uploads/..."
-            dir="ltr"
-            maxLength={500}
-            className="h-10 rounded-lg border border-border bg-background px-3 font-mono text-sm text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            onChange={setImage}
+            label={dict.admin.collectionImage}
+            required
+            dict={dict}
           />
-        </label>
-      </div>
-
-      {/* Image picker — uploads then fills the URL above */}
-      <div className="mt-4 flex items-center gap-3">
-        {image ? (
-          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border">
-            <Image
-              src={image}
-              alt=""
-              fill
-              sizes="64px"
-              className="object-cover"
-            />
-            <button
-              type="button"
-              onClick={() => setImage("")}
-              aria-label={dict.admin.removeImage}
-              className="absolute end-1 top-1 flex size-5 items-center justify-center rounded-full bg-black/70 text-white"
-            >
-              <X className="size-3" />
-            </button>
-          </div>
-        ) : null}
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">
-          {uploading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Plus className="size-4" />
-          )}
-          {dict.admin.collectionImageHint}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            className="hidden"
-            onChange={onPickImage}
-          />
-        </label>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -208,7 +142,7 @@ export function CollectionForm({ dict }: { dict: Dictionary }) {
       <div className="mt-4 flex items-center gap-3">
         <Button
           type="submit"
-          disabled={pending || uploading}
+          disabled={pending || !image}
           className="rounded-full px-6"
         >
           {pending ? (

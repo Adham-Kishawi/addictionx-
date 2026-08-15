@@ -28,6 +28,7 @@ import {
   SliderPreview,
   type PreviewCollection,
 } from "@/components/admin/slider-preview";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import { Button } from "@/components/ui/button";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
@@ -85,7 +86,6 @@ export function SliderManager({
   const [addImage, setAddImage] = useState("");
   const [addCaptionAr, setAddCaptionAr] = useState("");
   const [addCaptionEn, setAddCaptionEn] = useState("");
-  const [uploading, setUploading] = useState(false);
 
   // Inline editor
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -98,35 +98,6 @@ export function SliderManager({
   const [overId, setOverId] = useState<string | null>(null);
 
   const alreadyAdded = new Set(slides.map((s) => s.product.id));
-
-  const upload = async (file: File): Promise<string | null> => {
-    try {
-      const fd = new FormData();
-      fd.set("file", file);
-      const res = await fetch("/api/admin/upload-image", {
-        method: "POST",
-        body: fd,
-        credentials: "same-origin",
-      });
-      const data = await res.json();
-      if (!res.ok || !data?.url) return null;
-      return data.url as string;
-    } catch {
-      return null;
-    }
-  };
-
-  const onPick = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setUrl: (url: string) => void,
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const url = await upload(file);
-    setUploading(false);
-    if (url) setUrl(url);
-  };
 
   // ============ Mutations (optimistic, revert on error) ============
 
@@ -434,35 +405,15 @@ export function SliderManager({
         {/* Selected product + image + captions */}
         {selectedProduct && (
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-              {dict.admin.sliderCustomImage}
-              <input
-                type="text"
+            <div className="sm:col-span-2">
+              <ImageUploader
                 value={addImage}
-                onChange={(e) => setAddImage(e.target.value)}
-                placeholder="/api/uploads/..."
-                dir="ltr"
-                maxLength={500}
-                className={cn(inputCls, "font-mono")}
+                onChange={setAddImage}
+                label={dict.admin.sliderCustomImage}
+                hint={dict.admin.sliderCustomImageHint}
+                dict={dict}
               />
-              <span className="text-[11px] font-normal">
-                {dict.admin.sliderCustomImageHint}
-              </span>
-            </label>
-            <label className="inline-flex cursor-pointer items-center gap-2 self-end rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">
-              {uploading ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Plus className="size-4" />
-              )}
-              {dict.admin.uploadImage}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
-                onChange={(e) => onPick(e, setAddImage)}
-              />
-            </label>
+            </div>
             <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
               {dict.admin.sliderCaptionAr}
               <input
@@ -491,7 +442,7 @@ export function SliderManager({
           <Button
             type="button"
             onClick={() => void handleAdd()}
-            disabled={busy || uploading || !selectedId}
+            disabled={busy || !selectedId}
             className="rounded-full px-6"
           >
             {busy ? (
@@ -669,32 +620,15 @@ export function SliderManager({
                 {/* Inline editor */}
                 {editingId === slide.id && (
                   <div className="mt-4 grid gap-4 rounded-xl border border-border/60 bg-background p-4 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-                      {dict.admin.sliderCustomImage}
-                      <input
-                        type="text"
+                    <div className="sm:col-span-2">
+                      <ImageUploader
                         value={editImage}
-                        onChange={(e) => setEditImage(e.target.value)}
-                        placeholder="/api/uploads/..."
-                        dir="ltr"
-                        maxLength={500}
-                        className={cn(inputCls, "font-mono")}
+                        onChange={setEditImage}
+                        label={dict.admin.sliderCustomImage}
+                        hint={dict.admin.sliderCustomImageHint}
+                        dict={dict}
                       />
-                    </label>
-                    <label className="inline-flex cursor-pointer items-center gap-2 self-end rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">
-                      {uploading ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Plus className="size-4" />
-                      )}
-                      {dict.admin.uploadImage}
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/gif"
-                        className="hidden"
-                        onChange={(e) => onPick(e, setEditImage)}
-                      />
-                    </label>
+                    </div>
                     <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
                       {dict.admin.sliderCaptionAr}
                       <input
@@ -720,7 +654,6 @@ export function SliderManager({
                       <Button
                         type="button"
                         size="sm"
-                        disabled={uploading}
                         onClick={() => void handleEditSave(slide.id)}
                         className="rounded-full px-5"
                       >

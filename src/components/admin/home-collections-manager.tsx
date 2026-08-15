@@ -25,6 +25,7 @@ import {
   CollectionPreview,
   type PreviewCollectionCard,
 } from "@/components/admin/collection-preview";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import { Button } from "@/components/ui/button";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
@@ -431,6 +432,15 @@ export function HomeCollectionsManager({
                           {dict.admin.homeCollectionsInactiveSite}
                         </span>
                       )}
+                      {!collection.image && (
+                        <button
+                          type="button"
+                          onClick={() => openEdit(collection)}
+                          className="mt-1 inline-block rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 transition-colors hover:bg-amber-500/20 dark:text-amber-500"
+                        >
+                          {dict.admin.noImage} — {dict.admin.homeCollectionsAdd}
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -481,21 +491,15 @@ export function HomeCollectionsManager({
                 {/* Inline editor */}
                 {editingSlug === collection.slug && (
                   <div className="mt-4 grid gap-4 rounded-xl border border-border/60 bg-background p-4 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground sm:col-span-2">
-                      {dict.admin.homeCollectionsImage}
-                      <input
-                        type="text"
+                    <div className="sm:col-span-2">
+                      <ImageUploader
                         value={editImage}
-                        onChange={(e) => setEditImage(e.target.value)}
-                        placeholder="/api/uploads/..."
-                        dir="ltr"
-                        maxLength={500}
-                        className={cn(inputCls, "font-mono")}
+                        onChange={setEditImage}
+                        label={dict.admin.homeCollectionsImage}
+                        hint={dict.admin.homeCollectionsImageNote}
+                        dict={dict}
                       />
-                      <span className="text-[11px] font-normal">
-                        {dict.admin.homeCollectionsImageNote}
-                      </span>
-                    </label>
+                    </div>
                     <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
                       {dict.admin.homeCollectionsDescAr}
                       <input

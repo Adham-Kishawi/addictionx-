@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, CheckCircle2, AlertCircle, X, Save } from "lucide-react";
-import Image from "next/image";
+import { Loader2, CheckCircle2, AlertCircle, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   updateCollection,
   type CollectionActionState,
 } from "@/features/admin/collections-actions";
 import { Button } from "@/components/ui/button";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
 // Inline edit form for one collection (names, image, slider captions AR/EN).
@@ -39,35 +39,8 @@ export function CollectionEdit({
   const [descriptionEn, setDescriptionEn] = useState(
     initial.descriptionEn ?? "",
   );
-  const [uploading, setUploading] = useState(false);
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<CollectionActionState>({});
-
-  const handleImageUpload = async (file: File) => {
-    try {
-      const fd = new FormData();
-      fd.set("file", file);
-      const res = await fetch("/api/admin/upload-image", {
-        method: "POST",
-        body: fd,
-        credentials: "same-origin",
-      });
-      const data = await res.json();
-      if (!res.ok || !data?.url) return null;
-      return data.url as string;
-    } catch {
-      return null;
-    }
-  };
-
-  const onPickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const url = await handleImageUpload(file);
-    setUploading(false);
-    if (url) setImage(url);
-  };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -113,18 +86,14 @@ export function CollectionEdit({
           className="h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
         />
       </label>
-      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-        {dict.admin.collectionImage}
-        <input
-          type="text"
+      <div className="sm:col-span-2">
+        <ImageUploader
           value={image}
-          onChange={(e) => setImage(e.target.value)}
-          placeholder="/api/uploads/..."
-          dir="ltr"
-          maxLength={500}
-          className="h-9 rounded-lg border border-border bg-background px-3 font-mono text-sm text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          onChange={setImage}
+          label={dict.admin.collectionImage}
+          dict={dict}
         />
-      </label>
+      </div>
       <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
         {dict.admin.collectionDescriptionAr}
         <textarea
@@ -148,42 +117,9 @@ export function CollectionEdit({
       </label>
 
       <div className="flex items-center gap-3 sm:col-span-2">
-        {image ? (
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border">
-            <Image
-              src={image}
-              alt=""
-              fill
-              sizes="56px"
-              className="object-cover"
-            />
-            <button
-              type="button"
-              onClick={() => setImage("")}
-              aria-label={dict.admin.removeImage}
-              className="absolute end-1 top-1 flex size-5 items-center justify-center rounded-full bg-black/70 text-white"
-            >
-              <X className="size-3" />
-            </button>
-          </div>
-        ) : null}
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">
-          {uploading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Save className="size-4" />
-          )}
-          {dict.admin.collectionImageHint}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            className="hidden"
-            onChange={onPickImage}
-          />
-        </label>
         <Button
           type="submit"
-          disabled={pending || uploading}
+          disabled={pending}
           size="sm"
           className="ms-auto rounded-full px-5"
         >
