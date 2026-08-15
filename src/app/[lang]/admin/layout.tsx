@@ -69,7 +69,7 @@ export default async function AdminLayout({
     products: dict.admin.products,
     slider: dict.admin.slider,
     orders: dict.admin.orders,
-    "payment-verification": dict.admin.paymentVerification,
+    paymentVerification: dict.admin.paymentVerification,
     users: dict.admin.users,
     coupons: dict.admin.coupons,
     settings: dict.admin.settings,

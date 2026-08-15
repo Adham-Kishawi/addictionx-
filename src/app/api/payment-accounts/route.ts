@@ -14,9 +14,11 @@ export async function GET() {
     return NextResponse.json(
       {
         instapayNumber: "",
+        instapayPhone: "",
         instapayName: "ADDICTIONX",
         vodafoneCashNumber: "",
-        vodafoneCashName: "ADDICTIONX",
+        vodafoneCashNameAr: "ADDICTIONX",
+        vodafoneCashNameEn: "ADDICTIONX",
       },
       { status: 200 }, // Always 200 so checkout doesn't break
     );

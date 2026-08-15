@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, AlertCircle, Save } from "lucide-react";
+import { Check, AlertCircle, Save, CreditCard, Smartphone } from "lucide-react";
 import { updatePaymentSettings } from "@/features/admin/zones-actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { PaymentSettings } from "@/lib/shipping";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 export function PaymentSettingsForm({
   dict,
@@ -41,8 +43,14 @@ export function PaymentSettingsForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <Toggle label={dict.admin.enableCard} checked={card} onChange={setCard} />
-      <Toggle
+      <ToggleRow
+        icon={CreditCard}
+        label={dict.admin.enableCard}
+        checked={card}
+        onChange={setCard}
+      />
+      <ToggleRow
+        icon={Smartphone}
         label={dict.admin.enableWallet}
         checked={wallet}
         onChange={setWallet}
@@ -78,28 +86,38 @@ export function PaymentSettingsForm({
   );
 }
 
-function Toggle({
+function ToggleRow({
+  icon: Icon,
   label,
   checked,
   onChange,
 }: {
+  icon: React.ElementType;
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm">
-      <span className="font-medium">{label}</span>
-      <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          className="peer sr-only"
-        />
-        <span className="absolute inset-0 rounded-full bg-muted-foreground/30 transition-colors peer-checked:bg-primary" />
-        <span className="absolute start-1 h-4 w-4 rounded-full bg-background transition-transform peer-checked:translate-x-5 rtl:peer-checked:-translate-x-5" />
+    <label
+      className={cn(
+        "flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors",
+        checked
+          ? "border-primary/40 bg-primary/5"
+          : "border-border bg-background",
+      )}
+    >
+      <span
+        className={cn(
+          "grid size-9 shrink-0 place-items-center rounded-lg transition-colors",
+          checked
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-muted-foreground",
+        )}
+      >
+        <Icon className="size-4" />
       </span>
+      <span className="flex-1 font-medium">{label}</span>
+      <Switch checked={checked} onChange={onChange} label={label} />
     </label>
   );
 }

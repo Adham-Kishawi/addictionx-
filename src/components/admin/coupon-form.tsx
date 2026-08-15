@@ -6,6 +6,7 @@ import { Plus, Check, AlertCircle } from "lucide-react";
 import { createCoupon, type UserActionState } from "@/features/admin/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 const inputClass =
   "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
@@ -15,6 +16,7 @@ export function CouponForm({ dict }: { dict: Dictionary }) {
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<UserActionState>({});
   const [type, setType] = useState<"PERCENT" | "FIXED">("PERCENT");
+  const [active, setActive] = useState(true);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -139,14 +141,14 @@ export function CouponForm({ dict }: { dict: Dictionary }) {
             dir="ltr"
           />
         </label>
-        <label className="flex items-center gap-2 text-sm sm:col-span-2">
-          <input
+        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm sm:col-span-2">
+          <span className="flex-1 font-medium">{dict.admin.active}</span>
+          <Switch
+            checked={active}
+            onChange={setActive}
             name="isActive"
-            type="checkbox"
-            defaultChecked
-            className="size-4 accent-primary"
+            label={dict.admin.active}
           />
-          <span>{dict.admin.active}</span>
         </label>
       </div>
 

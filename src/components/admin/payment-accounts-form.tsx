@@ -12,18 +12,22 @@ import { cn } from "@/lib/utils";
 
 const schema = z.object({
   instapayNumber: z.string().trim(),
+  instapayPhone: z.string().trim(),
   instapayName: z.string().trim(),
   vodafoneCashNumber: z.string().trim(),
-  vodafoneCashName: z.string().trim(),
+  vodafoneCashNameAr: z.string().trim(),
+  vodafoneCashNameEn: z.string().trim(),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 type PaymentAccountsConfig = {
   instapayNumber: string;
+  instapayPhone: string;
   instapayName: string;
   vodafoneCashNumber: string;
-  vodafoneCashName: string;
+  vodafoneCashNameAr: string;
+  vodafoneCashNameEn: string;
 };
 
 type Props = {
@@ -33,8 +37,11 @@ type Props = {
     admin: {
       instapayAccountNumber: string;
       instapayAccountName: string;
+      instapayPhone: string;
       vodafoneCashNumber: string;
       vodafoneCashName: string;
+      vodafoneCashNameAr: string;
+      vodafoneCashNameEn: string;
       save: string;
       paymentSettingsSaved: string;
       paymentSettingsError: string;
@@ -53,9 +60,11 @@ export function PaymentAccountsForm({ config, locale, dict }: Props) {
     resolver: zodResolver(schema),
     defaultValues: {
       instapayNumber: config.instapayNumber,
+      instapayPhone: config.instapayPhone,
       instapayName: config.instapayName,
       vodafoneCashNumber: config.vodafoneCashNumber,
-      vodafoneCashName: config.vodafoneCashName,
+      vodafoneCashNameAr: config.vodafoneCashNameAr,
+      vodafoneCashNameEn: config.vodafoneCashNameEn,
     },
   });
 
@@ -87,12 +96,33 @@ export function PaymentAccountsForm({ config, locale, dict }: Props) {
               type="text"
               {...register("instapayNumber")}
               className={inputClass(!!errors.instapayNumber)}
-              placeholder="01XXXXXXXXX"
+              placeholder="you@instapay"
               dir="ltr"
             />
             {errors.instapayNumber && (
               <p className="mt-1 text-xs text-destructive">
                 {errors.instapayNumber.message}
+              </p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="instapayPhone"
+              className="mb-2 block text-sm font-medium"
+            >
+              {dict.admin.instapayPhone}
+            </label>
+            <input
+              id="instapayPhone"
+              type="text"
+              {...register("instapayPhone")}
+              className={inputClass(!!errors.instapayPhone)}
+              placeholder="01XXXXXXXXX"
+              dir="ltr"
+            />
+            {errors.instapayPhone && (
+              <p className="mt-1 text-xs text-destructive">
+                {errors.instapayPhone.message}
               </p>
             )}
           </div>
@@ -145,21 +175,41 @@ export function PaymentAccountsForm({ config, locale, dict }: Props) {
           </div>
           <div>
             <label
-              htmlFor="vodafoneCashName"
+              htmlFor="vodafoneCashNameAr"
               className="mb-2 block text-sm font-medium"
             >
-              {dict.admin.vodafoneCashName}
+              {dict.admin.vodafoneCashNameAr}
             </label>
             <input
-              id="vodafoneCashName"
+              id="vodafoneCashNameAr"
               type="text"
-              {...register("vodafoneCashName")}
-              className={inputClass(!!errors.vodafoneCashName)}
-              placeholder="ADDICTIONX"
+              {...register("vodafoneCashNameAr")}
+              className={inputClass(!!errors.vodafoneCashNameAr)}
+              placeholder="رانيا"
             />
-            {errors.vodafoneCashName && (
+            {errors.vodafoneCashNameAr && (
               <p className="mt-1 text-xs text-destructive">
-                {errors.vodafoneCashName.message}
+                {errors.vodafoneCashNameAr.message}
+              </p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="vodafoneCashNameEn"
+              className="mb-2 block text-sm font-medium"
+            >
+              {dict.admin.vodafoneCashNameEn}
+            </label>
+            <input
+              id="vodafoneCashNameEn"
+              type="text"
+              {...register("vodafoneCashNameEn")}
+              className={inputClass(!!errors.vodafoneCashNameEn)}
+              placeholder="Rania"
+            />
+            {errors.vodafoneCashNameEn && (
+              <p className="mt-1 text-xs text-destructive">
+                {errors.vodafoneCashNameEn.message}
               </p>
             )}
           </div>

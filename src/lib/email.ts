@@ -261,10 +261,9 @@ export async function notifyLowStock(
     include: { product: { select: { name: true } } },
   });
   if (!low.length) return;
+  const { getAdminNotificationEmail } = await import("@/lib/store-config");
   await sendEmail({
-    to:
-      process.env.ADMIN_EMAIL ||
-      (await import("@/config/site")).siteConfig.adminEmail,
+    to: await getAdminNotificationEmail(),
     subject: "Low stock alert",
     html: lowStockEmail(
       low.map((v) => ({
@@ -342,6 +341,107 @@ export function orderCancelledEmail(locale: Locale) {
            isAr
              ? "لو كان الإلغاء خطأً، يمكنك إعادة الطلب من المتجر في أي وقت."
              : "If the cancellation was a mistake, you can place a new order anytime."
+         }</p>`,
+      );
+    },
+  };
+}
+
+// Admin alert when a manual payment (InstaPay / Vodafone Cash) needs verification
+export function adminManualPaymentEmail(locale: Locale) {
+  const isAr = locale === "ar";
+  const methodLabel = (m: string) =>
+    m === "INSTAPAY" ? "InstaPay" : isAr ? "فودافون كاش" : "Vodafone Cash";
+  return {
+    subject(method: string, orderNumber: string) {
+      return isAr
+        ? `دفع يدوي بانتظار المراجعة — ${orderNumber}`
+        : `Manual payment awaiting verification — ${orderNumber}`;
+    },
+    html(info: {
+      orderNumber: string;
+      totalQirsh: number;
+      method: string;
+      transactionRef: string | null;
+      customerName: string | null;
+    }) {
+      return shell(
+        locale,
+        isAr
+          ? `دفع يدوي بانتظار المراجعة — ${info.orderNumber}`
+          : `Manual payment awaiting verification — ${info.orderNumber}`,
+        `<div style="font-size:18px;font-weight:bold;color:#f5c518;">${
+          isAr
+            ? "دفع يدوي بانتظار المراجعة ⏳"
+            : "Manual payment awaiting verification ⏳"
+        }</div>
+         <p>${isAr ? "طريقة الدفع:" : "Payment method:"} <b>${methodLabel(info.method)}</b></p>
+         <p>${isAr ? "رقم الطلب:" : "Order number:"} <b style="color:#f5c518;">${info.orderNumber}</b> — ${isAr ? "الإجمالي:" : "Total:"} <b>${fmt(locale, info.totalQirsh)}</b></p>
+         <p>${isAr ? "العميل:" : "Customer:"} <b>${escapeHtml(info.customerName ?? "-")}</b></p>
+         ${
+           info.transactionRef
+             ? `<p>${isAr ? "رقم العملية:" : "Transaction ref:"} <b style="color:#f5c518;">${escapeHtml(info.transactionRef)}</b></p>`
+             : ""
+         }
+         <p style="font-size:12px;color:#8a8a8a;">${
+           isAr
+             ? "راجع الإيصال من صفحة التحقق من الدفع في لوحة التحكم."
+             : "Review the receipt from the payment verification page in the dashboard."
+         }</p>`,
+      );
+    },
+  };
+}
+
+// Customer notification when their payment was approved or rejected
+export function paymentStatusEmail(locale: Locale) {
+  const isAr = locale === "ar";
+  return {
+    subject(orderNumber: string) {
+      return isAr
+        ? `تحديث حالة الدفع — ${orderNumber}`
+        : `Payment status update — ${orderNumber}`;
+    },
+    html(info: {
+      orderNumber: string;
+      status: "PAID" | "REJECTED";
+      rejectionNote?: string;
+    }) {
+      const paid = info.status === "PAID";
+      return shell(
+        locale,
+        isAr
+          ? `تحديث حالة الدفع — ${info.orderNumber}`
+          : `Payment status update — ${info.orderNumber}`,
+        `<div style="font-size:18px;font-weight:bold;color:${paid ? "#10b981" : "#f43f5e"};">${
+          paid
+            ? isAr
+              ? "تم تأكيد الدفع ✅"
+              : "Payment confirmed ✅"
+            : isAr
+              ? "لم يتم تأكيد الدفع ❌"
+              : "Payment was not accepted ❌"
+        }</div>
+         <p>${isAr ? "طلبك رقم" : "Your order"} <b style="color:#f5c518;">${info.orderNumber}</b> ${
+           paid
+             ? isAr
+               ? "تم التحقق من دفعته بنجاح."
+               : "— its payment has been verified."
+             : isAr
+               ? "لم يتم اعتماد دفعته."
+               : "— its payment was not accepted."
+         }</p>
+         ${
+           !paid && info.rejectionNote
+             ? `<p style="font-size:12px;color:#8a8a8a;">${
+                 isAr ? "السبب:" : "Reason:"
+               } ${escapeHtml(info.rejectionNote)}</p>`
+             : ""
+         }
+         <p style="font-size:12px;color:#8a8a8a;">${
+           isAr
+             ? "لو كان الرفض خطأً، تواصل معنا وسنحل الأمر بسرعة."
+             : "If this was a mistake, contact us and we'll fix it quickly."
          }</p>`,
       );
     },

@@ -9,7 +9,6 @@ import {
   MapPin,
   Plus,
   Trash2,
-  Power,
 } from "lucide-react";
 import {
   createGovernorate,
@@ -23,6 +22,7 @@ import { formatPrice } from "@/features/catalog/data/products";
 import type { Dictionary, Locale } from "@/lib/i18n/dictionary";
 import type { GovernorateAdminDto } from "@/lib/shipping";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 const inputClass =
   "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
@@ -41,6 +41,7 @@ export function ShippingZonesManager({
   const [addingGov, setAddingGov] = useState(false);
   const [addingRegion, setAddingRegion] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [pendingId, setPendingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{
     type: "ok" | "err";
     text: string;
@@ -50,11 +51,14 @@ export function ShippingZonesManager({
 
   const run = async (
     fn: () => Promise<{ success?: boolean; error?: string }>,
+    busyId?: string,
   ) => {
     setPending(true);
+    if (busyId) setPendingId(busyId);
     setMessage(null);
     const res = await fn();
     setPending(false);
+    setPendingId(null);
     if (res.success) {
       setMessage({ type: "ok", text: dict.admin.zoneSaved });
       router.refresh();
@@ -102,7 +106,10 @@ export function ShippingZonesManager({
             return (
               <li
                 key={gov.id}
-                className="rounded-xl border border-border bg-background"
+                className={cn(
+                  "rounded-xl border border-border bg-background transition-opacity",
+                  pendingId === gov.id && "opacity-60",
+                )}
               >
                 <div className="flex items-center gap-2 px-4 py-3">
                   <button
@@ -131,15 +138,6 @@ export function ShippingZonesManager({
                   </button>
                   <button
                     type="button"
-                    title={dict.admin.activate}
-                    onClick={() => run(() => toggleGovernorateActive(gov.id))}
-                    disabled={pending}
-                    className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-                  >
-                    <Power className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
                     title={dict.admin.delete}
                     onClick={() => {
                       if (window.confirm(dict.admin.deleteConfirm))
@@ -150,6 +148,19 @@ export function ShippingZonesManager({
                   >
                     <Trash2 className="size-3.5" />
                   </button>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {dict.admin.active}
+                    </span>
+                    <Switch
+                      checked={gov.isActive}
+                      disabled={pending}
+                      onChange={() =>
+                        run(() => toggleGovernorateActive(gov.id), gov.id)
+                      }
+                      label={dict.admin.activate}
+                    />
+                  </div>
                 </div>
 
                 {open && (
@@ -164,7 +175,8 @@ export function ShippingZonesManager({
                           <li
                             key={region.id}
                             className={cn(
-                              "flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2 text-sm",
+                              "flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2 text-sm transition-opacity",
+                              pendingId === region.id && "opacity-60",
                               !region.isActive && "opacity-50",
                             )}
                           >
@@ -175,17 +187,17 @@ export function ShippingZonesManager({
                               <span className="font-medium text-foreground">
                                 {formatPrice(region.shippingFee)}
                               </span>
-                              <button
-                                type="button"
-                                title={dict.admin.activate}
-                                onClick={() =>
-                                  run(() => toggleRegionActive(region.id))
-                                }
+                              <Switch
+                                checked={region.isActive}
                                 disabled={pending}
-                                className="inline-flex size-7 items-center justify-center rounded-md transition-colors hover:bg-muted disabled:opacity-50"
-                              >
-                                <Power className="size-3" />
-                              </button>
+                                onChange={() =>
+                                  run(
+                                    () => toggleRegionActive(region.id),
+                                    region.id,
+                                  )
+                                }
+                                label={dict.admin.activate}
+                              />
                               <button
                                 type="button"
                                 title={dict.admin.delete}

@@ -53,6 +53,7 @@ type Props = {
       approve: string;
       reject: string;
       rejectionReason: string;
+      rejectionReasonRequired: string;
       recentVerifications: string;
       orderNumber: string;
       paymentMethod: string;
@@ -63,6 +64,10 @@ type Props = {
       rejected: string;
       receiptAlt: string;
       errorGeneric: string;
+      approveConfirm: string;
+      confirmApprove: string;
+      confirmReject: string;
+      cancel: string;
     };
     checkout: {
       instapay: string;
@@ -87,6 +92,12 @@ export function PaymentVerificationList({
   const [isPending, startTransition] = useTransition();
   const [expandedProof, setExpandedProof] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<
+    | { type: "verify"; proofId: string; orderId: string }
+    | { type: "reject"; proofId: string }
+    | null
+  >(null);
+  const [rejectNote, setRejectNote] = useState("");
 
   const handleVerify = (proofId: string, orderId: string) => {
     setError(null);
@@ -198,7 +209,13 @@ export function PaymentVerificationList({
                   {/* Right: Actions */}
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => handleVerify(proof.id, proof.orderId)}
+                      onClick={() =>
+                        setConfirmAction({
+                          type: "verify",
+                          proofId: proof.id,
+                          orderId: proof.orderId,
+                        })
+                      }
                       disabled={isPending}
                       size="sm"
                       className="gap-2"
@@ -208,8 +225,8 @@ export function PaymentVerificationList({
                     </Button>
                     <Button
                       onClick={() => {
-                        const note = prompt(dict.admin.rejectionReason);
-                        if (note) handleReject(proof.id, note);
+                        setRejectNote("");
+                        setConfirmAction({ type: "reject", proofId: proof.id });
                       }}
                       disabled={isPending}
                       variant="destructive"
@@ -317,6 +334,93 @@ export function PaymentVerificationList({
           </div>
         )}
       </section>
+
+      {/* Confirmation dialog */}
+      {confirmAction && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setConfirmAction(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3
+              className={cn(
+                "mb-4 text-lg font-semibold",
+                confirmAction.type === "reject" && "text-destructive",
+              )}
+            >
+              {confirmAction.type === "verify"
+                ? dict.admin.approveConfirm
+                : dict.admin.confirmReject}
+            </h3>
+
+            {confirmAction.type === "reject" && (
+              <label className="mb-4 block">
+                <span className="mb-1.5 block text-sm font-medium">
+                  {dict.admin.rejectionReason}
+                </span>
+                <textarea
+                  value={rejectNote}
+                  onChange={(e) => setRejectNote(e.target.value)}
+                  rows={3}
+                  autoFocus
+                  className={cn(
+                    "w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    rejectNote.trim()
+                      ? "border-border"
+                      : "border-destructive/60",
+                  )}
+                  placeholder={dict.admin.rejectionReasonRequired}
+                />
+              </label>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmAction(null)}
+                disabled={isPending}
+              >
+                {dict.admin.cancel}
+              </Button>
+              <Button
+                variant={
+                  confirmAction.type === "reject" ? "destructive" : "default"
+                }
+                size="sm"
+                disabled={isPending}
+                onClick={() => {
+                  if (confirmAction.type === "verify") {
+                    handleVerify(confirmAction.proofId, confirmAction.orderId);
+                  } else {
+                    if (!rejectNote.trim()) return;
+                    handleReject(confirmAction.proofId, rejectNote.trim());
+                  }
+                  setConfirmAction(null);
+                }}
+                className="gap-2"
+              >
+                {confirmAction.type === "verify" ? (
+                  <>
+                    <CheckCircle className="size-4" />
+                    {dict.admin.confirmApprove}
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="size-4" />
+                    {dict.admin.confirmReject}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

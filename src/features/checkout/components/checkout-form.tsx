@@ -15,6 +15,8 @@ import {
   X,
   Wallet,
   Smartphone,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductArt } from "@/features/catalog/components/product-art";
@@ -46,9 +48,11 @@ type PaymentSettings = { cardEnabled: boolean; walletEnabled: boolean };
 
 type PaymentAccountsConfig = {
   instapayNumber: string;
+  instapayPhone: string;
   instapayName: string;
   vodafoneCashNumber: string;
-  vodafoneCashName: string;
+  vodafoneCashNameAr: string;
+  vodafoneCashNameEn: string;
 };
 
 type CouponState = { code: string; discount: number } | null;
@@ -69,9 +73,11 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
   const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccountsConfig>(
     {
       instapayNumber: "",
+      instapayPhone: "",
       instapayName: "ADDICTIONX",
       vodafoneCashNumber: "",
-      vodafoneCashName: "ADDICTIONX",
+      vodafoneCashNameAr: "ADDICTIONX",
+      vodafoneCashNameEn: "ADDICTIONX",
     },
   );
   const [freeThreshold, setFreeThreshold] = useState<number | null>(null);
@@ -84,6 +90,16 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
   // Payment proof state (for InstaPay and Vodafone Cash)
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [transactionRef, setTransactionRef] = useState("");
+
+  // Copy-to-clipboard feedback for account details
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyText = (key: string, text: string) => {
+    if (!text) return;
+    navigator.clipboard?.writeText(text).catch(() => {});
+    setCopiedKey(key);
+    window.setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 1600);
+  };
 
   useEffect(() => {
     fetch("/api/checkout-config")
@@ -519,36 +535,93 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
               <h3 className="text-sm font-semibold text-primary">
                 {dict.checkout.paymentInstructions}
               </h3>
+
+              <div className="flex items-center justify-between rounded-lg bg-background/60 px-4 py-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {dict.checkout.amountToTransfer}
+                  </p>
+                  <p className="text-lg font-bold text-primary">
+                    {formatPrice(total)}{" "}
+                    <span className="text-sm font-medium">
+                      {dict.product.currency}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
               <div className="space-y-2 text-sm">
                 <p className="text-muted-foreground">
                   {dict.checkout.transferTo}
                 </p>
-                <div className="rounded-lg bg-background/60 p-3 font-mono">
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">
-                      {dict.checkout.accountNumber}:
-                    </span>
-                    <span className="font-semibold" dir="ltr">
-                      {paymentMethod === "INSTAPAY"
-                        ? paymentAccounts.instapayNumber || "—"
-                        : paymentAccounts.vodafoneCashNumber || "—"}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex justify-between gap-2">
-                    <span className="text-muted-foreground">
-                      {dict.checkout.accountName}:
-                    </span>
-                    <span className="font-semibold">
-                      {paymentMethod === "INSTAPAY"
+
+                <div className="space-y-2">
+                  <AccountRow
+                    label={dict.checkout.accountNumber}
+                    value={
+                      paymentMethod === "INSTAPAY"
+                        ? paymentAccounts.instapayNumber
+                        : paymentAccounts.vodafoneCashNumber
+                    }
+                    copiedKey={copiedKey}
+                    copyText={copyText}
+                    copyLabel={dict.checkout.paymentCopy}
+                    copiedLabel={dict.checkout.paymentCopied}
+                    dir="ltr"
+                    mono
+                  />
+                  {paymentMethod === "INSTAPAY" && (
+                    <AccountRow
+                      label={dict.checkout.accountPhone}
+                      value={paymentAccounts.instapayPhone}
+                      copiedKey={copiedKey}
+                      copyText={copyText}
+                      copyLabel={dict.checkout.paymentCopy}
+                      copiedLabel={dict.checkout.paymentCopied}
+                      dir="ltr"
+                      mono
+                    />
+                  )}
+                  <AccountRow
+                    label={dict.checkout.accountName}
+                    value={
+                      paymentMethod === "INSTAPAY"
                         ? paymentAccounts.instapayName
-                        : paymentAccounts.vodafoneCashName}
-                    </span>
-                  </div>
+                        : locale === "ar"
+                          ? paymentAccounts.vodafoneCashNameAr
+                          : paymentAccounts.vodafoneCashNameEn
+                    }
+                    copiedKey={copiedKey}
+                    copyText={copyText}
+                    copyLabel={dict.checkout.paymentCopy}
+                    copiedLabel={dict.checkout.paymentCopied}
+                  />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {dict.checkout.paymentPendingHint}
-                </p>
               </div>
+
+              {/* Step-by-step instructions */}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">
+                  {dict.checkout.stepsTitle}
+                </p>
+                <ol className="space-y-1.5 text-xs text-muted-foreground">
+                  {(paymentMethod === "INSTAPAY"
+                    ? dict.checkout.stepsInstapay
+                    : dict.checkout.stepsVodafone
+                  ).map((step, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="mt-px flex size-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+                        {i + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                {dict.checkout.paymentPendingHint}
+              </p>
 
               <PaymentProofUpload
                 onReceiptChange={setReceiptFile}
@@ -668,6 +741,67 @@ function Field({
       {children}
       {error && <span className="text-xs text-destructive">{error}</span>}
     </label>
+  );
+}
+
+function AccountRow({
+  label,
+  value,
+  copiedKey,
+  copyText,
+  copyLabel,
+  copiedLabel,
+  dir,
+  mono,
+}: {
+  label: string;
+  value: string;
+  copiedKey: string | null;
+  copyText: (key: string, text: string) => void;
+  copyLabel: string;
+  copiedLabel: string;
+  dir?: "ltr";
+  mono?: boolean;
+}) {
+  const key = `${label}:${value}`;
+  const isCopied = copiedKey === key;
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-lg bg-background/60 px-3 py-2">
+      <span className="shrink-0 text-xs text-muted-foreground">{label}:</span>
+      <span
+        className={cn(
+          "min-w-0 flex-1 truncate text-end font-semibold",
+          mono && "font-mono",
+        )}
+        dir={dir}
+      >
+        {value || "—"}
+      </span>
+      {value && (
+        <button
+          type="button"
+          onClick={() => copyText(key, value)}
+          className={cn(
+            "flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+            isCopied
+              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600"
+              : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
+          )}
+        >
+          {isCopied ? (
+            <>
+              <Check className="size-3" />
+              {copiedLabel}
+            </>
+          ) : (
+            <>
+              <Copy className="size-3" />
+              {copyLabel}
+            </>
+          )}
+        </button>
+      )}
+    </div>
   );
 }
 

@@ -5,10 +5,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { siteConfig } from "@/config/site";
+import { getAdminNotificationEmail } from "@/lib/store-config";
 import {
   orderConfirmationEmail,
   adminNewOrderEmail,
+  adminManualPaymentEmail,
   sendEmail,
   notifyLowStock,
 } from "@/lib/email";
@@ -417,6 +418,9 @@ export async function createOrder(
       where: { id: session.user.id },
       select: { email: true },
     });
+    const adminEmail = await getAdminNotificationEmail();
+    const isManualPayment =
+      paymentMethod === "INSTAPAY" || paymentMethod === "VODAFONE_CASH";
     await Promise.allSettled([
       user?.email
         ? sendEmail({
@@ -425,11 +429,26 @@ export async function createOrder(
             html: orderConfirmationEmail(locale).html(mailInfo),
           })
         : Promise.resolve(),
-      sendEmail({
-        to: process.env.ADMIN_EMAIL || siteConfig.adminEmail,
-        subject: adminNewOrderEmail(locale).subject(order.orderNumber),
-        html: adminNewOrderEmail(locale).html(mailInfo),
-      }),
+      isManualPayment
+        ? sendEmail({
+            to: adminEmail,
+            subject: adminManualPaymentEmail(locale).subject(
+              paymentMethod,
+              order.orderNumber,
+            ),
+            html: adminManualPaymentEmail(locale).html({
+              orderNumber: order.orderNumber,
+              totalQirsh: order.total,
+              method: paymentMethod,
+              transactionRef: transactionRef || null,
+              customerName: name,
+            }),
+          })
+        : sendEmail({
+            to: adminEmail,
+            subject: adminNewOrderEmail(locale).subject(order.orderNumber),
+            html: adminNewOrderEmail(locale).html(mailInfo),
+          }),
       notifyLowStock(
         lines.filter((l) => l.variantId).map((l) => l.variantId as string),
       ),

@@ -14,6 +14,7 @@ import { formatPrice } from "@/features/catalog/data/products";
 import { statusLabel, statusStyles } from "@/features/admin/status";
 import { OrderStatusSelect } from "@/components/admin/order-status-select";
 import { ShipmentForm } from "@/components/admin/shipment-form";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -122,6 +123,29 @@ export default async function AdminOrderDetailPage({
               {dict.admin.paymentMethod}:
             </span>
             <span className="font-medium">{paymentLabel}</span>
+            {order.paymentMethod !== "CASH_ON_DELIVERY" && (
+              <span
+                className={cn(
+                  "ms-auto rounded-full px-2.5 py-0.5 text-xs font-medium",
+                  order.paymentStatus === "PAID"
+                    ? "bg-emerald-500/10 text-emerald-600"
+                    : order.paymentStatus === "FAILED" ||
+                        order.paymentStatus === "REFUNDED"
+                      ? "bg-red-500/10 text-red-600"
+                      : "bg-yellow-500/10 text-yellow-600",
+                )}
+              >
+                {paymentStatusLabel(dict.admin, order.paymentStatus)}
+              </span>
+            )}
+            {order.paidAt && (
+              <span className="text-xs text-muted-foreground">
+                {new Date(order.paidAt).toLocaleString(
+                  locale === "ar" ? "ar-EG" : "en-EG",
+                  { dateStyle: "medium", timeStyle: "short" },
+                )}
+              </span>
+            )}
           </div>
         </section>
 
@@ -253,5 +277,21 @@ function shipmentLabel(dict: ReturnType<typeof getDictionary>, status: string) {
       return dict.admin.shipmentStatusDelivered;
     default:
       return dict.admin.shipmentStatusCreated;
+  }
+}
+
+function paymentStatusLabel(
+  admin: ReturnType<typeof getDictionary>["admin"],
+  status: string,
+) {
+  switch (status) {
+    case "PAID":
+      return admin.paymentStatusPaid;
+    case "FAILED":
+      return admin.paymentStatusFailed;
+    case "REFUNDED":
+      return admin.paymentStatusRefunded;
+    default:
+      return admin.paymentStatusPending;
   }
 }

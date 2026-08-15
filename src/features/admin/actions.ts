@@ -11,7 +11,11 @@ import {
 } from "@/lib/admin-permissions";
 import { ADMIN_PERMISSIONS } from "@/lib/admin-permissions-core";
 import { prisma } from "@/lib/prisma";
-import { clearConfigCache, getShippingConfig } from "@/lib/store-config";
+import {
+  clearConfigCache,
+  getShippingConfig,
+  getAdminNotificationEmail,
+} from "@/lib/store-config";
 import {
   orderStatusEmail,
   shippingInfoEmail,
@@ -19,7 +23,6 @@ import {
   sendEmail,
   notifyLowStock,
 } from "@/lib/email";
-import { siteConfig } from "@/config/site";
 import { storedImageId } from "@/lib/uploads";
 import type { OrderStatus } from "@prisma/client";
 
@@ -973,9 +976,11 @@ export type ManualOrderResult =
 
 type PaymentAccountsInput = {
   instapayNumber: string;
+  instapayPhone: string;
   instapayName: string;
   vodafoneCashNumber: string;
-  vodafoneCashName: string;
+  vodafoneCashNameAr: string;
+  vodafoneCashNameEn: string;
 };
 
 export async function updatePaymentAccounts(
@@ -992,6 +997,11 @@ export async function updatePaymentAccounts(
         update: { value: input.instapayNumber },
       }),
       prisma.storeSetting.upsert({
+        where: { key: "instapay_phone" },
+        create: { key: "instapay_phone", value: input.instapayPhone },
+        update: { value: input.instapayPhone },
+      }),
+      prisma.storeSetting.upsert({
         where: { key: "instapay_account_name" },
         create: { key: "instapay_account_name", value: input.instapayName },
         update: { value: input.instapayName },
@@ -1004,10 +1014,30 @@ export async function updatePaymentAccounts(
         },
         update: { value: input.vodafoneCashNumber },
       }),
+      // Legacy key kept in sync for backward compatibility
       prisma.storeSetting.upsert({
         where: { key: "vodafone_cash_name" },
-        create: { key: "vodafone_cash_name", value: input.vodafoneCashName },
-        update: { value: input.vodafoneCashName },
+        create: {
+          key: "vodafone_cash_name",
+          value: input.vodafoneCashNameEn,
+        },
+        update: { value: input.vodafoneCashNameEn },
+      }),
+      prisma.storeSetting.upsert({
+        where: { key: "vodafone_cash_name_ar" },
+        create: {
+          key: "vodafone_cash_name_ar",
+          value: input.vodafoneCashNameAr,
+        },
+        update: { value: input.vodafoneCashNameAr },
+      }),
+      prisma.storeSetting.upsert({
+        where: { key: "vodafone_cash_name_en" },
+        create: {
+          key: "vodafone_cash_name_en",
+          value: input.vodafoneCashNameEn,
+        },
+        update: { value: input.vodafoneCashNameEn },
       }),
     ]);
 
@@ -1018,6 +1048,32 @@ export async function updatePaymentAccounts(
     return { ok: true };
   } catch (error) {
     console.error("Failed to update payment accounts:", error);
+    return { ok: false, error: "UPDATE_FAILED" };
+  }
+}
+
+export async function updateAdminNotificationEmail(input: {
+  email: string;
+  locale: string;
+}) {
+  await requirePermission("settings");
+
+  const email = input.email.trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "INVALID_EMAIL" };
+  }
+
+  try {
+    await prisma.storeSetting.upsert({
+      where: { key: "admin_notification_email" },
+      create: { key: "admin_notification_email", value: email },
+      update: { value: email },
+    });
+
+    clearConfigCache();
+    return { ok: true };
+  } catch (error) {
+    console.error("Failed to update notification email:", error);
     return { ok: false, error: "UPDATE_FAILED" };
   }
 }
@@ -1129,8 +1185,9 @@ export async function createManualOrder(
     });
 
     // Notify the admin about a new manual order (same new-order template)
+    const adminEmail = await getAdminNotificationEmail();
     await sendEmail({
-      to: process.env.ADMIN_EMAIL || siteConfig.adminEmail,
+      to: adminEmail,
       subject: adminNewOrderEmail("en").subject(order.orderNumber),
       html: adminNewOrderEmail("en").html({
         orderNumber: order.orderNumber,

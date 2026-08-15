@@ -8,6 +8,7 @@ import {
   type UserActionState,
 } from "@/features/admin/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { Switch } from "@/components/ui/switch";
 
 const inputClass =
   "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
@@ -56,14 +57,14 @@ export function HomeSectionsForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
-      <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
-        <input
-          type="checkbox"
+      <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium">
+        <span className="flex-1">{dict.admin.showCollections}</span>
+        <Switch
           checked={show}
-          onChange={(e) => setShow(e.target.checked)}
-          className="size-4 rounded border-border accent-primary"
+          onChange={setShow}
+          name="showCollections"
+          label={dict.admin.showCollections}
         />
-        {dict.admin.showCollections}
       </label>
 
       <div className="grid gap-4 sm:grid-cols-2">

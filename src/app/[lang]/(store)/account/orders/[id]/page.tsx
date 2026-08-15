@@ -7,6 +7,7 @@ import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { formatPrice } from "@/features/catalog/data/products";
 import { CancelOrderButton } from "@/features/account/components/cancel-order-button";
 import { statusLabel, statusStyles } from "@/features/admin/status";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -202,6 +203,35 @@ export default async function AccountOrderDetailPage({
             </span>
             <span className="font-medium">{paymentLabel}</span>
           </div>
+          {order.paymentMethod !== "CASH_ON_DELIVERY" && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">
+                {dict.admin.paymentStatus}:
+              </span>
+              <span
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                  order.paymentStatus === "PAID"
+                    ? "bg-emerald-500/10 text-emerald-600"
+                    : order.paymentStatus === "FAILED" ||
+                        order.paymentStatus === "REFUNDED"
+                      ? "bg-red-500/10 text-red-600"
+                      : "bg-yellow-500/10 text-yellow-600",
+                )}
+              >
+                {paymentStatusLabel(dict.checkout, order.paymentStatus)}
+              </span>
+            </div>
+          )}
+          {order.paidAt && (
+            <p className="text-xs text-muted-foreground">
+              {dict.checkout.paymentStatusPaid}:{" "}
+              {new Date(order.paidAt).toLocaleString(
+                locale === "ar" ? "ar-EG" : "en-EG",
+                { dateStyle: "medium", timeStyle: "short" },
+              )}
+            </p>
+          )}
         </section>
       </div>
 
@@ -252,5 +282,21 @@ function shipmentLabel(dict: ReturnType<typeof getDictionary>, status: string) {
       return dict.admin.shipmentStatusDelivered;
     default:
       return dict.admin.shipmentStatusCreated;
+  }
+}
+
+function paymentStatusLabel(
+  checkout: ReturnType<typeof getDictionary>["checkout"],
+  status: string,
+) {
+  switch (status) {
+    case "PAID":
+      return checkout.paymentStatusPaid;
+    case "FAILED":
+      return checkout.paymentStatusFailed;
+    case "REFUNDED":
+      return checkout.paymentStatusRefunded;
+    default:
+      return checkout.paymentStatusPending;
   }
 }

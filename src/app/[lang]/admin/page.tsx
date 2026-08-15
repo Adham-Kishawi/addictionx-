@@ -8,14 +8,42 @@ import {
   AlertTriangle,
   Clock,
   TrendingUp,
+  ArrowUpRight,
+  ChevronRight,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { formatPrice } from "@/features/catalog/data/products";
 import { statusStyles, statusLabel } from "@/features/admin/status";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+const tone = {
+  blue: {
+    chip: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+    glow: "from-sky-500/10",
+    bar: "bg-sky-500",
+  },
+  violet: {
+    chip: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+    glow: "from-violet-500/10",
+    bar: "bg-violet-500",
+  },
+  emerald: {
+    chip: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    glow: "from-emerald-500/10",
+    bar: "bg-emerald-500",
+  },
+  amber: {
+    chip: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    glow: "from-amber-500/10",
+    bar: "bg-amber-500",
+  },
+} as const;
+
+type Tone = keyof typeof tone;
 
 export default async function AdminPage({
   params,
@@ -25,6 +53,10 @@ export default async function AdminPage({
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
   const dict = getDictionary(locale);
+  const dateFmt = new Intl.DateTimeFormat(locale === "ar" ? "ar-EG" : "en-US", {
+    day: "numeric",
+    month: "short",
+  });
 
   const now = new Date();
   const startOfToday = new Date(
@@ -55,13 +87,13 @@ export default async function AdminPage({
       where: { status: { notIn: ["CANCELLED", "REFUNDED"] } },
     }),
     prisma.order.findMany({
-      take: 8,
+      take: 6,
       orderBy: { createdAt: "desc" },
       include: { user: true, items: true },
     }),
     prisma.productVariant.findMany({
       where: { stock: { lte: 5 } },
-      take: 8,
+      take: 6,
       orderBy: { stock: "asc" },
       include: { product: true },
     }),
@@ -86,13 +118,29 @@ export default async function AdminPage({
     paidOrderCount > 0 ? Math.round(revenueTotal / paidOrderCount) : 0;
 
   const stats = [
-    { label: dict.admin.users, value: userCount, icon: Users },
-    { label: dict.admin.orders, value: orderCount, icon: ShoppingBag },
-    { label: dict.admin.products, value: productCount, icon: Package },
+    {
+      label: dict.admin.users,
+      value: userCount.toLocaleString(locale === "ar" ? "ar-EG" : "en-US"),
+      icon: Users,
+      tone: tone.blue as (typeof tone)[Tone],
+    },
+    {
+      label: dict.admin.orders,
+      value: orderCount.toLocaleString(locale === "ar" ? "ar-EG" : "en-US"),
+      icon: ShoppingBag,
+      tone: tone.violet as (typeof tone)[Tone],
+    },
+    {
+      label: dict.admin.products,
+      value: productCount.toLocaleString(locale === "ar" ? "ar-EG" : "en-US"),
+      icon: Package,
+      tone: tone.emerald as (typeof tone)[Tone],
+    },
     {
       label: dict.admin.revenue,
       value: formatPrice(revenueTotal),
       icon: Wallet,
+      tone: tone.amber as (typeof tone)[Tone],
     },
   ];
 
@@ -101,6 +149,7 @@ export default async function AdminPage({
     startOfChart,
     dict.admin.ordersToday,
   );
+  const pendingRatio = paidOrderCount > 0 ? pendingCount / paidOrderCount : 0;
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
@@ -130,16 +179,31 @@ export default async function AdminPage({
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex items-center gap-4 rounded-2xl border border-border bg-card/40 p-5"
+            className="group relative overflow-hidden rounded-2xl border border-border bg-card/40 p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/5"
           >
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <stat.icon className="size-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm text-muted-foreground">
-                {stat.label}
-              </p>
-              <p className="truncate text-2xl font-bold">{stat.value}</p>
+            <div
+              className={cn(
+                "pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b to-transparent opacity-60",
+                stat.tone.glow,
+              )}
+            />
+            <div className="relative flex items-center gap-4">
+              <span
+                className={cn(
+                  "grid size-11 shrink-0 place-items-center rounded-xl transition-transform group-hover:scale-110",
+                  stat.tone.chip,
+                )}
+              >
+                <stat.icon className="size-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm text-muted-foreground">
+                  {stat.label}
+                </p>
+                <p className="truncate text-2xl font-bold tabular-nums">
+                  {stat.value}
+                </p>
+              </div>
             </div>
           </div>
         ))}
@@ -150,11 +214,16 @@ export default async function AdminPage({
         <section className="rounded-2xl border border-border bg-card/40 p-6 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
-              <TrendingUp className="size-5 text-primary" />
+              <span className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary">
+                <TrendingUp className="size-4" />
+              </span>
               {dict.admin.revenueChart}
             </h2>
-            <span className="text-xs text-muted-foreground">
-              {dict.admin.avgOrder}: {formatPrice(avgOrderValue)}
+            <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+              {dict.admin.avgOrder}:{" "}
+              <span className="font-semibold text-foreground">
+                {formatPrice(avgOrderValue)}
+              </span>
             </span>
           </div>
 
@@ -176,13 +245,14 @@ export default async function AdminPage({
                       {formatPrice(day.value)}
                     </span>
                     <div
-                      className={`w-full rounded-t-md transition-all ${
+                      className={cn(
+                        "w-full rounded-t-md transition-all",
                         isToday
                           ? "bg-primary"
                           : day.value > 0
-                            ? "bg-primary/50 group-hover:bg-primary"
-                            : "bg-muted"
-                      }`}
+                            ? "bg-primary/40 group-hover:bg-primary/70"
+                            : "bg-muted",
+                      )}
                       style={{ height: `${day.height}%` }}
                     />
                   </div>
@@ -203,23 +273,35 @@ export default async function AdminPage({
         </section>
 
         {/* Pending orders */}
-        <section className="flex flex-col justify-center rounded-2xl border border-border bg-card/40 p-6">
-          <div className="mb-3 flex items-center gap-2">
-            <Clock className="size-5 text-amber-500" />
+        <section className="relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card/40 p-6">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-amber-500/10 to-transparent" />
+          <div className="relative flex items-center gap-2">
+            <span className="grid size-8 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <Clock className="size-4" />
+            </span>
             <h2 className="text-lg font-semibold">
               {dict.admin.pendingOrders}
             </h2>
           </div>
-          <p className="text-4xl font-bold">{pendingCount}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {dict.admin.pendingOrdersHint} · {dict.admin.ordersToday}:{" "}
-            {todayOrders}
+          <p className="relative mt-5 text-5xl font-bold tabular-nums">
+            {pendingCount}
           </p>
+          <p className="relative mt-1 text-sm text-muted-foreground">
+            {dict.admin.pendingOrdersHint} · {dict.admin.ordersToday}:{" "}
+            <span className="font-semibold text-foreground">{todayOrders}</span>
+          </p>
+          <div className="relative mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-amber-500 transition-all"
+              style={{ width: `${Math.min(pendingRatio * 100, 100)}%` }}
+            />
+          </div>
           <Link
             href={`/${locale}/admin/orders`}
-            className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+            className="group mt-6 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-primary/10 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
           >
             {dict.admin.orders}
+            <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:rotate-180" />
           </Link>
         </section>
       </div>
@@ -227,9 +309,16 @@ export default async function AdminPage({
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         {/* Latest orders */}
         <section className="rounded-2xl border border-border bg-card/40 p-6 lg:col-span-2">
-          <h2 className="mb-4 text-lg font-semibold">
-            {dict.admin.recentOrders}
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">{dict.admin.recentOrders}</h2>
+            <Link
+              href={`/${locale}/admin/orders`}
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/70"
+            >
+              {dict.home.viewAll}
+              <ArrowUpRight className="size-3.5" />
+            </Link>
+          </div>
 
           {recentOrders.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -247,6 +336,9 @@ export default async function AdminPage({
                       {dict.admin.customer}
                     </th>
                     <th className="pb-2 text-start font-medium">
+                      {dict.admin.date}
+                    </th>
+                    <th className="pb-2 text-start font-medium">
                       {dict.admin.total}
                     </th>
                     <th className="pb-2 text-start font-medium">
@@ -258,20 +350,31 @@ export default async function AdminPage({
                   {recentOrders.map((order) => (
                     <tr
                       key={order.id}
-                      className="border-b border-border/60 last:border-0"
+                      className="group border-b border-border/60 transition-colors hover:bg-muted/40 last:border-0"
                     >
                       <td className="py-3 font-medium" dir="ltr">
-                        #{order.orderNumber}
+                        <Link
+                          href={`/${locale}/admin/orders/${order.id}`}
+                          className="inline-flex items-center gap-1.5 text-primary transition-colors hover:text-primary/70"
+                        >
+                          #{order.orderNumber}
+                        </Link>
                       </td>
                       <td className="py-3 text-muted-foreground">
                         {order.user?.name ?? order.user?.email ?? "—"}
                       </td>
-                      <td className="py-3 font-medium">
+                      <td className="py-3 text-muted-foreground">
+                        {dateFmt.format(order.createdAt)}
+                      </td>
+                      <td className="py-3 font-medium tabular-nums">
                         {formatPrice(order.total)}
                       </td>
                       <td className="py-3">
                         <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[order.status]}`}
+                          className={cn(
+                            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                            statusStyles[order.status],
+                          )}
                         >
                           {statusLabel(dict.admin, order.status)}
                         </span>
@@ -286,9 +389,20 @@ export default async function AdminPage({
 
         {/* Low stock */}
         <section className="rounded-2xl border border-border bg-card/40 p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <AlertTriangle className="size-5 text-destructive" />
-            <h2 className="text-lg font-semibold">{dict.admin.lowStock}</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <span className="grid size-7 place-items-center rounded-lg bg-destructive/10 text-destructive">
+                <AlertTriangle className="size-4" />
+              </span>
+              {dict.admin.lowStock}
+            </h2>
+            <Link
+              href={`/${locale}/admin/products`}
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/70"
+            >
+              {dict.home.viewAll}
+              <ArrowUpRight className="size-3.5" />
+            </Link>
           </div>
 
           {lowStock.length === 0 ? (
@@ -296,16 +410,25 @@ export default async function AdminPage({
               {dict.admin.noStockAlerts}
             </p>
           ) : (
-            <ul className="flex flex-col gap-3">
+            <ul className="flex flex-col gap-2">
               {lowStock.map((variant) => (
                 <li
                   key={variant.id}
-                  className="flex items-center justify-between gap-2 text-sm"
+                  className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 px-3 py-2 text-sm"
                 >
                   <span className="min-w-0 truncate">
                     {variant.product.name} · {variant.sizeMl}ml
                   </span>
-                  <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+                      variant.stock === 0
+                        ? "bg-destructive/10 text-destructive"
+                        : variant.stock <= 3
+                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          : "bg-muted text-muted-foreground",
+                    )}
+                  >
                     {variant.stock}
                   </span>
                 </li>

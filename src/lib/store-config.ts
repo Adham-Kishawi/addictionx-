@@ -1,6 +1,7 @@
 // Store settings editable from the dashboard — read from the DB with default fallbacks
 // so everything works even if the keys are missing yet (or a read error occurs).
 import { prisma } from "@/lib/prisma";
+import { siteConfig } from "@/config/site";
 
 export const DEFAULT_SHIPPING_FEE = 5000; // 50 EGP in piasters
 export const DEFAULT_FREE_SHIPPING_THRESHOLD = 150000; // 1500 EGP in piasters
@@ -109,32 +110,63 @@ export function clearConfigCache() {
 
 export type PaymentAccountsConfig = {
   instapayNumber: string;
+  instapayPhone: string;
   instapayName: string;
   vodafoneCashNumber: string;
-  vodafoneCashName: string;
+  // Localized receiver name — e.g. رانيا / Rania
+  vodafoneCashNameAr: string;
+  vodafoneCashNameEn: string;
 };
 
 export async function getPaymentAccountsConfig(): Promise<PaymentAccountsConfig> {
   try {
-    const [instapayNum, instapayName, vodafoneNum, vodafoneName] =
-      await Promise.all([
-        readSetting("instapay_account_number"),
-        readSetting("instapay_account_name"),
-        readSetting("vodafone_cash_number"),
-        readSetting("vodafone_cash_name"),
-      ]);
+    const [
+      instapayNum,
+      instapayPhone,
+      instapayName,
+      vodafoneNum,
+      vodafoneNameLegacy,
+      vodafoneNameAr,
+      vodafoneNameEn,
+    ] = await Promise.all([
+      readSetting("instapay_account_number"),
+      readSetting("instapay_phone"),
+      readSetting("instapay_account_name"),
+      readSetting("vodafone_cash_number"),
+      readSetting("vodafone_cash_name"),
+      readSetting("vodafone_cash_name_ar"),
+      readSetting("vodafone_cash_name_en"),
+    ]);
     return {
       instapayNumber: instapayNum ?? "",
+      instapayPhone: instapayPhone ?? "",
       instapayName: instapayName ?? "ADDICTIONX",
       vodafoneCashNumber: vodafoneNum ?? "",
-      vodafoneCashName: vodafoneName ?? "ADDICTIONX",
+      vodafoneCashNameAr: vodafoneNameAr ?? vodafoneNameLegacy ?? "ADDICTIONX",
+      vodafoneCashNameEn: vodafoneNameEn ?? vodafoneNameLegacy ?? "ADDICTIONX",
     };
   } catch {
     return {
       instapayNumber: "",
+      instapayPhone: "",
       instapayName: "ADDICTIONX",
       vodafoneCashNumber: "",
-      vodafoneCashName: "ADDICTIONX",
+      vodafoneCashNameAr: "ADDICTIONX",
+      vodafoneCashNameEn: "ADDICTIONX",
     };
+  }
+}
+
+// ============================================================
+// Admin notification email — set from the dashboard, falls back to
+// the ADMIN_EMAIL env var, then to the site config default.
+// ============================================================
+
+export async function getAdminNotificationEmail(): Promise<string> {
+  try {
+    const email = await readSetting("admin_notification_email");
+    return email || process.env.ADMIN_EMAIL || siteConfig.adminEmail;
+  } catch {
+    return process.env.ADMIN_EMAIL || siteConfig.adminEmail;
   }
 }

@@ -15,6 +15,7 @@ import {
   Flame,
   Settings,
   Images,
+  BadgeCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ export function AdminNav({
     products: string;
     slider: string;
     orders: string;
+    paymentVerification: string;
     users: string;
     coupons: string;
     settings: string;
@@ -66,6 +68,12 @@ export function AdminNav({
       label: labels.orders,
       icon: ShoppingBag,
       key: "orders",
+    },
+    {
+      href: `${basePath}/payment-verification`,
+      label: labels.paymentVerification,
+      icon: BadgeCheck,
+      key: "payment-verification",
     },
     {
       href: `${basePath}/collections`,
