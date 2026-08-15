@@ -24,13 +24,13 @@ export default async function AdminShippingPage({
   ]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <h1 className="font-display text-3xl font-bold">
         {dict.admin.shipping || "Shipping"}
       </h1>
       <p className="text-sm text-muted-foreground">{dict.admin.shippingDesc}</p>
 
-      <section className="overflow-hidden rounded-2xl border border-border bg-card/40">
+      <section className="w-full overflow-hidden rounded-2xl border border-border bg-card/40">
         <div className="flex items-center gap-2 border-b border-border px-6 py-4">
           <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
             <Truck className="size-4" />
@@ -54,7 +54,7 @@ export default async function AdminShippingPage({
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-border bg-card/40">
+      <section className="w-full overflow-hidden rounded-2xl border border-border bg-card/40">
         <div className="flex items-center gap-2 border-b border-border px-6 py-4">
           <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
             <MapPinned className="size-4" />
