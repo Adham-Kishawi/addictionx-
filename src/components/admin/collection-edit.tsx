@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import type { ImageAdjust } from "@/lib/image-adjust";
 
 // Inline edit form for one collection (names, image, slider captions AR/EN).
 // The slug is immutable once created — Product.collection holds it as text.
@@ -24,6 +25,7 @@ export function CollectionEdit({
     nameAr: string;
     nameEn: string;
     image?: string | null;
+    imageAdjust?: ImageAdjust | null;
     descriptionAr?: string | null;
     descriptionEn?: string | null;
   };
@@ -33,6 +35,9 @@ export function CollectionEdit({
   const [nameAr, setNameAr] = useState(initial.nameAr);
   const [nameEn, setNameEn] = useState(initial.nameEn);
   const [image, setImage] = useState(initial.image ?? "");
+  const [adjust, setAdjust] = useState<ImageAdjust | null>(
+    initial.imageAdjust ?? null,
+  );
   const [descriptionAr, setDescriptionAr] = useState(
     initial.descriptionAr ?? "",
   );
@@ -50,6 +55,7 @@ export function CollectionEdit({
     fd.set("nameAr", nameAr);
     fd.set("nameEn", nameEn);
     fd.set("image", image);
+    fd.set("imageAdjust", adjust ? JSON.stringify(adjust) : "");
     fd.set("descriptionAr", descriptionAr);
     fd.set("descriptionEn", descriptionEn);
     const res = await updateCollection(slug, undefined, fd);
@@ -92,6 +98,10 @@ export function CollectionEdit({
           onChange={setImage}
           label={dict.admin.collectionImage}
           dict={dict}
+          adjustable
+          adjust={adjust}
+          onAdjustChange={setAdjust}
+          adjustAspect="4 / 5"
         />
       </div>
       <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">

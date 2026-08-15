@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { requirePermission } from "@/lib/admin-permissions";
 import { prisma } from "@/lib/prisma";
+import { parseImageAdjust } from "@/lib/image-adjust";
 
 // ============================================================
 // Home slider management from the dashboard (admin → Slider).
@@ -39,19 +41,32 @@ const isSafeImage = (v: string) =>
 const readField = (value: string | undefined, max: number) =>
   (value ?? "").trim().slice(0, max);
 
-type SlideData = { image?: string; captionAr?: string; captionEn?: string };
+type SlideData = {
+  image?: string;
+  captionAr?: string;
+  captionEn?: string;
+  imageAdjust?: string;
+};
 
 function parseSlideData(data: SlideData): {
   ok: boolean;
   image: string;
   captionAr: string;
   captionEn: string;
+  adjust: ReturnType<typeof parseImageAdjust>;
 } {
   const image = readField(data.image, 500);
   const captionAr = readField(data.captionAr, 300);
   const captionEn = readField(data.captionEn, 300);
-  if (!isSafeImage(image)) return { ok: false, image, captionAr, captionEn };
-  return { ok: true, image, captionAr, captionEn };
+  if (!isSafeImage(image))
+    return { ok: false, image, captionAr, captionEn, adjust: null };
+  return {
+    ok: true,
+    image,
+    captionAr,
+    captionEn,
+    adjust: parseImageAdjust(data.imageAdjust),
+  };
 }
 
 export async function addSlide(
@@ -83,6 +98,7 @@ export async function addSlide(
     data: {
       productId: product.id,
       image: parsed.image || null,
+      imageAdjust: parsed.adjust ?? Prisma.DbNull,
       captionAr: parsed.captionAr || null,
       captionEn: parsed.captionEn || null,
       position: (last._max.position ?? 0) + 10,
@@ -114,6 +130,7 @@ export async function updateSlide(
       where: { id },
       data: {
         image: parsed.image || null,
+        imageAdjust: parsed.adjust ?? Prisma.DbNull,
         captionAr: parsed.captionAr || null,
         captionEn: parsed.captionEn || null,
       },

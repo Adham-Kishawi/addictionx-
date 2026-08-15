@@ -1,6 +1,8 @@
 // Product model matching the Prisma schema structure — mock until the DB is wired
 // Prices are integers in piasters (100 piasters = 1 EGP) per decision #3
 
+import type { ImageAdjust } from "@/lib/image-adjust";
+
 export type Gender = "male" | "female" | "unisex";
 
 export type PerfumeNotes = {
@@ -34,6 +36,8 @@ export type Product = {
   image?: string;
   // Full gallery (DB-backed uploads). image === images[0]
   images?: string[];
+  // Admin-set framing ({x,y,zoom}) for slider/custom images — see lib/image-adjust
+  imageAdjust?: ImageAdjust;
   art: { from: string; to: string; glow: string };
 };
 

@@ -29,6 +29,7 @@ import { ImageUploader } from "@/components/admin/image-uploader";
 import { Button } from "@/components/ui/button";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
+import type { ImageAdjust } from "@/lib/image-adjust";
 
 // Home "Our Collections" section manager — the same experience as the product
 // slider manager: live preview, a searchable picker (no duplicates), drag to
@@ -40,6 +41,7 @@ export type HomeCollectionRow = {
   nameAr: string;
   nameEn: string;
   image: string | null;
+  imageAdjust?: ImageAdjust | null;
   descriptionAr: string | null;
   descriptionEn: string | null;
   showInHome: boolean;
@@ -71,6 +73,7 @@ export function HomeCollectionsManager({
   // Inline editor
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [editImage, setEditImage] = useState("");
+  const [editAdjust, setEditAdjust] = useState<ImageAdjust | null>(null);
   const [editDescAr, setEditDescAr] = useState("");
   const [editDescEn, setEditDescEn] = useState("");
 
@@ -92,6 +95,7 @@ export function HomeCollectionsManager({
     nameAr: c.nameAr,
     nameEn: c.nameEn,
     image: c.image,
+    imageAdjust: c.imageAdjust,
     descriptionAr: c.descriptionAr,
     descriptionEn: c.descriptionEn,
     showInHome: true,
@@ -184,6 +188,7 @@ export function HomeCollectionsManager({
     const prev = items;
     patch(slug, {
       image: editImage || null,
+      imageAdjust: editAdjust,
       descriptionAr: editDescAr || null,
       descriptionEn: editDescEn || null,
     });
@@ -191,6 +196,7 @@ export function HomeCollectionsManager({
     setBusy(true);
     const res = await updateCollectionSlider(slug, {
       image: editImage,
+      imageAdjust: editAdjust ? JSON.stringify(editAdjust) : "",
       descriptionAr: editDescAr,
       descriptionEn: editDescEn,
     });
@@ -206,6 +212,7 @@ export function HomeCollectionsManager({
   const openEdit = (collection: HomeCollectionRow) => {
     setEditingSlug(collection.slug);
     setEditImage(collection.image ?? "");
+    setEditAdjust(collection.imageAdjust ?? null);
     setEditDescAr(collection.descriptionAr ?? "");
     setEditDescEn(collection.descriptionEn ?? "");
   };
@@ -498,6 +505,10 @@ export function HomeCollectionsManager({
                         label={dict.admin.homeCollectionsImage}
                         hint={dict.admin.homeCollectionsImageNote}
                         dict={dict}
+                        adjustable
+                        adjust={editAdjust}
+                        onAdjustChange={setEditAdjust}
+                        adjustAspect="3 / 4"
                       />
                     </div>
                     <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">

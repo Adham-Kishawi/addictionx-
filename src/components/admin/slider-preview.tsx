@@ -4,15 +4,19 @@ import { useState } from "react";
 import { Play, Images } from "lucide-react";
 import { formatPrice } from "@/features/catalog/data/products";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { imageAdjustStyle, type ImageAdjust } from "@/lib/image-adjust";
 import { cn } from "@/lib/utils";
 
 // Live preview of the home slider, mirroring the storefront logic:
 // visible slides only, slide image overrides the product image, and the
 // slide caption (AR/EN) beats the collection description fallback.
+// Custom slide images with an adjustment render object-cover (honoring the
+// focal point) — same as the storefront — plain product images stay contain.
 
 export type PreviewSlide = {
   id: string;
   image: string | null;
+  imageAdjust?: ImageAdjust | null;
   captionAr: string | null;
   captionEn: string | null;
   product: {
@@ -64,6 +68,9 @@ export function SliderPreview({
       : (c?.descriptionEn ?? c?.descriptionAr ?? "");
   };
 
+  const imageStyle = (slide: PreviewSlide): React.CSSProperties | undefined =>
+    slide.imageAdjust ? imageAdjustStyle(slide.imageAdjust) : undefined;
+
   return (
     <div className="rounded-2xl border border-border bg-card/40 p-5">
       <div className="mb-4 flex items-center gap-2">
@@ -92,7 +99,12 @@ export function SliderPreview({
               <img
                 src={current.image ?? current.product.image ?? ""}
                 alt=""
-                className="h-full w-full object-contain object-bottom"
+                className={
+                  current.imageAdjust
+                    ? "h-full w-full"
+                    : "h-full w-full object-contain object-bottom"
+                }
+                style={imageStyle(current)}
               />
             </div>
             <div className="min-w-0 flex-1 text-center sm:text-start">
@@ -145,7 +157,12 @@ export function SliderPreview({
                   <img
                     src={slide.image ?? slide.product.image ?? ""}
                     alt=""
-                    className="h-full w-full object-contain object-bottom"
+                    className={
+                      slide.imageAdjust
+                        ? "h-full w-full"
+                        : "h-full w-full object-contain object-bottom"
+                    }
+                    style={imageStyle(slide)}
                   />
                 </button>
               ))}

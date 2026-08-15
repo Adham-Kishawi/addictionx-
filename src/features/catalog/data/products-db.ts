@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Product } from "./products";
+import { parseImageAdjust, type ImageAdjust } from "@/lib/image-adjust";
 import {
   collections as staticCollections,
   products as staticProducts,
@@ -14,6 +15,7 @@ export interface CollectionRow {
   nameAr: string;
   nameEn: string;
   image?: string | null;
+  imageAdjust?: ImageAdjust | null;
   descriptionAr?: string | null;
   descriptionEn?: string | null;
 }
@@ -40,11 +42,16 @@ export async function getCollections(opts?: {
         nameAr: true,
         nameEn: true,
         image: true,
+        imageAdjust: true,
         descriptionAr: true,
         descriptionEn: true,
       },
     });
-    if (rows.length > 0) return rows;
+    if (rows.length > 0)
+      return rows.map((r) => ({
+        ...r,
+        imageAdjust: parseImageAdjust(r.imageAdjust),
+      }));
   } catch {
     // Use the static catalog while the remote database is unavailable.
   }
@@ -54,6 +61,7 @@ export async function getCollections(opts?: {
     nameAr: c.nameAr,
     nameEn: c.nameEn,
     image: undefined,
+    imageAdjust: undefined,
     descriptionAr: undefined,
     descriptionEn: undefined,
   }));
@@ -71,23 +79,29 @@ export interface HomeSlideRow {
   id: string;
   productId: string;
   image?: string | null;
+  imageAdjust?: ImageAdjust | null;
   captionAr?: string | null;
   captionEn?: string | null;
 }
 
 export async function getHomeSlides(): Promise<HomeSlideRow[]> {
   try {
-    return await prisma.homeSlide.findMany({
+    const rows = await prisma.homeSlide.findMany({
       where: { isActive: true, product: { isActive: true } },
       orderBy: { position: "asc" },
       select: {
         id: true,
         productId: true,
         image: true,
+        imageAdjust: true,
         captionAr: true,
         captionEn: true,
       },
     });
+    return rows.map((r) => ({
+      ...r,
+      imageAdjust: parseImageAdjust(r.imageAdjust),
+    }));
   } catch {
     return [];
   }

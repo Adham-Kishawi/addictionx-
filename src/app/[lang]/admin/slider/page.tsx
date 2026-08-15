@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { SliderManager } from "@/components/admin/slider-manager";
+import type { ImageAdjust } from "@/lib/image-adjust";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,7 @@ export default async function AdminSliderPage({
     position: s.position,
     isActive: s.isActive,
     image: s.image,
+    imageAdjust: (s.imageAdjust as ImageAdjust | null) ?? null,
     captionAr: s.captionAr,
     captionEn: s.captionEn,
     product: {

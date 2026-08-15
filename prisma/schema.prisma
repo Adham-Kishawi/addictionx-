@@ -212,6 +212,9 @@ model HomeSlide {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   // Custom slide image — overrides the product's own image on the slide
   image     String?
+  // Admin-set framing for the slide image { x, y, zoom } — applied as
+  // object-position + cover scale so wide banners fill the slide card.
+  imageAdjust Json?
   // Slide caption overrides (AR/EN) — falls back to product/collection text
   captionAr String?
   captionEn String?
@@ -496,6 +499,9 @@ model Collection {
   // Representative image — shown on the home slider and the collections hub
   // (an UploadedImage URL like /api/uploads/<id>, or any absolute URL)
   image        String?
+  // Admin-set framing for the image inside its display boxes { x, y, zoom } —
+  // x/y = object-position %, zoom = cover scale. Fixes ugly center-crops.
+  imageAdjust  Json?
   // Slider / collection caption (dashboard-controlled, AR + EN)
   descriptionAr String?
   descriptionEn String?

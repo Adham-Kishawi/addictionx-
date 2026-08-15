@@ -105,7 +105,14 @@ export default async function Home({
             en: s.captionEn ?? undefined,
           };
         }
-        return s.image ? { ...product, image: s.image } : product;
+        // Custom slide images carry the admin's framing adjustment.
+        return s.image
+          ? {
+              ...product,
+              image: s.image,
+              imageAdjust: s.imageAdjust ?? undefined,
+            }
+          : product;
       })
       .filter((p): p is Product => p !== null);
   }
@@ -117,7 +124,13 @@ export default async function Home({
         if (inCollection.length === 0) return null;
         const first = inCollection.find((p) => p.image) ?? inCollection[0];
         const slider = c.image ?? carouselImages[c.slug];
-        return slider ? { ...first, image: slider } : first;
+        return slider
+          ? {
+              ...first,
+              image: slider,
+              imageAdjust: c.imageAdjust ?? undefined,
+            }
+          : first;
       })
       .filter((p): p is Product => p !== null);
   }
@@ -432,6 +445,7 @@ export default async function Home({
                   collection.image ??
                   collectionBackdrop(collection.slug) ??
                   null,
+                imageAdjust: collection.imageAdjust ?? null,
                 tint:
                   shelfTint(collection.slug) ?? cover.art?.glow ?? "#ef4444",
                 hrefLabel: dict.home.signatureCta,

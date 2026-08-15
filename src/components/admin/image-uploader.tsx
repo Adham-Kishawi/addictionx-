@@ -2,14 +2,24 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { ImagePlus, Loader2, X, TriangleAlert } from "lucide-react";
+import {
+  ImagePlus,
+  Loader2,
+  X,
+  TriangleAlert,
+  SlidersHorizontal,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { ImageAdjustEditor } from "@/components/admin/image-adjust-editor";
+import { imageAdjustStyle, type ImageAdjust } from "@/lib/image-adjust";
 
 // Picture uploader used everywhere an admin picks a single image (collections,
 // slider cards…). No URL field — picking a file uploads it through
 // /api/admin/upload-image (stored in the DB) and the preview updates inline.
 // Drag & drop is supported; type and size are validated client-side.
+// When `adjustable` is on, an extra "Adjust image" button opens a zoom/pan
+// editor so the admin can fix how the picture is cropped on the site.
 
 export function ImageUploader({
   value,
@@ -18,6 +28,10 @@ export function ImageUploader({
   hint,
   required,
   dict,
+  adjustable,
+  adjust,
+  onAdjustChange,
+  adjustAspect,
 }: {
   value: string;
   onChange: (url: string) => void;
@@ -25,10 +39,15 @@ export function ImageUploader({
   hint?: string;
   required?: boolean;
   dict: Dictionary;
+  adjustable?: boolean;
+  adjust?: ImageAdjust | null;
+  onAdjustChange?: (adjust: ImageAdjust | null) => void;
+  adjustAspect?: string;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const upload = async (file: File) => {
@@ -109,6 +128,7 @@ export function ImageUploader({
                 fill
                 sizes="(min-width: 1280px) 560px, 100vw"
                 className="object-cover"
+                style={adjustable ? imageAdjustStyle(adjust) : undefined}
               />
             </div>
             <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-1.5 bg-gradient-to-t from-black/70 to-transparent py-2 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -164,6 +184,16 @@ export function ImageUploader({
             <ImagePlus className="size-3" />
             {dict.admin.changeImage}
           </button>
+          {adjustable && (
+            <button
+              type="button"
+              onClick={() => setEditorOpen(true)}
+              className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20"
+            >
+              <SlidersHorizontal className="size-3" />
+              {dict.admin.adjustImage}
+            </button>
+          )}
         </span>
       )}
 
@@ -176,6 +206,20 @@ export function ImageUploader({
       {error && <span className="text-[11px] text-destructive">{error}</span>}
       {hint && !required && (
         <span className="text-[11px] text-muted-foreground">{hint}</span>
+      )}
+
+      {editorOpen && value && (
+        <ImageAdjustEditor
+          src={value}
+          adjust={adjust ?? null}
+          aspect={adjustAspect}
+          onClose={() => setEditorOpen(false)}
+          onSave={(adj) => {
+            onAdjustChange?.(adj);
+            setEditorOpen(false);
+          }}
+          dict={dict}
+        />
       )}
     </div>
   );

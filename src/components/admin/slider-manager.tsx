@@ -32,6 +32,7 @@ import { ImageUploader } from "@/components/admin/image-uploader";
 import { Button } from "@/components/ui/button";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
+import type { ImageAdjust } from "@/lib/image-adjust";
 
 // Full home-slider control from the dashboard: live preview, smart product
 // picker (search + no duplicates), drag-to-reorder, custom image + captions,
@@ -54,6 +55,7 @@ type SlideRow = {
   position: number;
   isActive: boolean;
   image: string | null;
+  imageAdjust?: ImageAdjust | null;
   captionAr: string | null;
   captionEn: string | null;
   product: SlideProduct;
@@ -84,12 +86,14 @@ export function SliderManager({
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [addImage, setAddImage] = useState("");
+  const [addAdjust, setAddAdjust] = useState<ImageAdjust | null>(null);
   const [addCaptionAr, setAddCaptionAr] = useState("");
   const [addCaptionEn, setAddCaptionEn] = useState("");
 
   // Inline editor
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editImage, setEditImage] = useState("");
+  const [editAdjust, setEditAdjust] = useState<ImageAdjust | null>(null);
   const [editCaptionAr, setEditCaptionAr] = useState("");
   const [editCaptionEn, setEditCaptionEn] = useState("");
 
@@ -119,6 +123,7 @@ export function SliderManager({
     setError(null);
     const res = await addSlide(product.id, {
       image: addImage,
+      imageAdjust: addAdjust ? JSON.stringify(addAdjust) : "",
       captionAr: addCaptionAr,
       captionEn: addCaptionEn,
     });
@@ -134,6 +139,7 @@ export function SliderManager({
         position: prev.length * 10 + 10,
         isActive: true,
         image: addImage || null,
+        imageAdjust: addAdjust,
         captionAr: addCaptionAr || null,
         captionEn: addCaptionEn || null,
         product: { ...product, isActive: true },
@@ -142,6 +148,7 @@ export function SliderManager({
     setSelectedId("");
     setSearch("");
     setAddImage("");
+    setAddAdjust(null);
     setAddCaptionAr("");
     setAddCaptionEn("");
   };
@@ -220,6 +227,7 @@ export function SliderManager({
           ? {
               ...s,
               image: editImage || null,
+              imageAdjust: editAdjust,
               captionAr: editCaptionAr || null,
               captionEn: editCaptionEn || null,
             }
@@ -229,6 +237,7 @@ export function SliderManager({
     setError(null);
     const res = await updateSlide(id, {
       image: editImage,
+      imageAdjust: editAdjust ? JSON.stringify(editAdjust) : "",
       captionAr: editCaptionAr,
       captionEn: editCaptionEn,
     });
@@ -243,6 +252,7 @@ export function SliderManager({
   const openEdit = (slide: SlideRow) => {
     setEditingId(slide.id);
     setEditImage(slide.image ?? "");
+    setEditAdjust(slide.imageAdjust ?? null);
     setEditCaptionAr(slide.captionAr ?? "");
     setEditCaptionEn(slide.captionEn ?? "");
   };
@@ -310,6 +320,7 @@ export function SliderManager({
           slides={slides.map((s) => ({
             id: s.id,
             image: s.image,
+            imageAdjust: s.imageAdjust,
             captionAr: s.captionAr,
             captionEn: s.captionEn,
             product: {
@@ -412,6 +423,10 @@ export function SliderManager({
                 label={dict.admin.sliderCustomImage}
                 hint={dict.admin.sliderCustomImageHint}
                 dict={dict}
+                adjustable
+                adjust={addAdjust}
+                onAdjustChange={setAddAdjust}
+                adjustAspect="3 / 5"
               />
             </div>
             <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
@@ -627,6 +642,10 @@ export function SliderManager({
                         label={dict.admin.sliderCustomImage}
                         hint={dict.admin.sliderCustomImageHint}
                         dict={dict}
+                        adjustable
+                        adjust={editAdjust}
+                        onAdjustChange={setEditAdjust}
+                        adjustAspect="3 / 5"
                       />
                     </div>
                     <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">

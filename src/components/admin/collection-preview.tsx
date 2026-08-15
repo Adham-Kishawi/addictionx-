@@ -7,17 +7,20 @@ import {
   shelfTint,
 } from "@/features/catalog/data/collection-assets";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { imageAdjustStyle, type ImageAdjust } from "@/lib/image-adjust";
 
 // Live preview of the home "Our Collections" section — mirrors the storefront
 // CollectionShelf: one card per collection shown in the section (showInHome and
 // site-active), with the collection image (falling back to the fixed backdrop),
-// the localized name and the caption from the description.
+// the localized name and the caption from the description. The card frame is
+// 3/4 (same as the shelf card) so the admin sees the real crop.
 
 export type PreviewCollectionCard = {
   slug: string;
   nameAr: string;
   nameEn: string;
   image: string | null;
+  imageAdjust?: ImageAdjust | null;
   descriptionAr: string | null;
   descriptionEn: string | null;
   showInHome: boolean;
@@ -68,7 +71,7 @@ export function CollectionPreview({
                 className="flex min-w-0 shrink-0 flex-1 basis-48 flex-col rounded-2xl border border-border/60 bg-background p-4"
               >
                 <div
-                  className="relative mb-3 flex aspect-[16/9] items-center justify-center overflow-hidden rounded-xl"
+                  className="relative mb-3 flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl"
                   style={{
                     background: `linear-gradient(135deg, ${tint}33, ${tint}11)`,
                   }}
@@ -80,6 +83,11 @@ export function CollectionPreview({
                       fill
                       sizes="(min-width: 1280px) 288px, 192px"
                       className="object-cover"
+                      style={
+                        collection.imageAdjust
+                          ? imageAdjustStyle(collection.imageAdjust)
+                          : undefined
+                      }
                     />
                   ) : (
                     <span

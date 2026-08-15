@@ -18,6 +18,7 @@ import { WishlistButton } from "@/components/wishlist-button";
 import { cn } from "@/lib/utils";
 import { formatPrice, type Product } from "@/features/catalog/data/products";
 import { collectionBackdrop } from "@/features/catalog/data/collection-assets";
+import { imageAdjustStyle } from "@/lib/image-adjust";
 import type { Locale, Dictionary } from "@/lib/i18n/dictionary";
 
 // ============================================================
@@ -484,6 +485,21 @@ function SlideImage({
   product: Product;
   priority?: boolean;
 }) {
+  // Custom slide image with an admin-set framing → object-cover honoring the
+  // focal point (fills the tall card like the admin framed it).
+  if (product.image && product.imageAdjust) {
+    return (
+      <Image
+        src={product.image}
+        alt=""
+        fill
+        sizes="(min-width:1024px) 560px, (min-width:640px) 500px, 320px"
+        style={imageAdjustStyle(product.imageAdjust)}
+        priority={priority}
+        draggable={false}
+      />
+    );
+  }
   if (product.image) {
     return (
       <Image

@@ -1,11 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
+import type { ImageAdjust } from "@/lib/image-adjust";
 import { CollectionForm } from "@/components/admin/collection-form";
 import { CollectionEdit } from "@/components/admin/collection-edit";
 import { CollectionDelete } from "@/components/admin/collection-delete";
 import { CollectionActiveToggle } from "@/components/admin/collection-active-toggle";
-import { HomeCollectionsManager } from "@/components/admin/home-collections-manager";
+import {
+  HomeCollectionsManager,
+  type HomeCollectionRow,
+} from "@/components/admin/home-collections-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +45,18 @@ export default async function AdminCollectionsPage({
     productsByCollection.set(slug, list);
   }
 
+  const homeRows: HomeCollectionRow[] = collections.map((c) => ({
+    slug: c.slug,
+    nameAr: c.nameAr,
+    nameEn: c.nameEn,
+    image: c.image,
+    imageAdjust: (c.imageAdjust as ImageAdjust | null) ?? null,
+    descriptionAr: c.descriptionAr,
+    descriptionEn: c.descriptionEn,
+    showInHome: c.showInHome,
+    isActive: c.isActive,
+  }));
+
   return (
     <div>
       <h1 className="mb-6 font-display text-3xl font-bold">
@@ -49,7 +65,7 @@ export default async function AdminCollectionsPage({
 
       <div className="mb-8">
         <HomeCollectionsManager
-          collections={collections}
+          collections={homeRows}
           locale={locale}
           dict={dict}
         />
@@ -135,6 +151,8 @@ export default async function AdminCollectionsPage({
                     nameAr: collection.nameAr,
                     nameEn: collection.nameEn,
                     image: collection.image,
+                    imageAdjust:
+                      (collection.imageAdjust as ImageAdjust | null) ?? null,
                     descriptionAr: collection.descriptionAr,
                     descriptionEn: collection.descriptionEn,
                   }}

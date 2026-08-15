@@ -11,6 +11,7 @@ import {
   useTransform,
 } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { imageAdjustStyle, type ImageAdjust } from "@/lib/image-adjust";
 
 // ============================================================
 // THE SHELF — wave 41: «three bottles on a dark glass shelf».
@@ -37,6 +38,7 @@ export type ShelfCard = {
   href: string;
   bottle: string | null;
   image: string | null;
+  imageAdjust?: ImageAdjust | null;
   tint: string;
   hrefLabel: string;
 };
@@ -71,6 +73,9 @@ function GlassCard({
             src={card.image}
             alt=""
             className="h-full w-full object-cover opacity-45"
+            style={
+              card.imageAdjust ? imageAdjustStyle(card.imageAdjust) : undefined
+            }
           />
         ) : null}
         {/* Diagonal sheen across the pane */}

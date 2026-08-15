@@ -373,6 +373,13 @@ export const dictionary = {
       uploadImage: "رفع صورة",
       changeImage: "تغيير الصورة",
       removeImage: "إزالة الصورة",
+      adjustImage: "ضبط الصورة",
+      adjustImageHint:
+        "عدّل قص الصورة (زوم + تحريك) كما ستظهر في الموقع، بدل قصّها من النص.",
+      adjustDrag: "اسحب داخل الإطار لتحريك موضع الصورة",
+      adjustZoom: "التكبير",
+      adjustReset: "إعادة تعيين",
+      adjustDone: "تم",
       uploadHint: "JPG / PNG / WebP حتى 5MB — تتخزن محليًا في public/uploads",
       uploading: "جاري الرفع...",
       uploadError: "فشل رفع الصورة",
@@ -1079,6 +1086,13 @@ export const dictionary = {
         "The first image is the primary one shown in the store — reorder with “Make primary”.",
       changeImage: "Change image",
       removeImage: "Remove image",
+      adjustImage: "Adjust image",
+      adjustImageHint:
+        "Fix how the picture is cropped (zoom + pan) as it appears on the site, instead of slicing the middle.",
+      adjustDrag: "Drag inside the frame to reposition the picture",
+      adjustZoom: "Zoom",
+      adjustReset: "Reset",
+      adjustDone: "Done",
       uploadHint:
         "JPG / PNG / WebP up to 5MB — stored locally in public/uploads",
       uploading: "Uploading...",

@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { requirePermission } from "@/lib/admin-permissions";
 import { prisma } from "@/lib/prisma";
+import { parseImageAdjust } from "@/lib/image-adjust";
 
 // ============================================================
 // Collections management from the dashboard (add / edit / delete)
@@ -26,6 +28,7 @@ const collectionSchema = z.object({
   image: z.string().trim().max(500).optional().default(""),
   descriptionAr: z.string().trim().max(300).optional().default(""),
   descriptionEn: z.string().trim().max(300).optional().default(""),
+  imageAdjust: z.string().trim().max(200).optional().default(""),
 });
 
 export type CollectionActionState = {
@@ -51,6 +54,7 @@ function readCollectionForm(fd: FormData) {
     image: fd.get("image") || "",
     descriptionAr: fd.get("descriptionAr") || "",
     descriptionEn: fd.get("descriptionEn") || "",
+    imageAdjust: fd.get("imageAdjust") || "",
   });
 }
 
@@ -66,7 +70,16 @@ export async function createCollection(
   } catch {
     return { error: "INVALID" };
   }
-  const { nameAr, nameEn, slug, image, descriptionAr, descriptionEn } = parsed;
+  const {
+    nameAr,
+    nameEn,
+    slug,
+    image,
+    descriptionAr,
+    descriptionEn,
+    imageAdjust,
+  } = parsed;
+  const adjust = parseImageAdjust(imageAdjust);
 
   const existing = await prisma.collection.findUnique({ where: { slug } });
   if (existing) return { error: "SLUG_TAKEN" };
@@ -77,6 +90,7 @@ export async function createCollection(
       nameEn,
       slug,
       image: image || null,
+      imageAdjust: adjust ?? Prisma.DbNull,
       descriptionAr: descriptionAr || null,
       descriptionEn: descriptionEn || null,
     },
@@ -103,13 +117,16 @@ export async function updateCollection(
       image: fd.get("image") || "",
       descriptionAr: fd.get("descriptionAr") || "",
       descriptionEn: fd.get("descriptionEn") || "",
+      imageAdjust: fd.get("imageAdjust") || "",
     });
     if (!parsed.success) return { error: "INVALID" };
   } catch {
     return { error: "INVALID" };
   }
 
-  const { nameAr, nameEn, image, descriptionAr, descriptionEn } = parsed.data;
+  const { nameAr, nameEn, image, descriptionAr, descriptionEn, imageAdjust } =
+    parsed.data;
+  const adjust = parseImageAdjust(imageAdjust);
 
   const existing = await prisma.collection.findUnique({ where: { slug } });
   if (!existing) return { error: "NOT_FOUND" };
@@ -120,6 +137,7 @@ export async function updateCollection(
       nameAr,
       nameEn,
       image: image || null,
+      imageAdjust: adjust ?? Prisma.DbNull,
       descriptionAr: descriptionAr || null,
       descriptionEn: descriptionEn || null,
     },
@@ -255,6 +273,7 @@ const sliderImageSchema = z.object({
   image: z.string().trim().max(500).optional().default(""),
   descriptionAr: z.string().trim().max(300).optional().default(""),
   descriptionEn: z.string().trim().max(300).optional().default(""),
+  imageAdjust: z.string().trim().max(200).optional().default(""),
 });
 
 const isSafeCollectionImage = (v: string) =>
@@ -267,7 +286,12 @@ const isSafeCollectionImage = (v: string) =>
 // updateSlide on the product slider.
 export async function updateCollectionSlider(
   slug: string,
-  data: { image?: string; descriptionAr?: string; descriptionEn?: string },
+  data: {
+    image?: string;
+    descriptionAr?: string;
+    descriptionEn?: string;
+    imageAdjust?: string;
+  },
 ): Promise<CollectionActionState> {
   await requirePermission("collections");
 
@@ -276,13 +300,15 @@ export async function updateCollectionSlider(
 
   const parsed = sliderImageSchema.safeParse(data);
   if (!parsed.success) return { error: "INVALID" };
-  const { image, descriptionAr, descriptionEn } = parsed.data;
+  const { image, descriptionAr, descriptionEn, imageAdjust } = parsed.data;
   if (!isSafeCollectionImage(image)) return { error: "INVALID_IMAGE" };
+  const adjust = parseImageAdjust(imageAdjust);
 
   await prisma.collection.update({
     where: { slug },
     data: {
       image: image || null,
+      imageAdjust: adjust ?? Prisma.DbNull,
       descriptionAr: descriptionAr || null,
       descriptionEn: descriptionEn || null,
     },

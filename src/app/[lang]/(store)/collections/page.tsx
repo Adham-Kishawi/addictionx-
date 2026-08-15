@@ -14,6 +14,7 @@ import { SectionGlow } from "@/components/motion/section-glow";
 import { ScrollWordReveal } from "@/components/motion/scroll-word-reveal";
 import { TiltCard } from "@/components/motion/tilt-card";
 import { collectionBackdrop } from "@/features/catalog/data/collection-assets";
+import { imageAdjustStyle } from "@/lib/image-adjust";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -69,14 +70,21 @@ export default async function CollectionsPage({
                     className="group relative block aspect-[4/5] overflow-hidden rounded-3xl border border-border transition-shadow duration-500 hover:border-primary/40 hover:shadow-[0_0_45px_-14px_oklch(0.6_0.22_22/0.6)]"
                   >
                     {collection.image ? (
-                      <Image
-                        src={collection.image}
-                        alt={isRtl ? collection.nameAr : collection.nameEn}
-                        fill
-                        sizes="(min-width:1024px) 320px, (min-width:640px) 50vw, 90vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        draggable={false}
-                      />
+                      <div className="absolute inset-0 overflow-hidden transition-transform duration-700 group-hover:scale-105">
+                        <Image
+                          src={collection.image}
+                          alt={isRtl ? collection.nameAr : collection.nameEn}
+                          fill
+                          sizes="(min-width:1024px) 320px, (min-width:640px) 50vw, 90vw"
+                          className="object-cover"
+                          style={
+                            collection.imageAdjust
+                              ? imageAdjustStyle(collection.imageAdjust)
+                              : undefined
+                          }
+                          draggable={false}
+                        />
+                      </div>
                     ) : cover ? (
                       <ProductArt
                         product={cover}
