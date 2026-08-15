@@ -24,15 +24,13 @@ export default async function AdminShippingPage({
   ]);
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="mb-2 font-display text-3xl font-bold">
+    <div className="flex flex-col gap-6">
+      <h1 className="font-display text-3xl font-bold">
         {dict.admin.shipping || "Shipping"}
       </h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        {dict.admin.shippingDesc}
-      </p>
+      <p className="text-sm text-muted-foreground">{dict.admin.shippingDesc}</p>
 
-      <section className="mb-6 overflow-hidden rounded-2xl border border-border bg-card/40">
+      <section className="overflow-hidden rounded-2xl border border-border bg-card/40">
         <div className="flex items-center gap-2 border-b border-border px-6 py-4">
           <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
             <Truck className="size-4" />
