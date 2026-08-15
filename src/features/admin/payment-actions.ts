@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { requirePermission } from "@/lib/admin-permissions";
+import {
+  requirePermission,
+  requireAnyPermission,
+} from "@/lib/admin-permissions";
 import { paymentStatusEmail, sendEmail } from "@/lib/email";
 import type { Locale } from "@/lib/i18n/dictionary";
 
@@ -118,7 +121,7 @@ export async function rejectPaymentProof(
     throw new Error("Unauthorized");
   }
 
-  await requirePermission("orders", locale);
+  await requireAnyPermission(["payment-verification", "orders"], locale);
 
   const parsedNote = rejectionNoteSchema.parse(rejectionNote);
 
