@@ -23,9 +23,7 @@ import type { Dictionary, Locale } from "@/lib/i18n/dictionary";
 import type { GovernorateAdminDto } from "@/lib/shipping";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
-
-const inputClass =
-  "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
+import { Field, fieldInputClass } from "@/components/ui/field";
 
 export function ShippingZonesManager({
   dict,
@@ -283,19 +281,23 @@ function GovForm({
       }}
       className="grid gap-3 rounded-xl border border-border bg-background p-4 sm:grid-cols-2"
     >
-      <input
-        name="nameAr"
-        placeholder={dict.admin.governorateNameAr}
-        className={inputClass}
-        required
-      />
-      <input
-        name="nameEn"
-        placeholder={dict.admin.governorateNameEn}
-        className={inputClass}
-        dir="ltr"
-        required
-      />
+      <Field label={dict.admin.governorateNameAr}>
+        <input
+          name="nameAr"
+          placeholder={dict.admin.governorateNameAr}
+          className={fieldInputClass()}
+          required
+        />
+      </Field>
+      <Field label={dict.admin.governorateNameEn}>
+        <input
+          name="nameEn"
+          placeholder={dict.admin.governorateNameEn}
+          className={fieldInputClass()}
+          dir="ltr"
+          required
+        />
+      </Field>
       <div className="flex items-center gap-2 sm:col-span-2">
         <button
           type="submit"
@@ -335,33 +337,36 @@ function RegionForm({
       }}
       className="grid gap-3 rounded-xl border border-border bg-background p-4 sm:grid-cols-2"
     >
-      <input
-        name="nameAr"
-        placeholder={dict.admin.regionNameAr}
-        className={inputClass}
-        required
-      />
-      <input
-        name="nameEn"
-        placeholder={dict.admin.regionNameEn}
-        className={inputClass}
-        dir="ltr"
-        required
-      />
-      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-        {dict.admin.regionFeeEgp}
+      <Field label={dict.admin.regionNameAr}>
+        <input
+          name="nameAr"
+          placeholder={dict.admin.regionNameAr}
+          className={fieldInputClass()}
+          required
+        />
+      </Field>
+      <Field label={dict.admin.regionNameEn}>
+        <input
+          name="nameEn"
+          placeholder={dict.admin.regionNameEn}
+          className={fieldInputClass()}
+          dir="ltr"
+          required
+        />
+      </Field>
+      <Field label={dict.admin.regionFeeEgp} className="sm:col-span-2">
         <input
           name="shippingFeeEgp"
           type="number"
           min="0"
           step="0.01"
           defaultValue="0"
-          className={inputClass}
+          className={fieldInputClass()}
           dir="ltr"
           required
         />
-      </label>
-      <div className="flex items-end gap-2">
+      </Field>
+      <div className="flex items-end gap-2 sm:col-span-2">
         <button
           type="submit"
           disabled={pending}

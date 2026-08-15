@@ -57,7 +57,21 @@ type PaymentAccountsConfig = {
 
 type CouponState = { code: string; discount: number } | null;
 
-export function CheckoutForm({ locale }: { locale: Locale }) {
+type InitialValues = {
+  name: string;
+  phone: string;
+  governorateName: string;
+  regionName: string;
+  address: string;
+};
+
+export function CheckoutForm({
+  locale,
+  initialValues,
+}: {
+  locale: Locale;
+  initialValues?: InitialValues;
+}) {
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
   const dict = getDictionary(locale);
@@ -174,15 +188,16 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: "",
-      phone: "",
+      name: initialValues?.name ?? "",
+      phone: initialValues?.phone ?? "",
       governorateId: "",
       regionId: "",
-      address: "",
+      address: initialValues?.address ?? "",
     },
   });
 
@@ -192,6 +207,34 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
   const activeRegions =
     zones.find((z) => z.id === selectedGovernorate)?.regions ?? [];
   const activeRegion = activeRegions.find((r) => r.id === selectedRegion);
+
+  // Match the last saved address (by name) to a zone id once zones load, so
+  // returning customers get their governorate/region prefilled too.
+  useEffect(() => {
+    if (!zones.length || !initialValues) return;
+    const govName = initialValues.governorateName.trim();
+    const regName = initialValues.regionName.trim();
+    if (!govName) return;
+    const gov = zones.find(
+      (z) =>
+        z.nameAr === govName ||
+        z.nameEn === govName ||
+        z.nameAr.includes(govName) ||
+        govName.includes(z.nameAr),
+    );
+    if (!gov) return;
+    setValue("governorateId", gov.id);
+    if (regName) {
+      const region = gov.regions.find(
+        (r) =>
+          r.nameAr === regName ||
+          r.nameEn === regName ||
+          r.nameAr.includes(regName) ||
+          regName.includes(r.nameAr),
+      );
+      if (region) setValue("regionId", region.id);
+    }
+  }, [zones, initialValues, setValue]);
 
   // Shipping fee: per-region when available, else flat; free above threshold.
   const shippingFee =
@@ -267,6 +310,17 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
     });
   };
 
+  const focusFirstError = (fields: Record<string, { message?: string }>) => {
+    const firstKey = Object.keys(fields)[0];
+    if (!firstKey) return;
+    // react-hook-form names are dot-free here, so querySelector with [name=...]
+    // is safe; guard against unexpected characters anyway.
+    const el = document.querySelector<HTMLElement>(`[name="${firstKey}"]`) as
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    el?.focus({ preventScroll: true });
+  };
+
   const onSubmit = handleSubmit((data) => {
     setError(null);
     startTransition(async () => {
@@ -305,12 +359,15 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
       });
       if (result.ok) {
         clearCart();
-        setPlaced({ orderId: result.orderId, orderNumber: result.orderNumber });
+        setPlaced({
+          orderId: result.orderId,
+          orderNumber: result.orderNumber,
+        });
       } else {
         setError(result.error);
       }
     });
-  });
+  }, focusFirstError);
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
@@ -345,20 +402,30 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
           </legend>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={dict.checkout.fullName} error={errors.name?.message}>
+            <Field
+              label={dict.checkout.fullName}
+              error={errors.name?.message}
+              required
+            >
               <input
                 type="text"
                 {...register("name")}
                 className={inputClass(!!errors.name)}
+                aria-invalid={!!errors.name}
                 placeholder={dict.account.namePlaceholder}
               />
             </Field>
-            <Field label={dict.checkout.phone} error={errors.phone?.message}>
+            <Field
+              label={dict.checkout.phone}
+              error={errors.phone?.message}
+              required
+            >
               <input
                 type="tel"
                 inputMode="tel"
                 {...register("phone")}
                 className={inputClass(!!errors.phone)}
+                aria-invalid={!!errors.phone}
                 placeholder="+20 100 000 0000"
                 dir="ltr"
               />
@@ -369,10 +436,12 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
             <Field
               label={dict.checkout.governorate}
               error={errors.governorateId?.message}
+              required
             >
               <select
                 {...register("governorateId")}
                 className={inputClass(!!errors.governorateId)}
+                aria-invalid={!!errors.governorateId}
               >
                 <option value="">
                   {locale === "ar" ? "اختر المحافظة" : "Select governorate"}
@@ -388,10 +457,12 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
             <Field
               label={dict.checkout.region}
               error={errors.regionId?.message}
+              required
             >
               <select
                 {...register("regionId")}
                 className={inputClass(!!errors.regionId)}
+                aria-invalid={!!errors.regionId}
                 disabled={!selectedGovernorate}
               >
                 <option value="">
@@ -406,11 +477,16 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
             </Field>
           </div>
 
-          <Field label={dict.checkout.address} error={errors.address?.message}>
+          <Field
+            label={dict.checkout.address}
+            error={errors.address?.message}
+            required
+          >
             <textarea
               rows={3}
               {...register("address")}
               className={cn(inputClass(!!errors.address), "resize-none")}
+              aria-invalid={!!errors.address}
               placeholder="District, Street, Building, Floor"
             />
           </Field>
@@ -721,7 +797,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
 
 function inputClass(hasError: boolean) {
   return cn(
-    "h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+    "h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none transition-all focus-visible:ring-4 focus-visible:ring-ring/25 focus-visible:border-ring placeholder:text-muted-foreground/60",
     hasError ? "border-destructive" : "border-border",
   );
 }
@@ -729,18 +805,31 @@ function inputClass(hasError: boolean) {
 function Field({
   label,
   error,
+  required,
   children,
 }: {
   label: string;
   error?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1.5 text-sm">
-      <span className="text-muted-foreground">{label}</span>
+    <div className="flex flex-col gap-1.5 text-sm">
+      <span className="text-muted-foreground">
+        {label}
+        {required && <span className="text-destructive"> *</span>}
+      </span>
       {children}
-      {error && <span className="text-xs text-destructive">{error}</span>}
-    </label>
+      {error && (
+        <span
+          role="alert"
+          className="flex items-start gap-1 text-xs font-medium text-destructive"
+        >
+          <AlertCircle className="mt-px size-3.5 shrink-0" />
+          <span>{error}</span>
+        </span>
+      )}
+    </div>
   );
 }
 

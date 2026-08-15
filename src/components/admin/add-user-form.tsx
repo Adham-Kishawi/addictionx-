@@ -137,7 +137,7 @@ function Field({
       </label>
       <input
         {...props}
-        className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-12 rounded-xl border border-border bg-background px-3.5 text-sm shadow-sm outline-none transition-all placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/25"
       />
     </div>
   );

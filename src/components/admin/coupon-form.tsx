@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Check, AlertCircle } from "lucide-react";
+import { Plus, Check, AlertCircle, Tag } from "lucide-react";
 import { createCoupon, type UserActionState } from "@/features/admin/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
-
-const inputClass =
-  "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
+import { Field, fieldInputClass } from "@/components/ui/field";
 
 export function CouponForm({ dict }: { dict: Dictionary }) {
   const router = useRouter();
@@ -45,103 +43,89 @@ export function CouponForm({ dict }: { dict: Dictionary }) {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.couponCode}
-          </span>
+        <Field label={dict.admin.couponCode}>
           <input
             name="code"
             type="text"
             required
             maxLength={30}
             placeholder="SALE20"
-            className={cn(inputClass, "uppercase")}
+            className={cn(fieldInputClass(), "uppercase")}
             dir="ltr"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.couponType}
-          </span>
+        </Field>
+        <Field label={dict.admin.couponType}>
           <select
             name="discountType"
             value={type}
             onChange={(e) => setType(e.target.value as "PERCENT" | "FIXED")}
-            className={inputClass}
+            className={fieldInputClass()}
           >
             <option value="PERCENT">{dict.admin.couponTypePercent}</option>
             <option value="FIXED">{dict.admin.couponTypeFixed}</option>
           </select>
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-muted-foreground">
-            {type === "PERCENT"
+        </Field>
+        <Field
+          label={
+            type === "PERCENT"
               ? dict.admin.couponValuePercent
-              : dict.admin.couponValueFixed}
-          </span>
+              : dict.admin.couponValueFixed
+          }
+        >
           <input
             name="discountValue"
             type="number"
             required
             min="0"
             step="0.01"
-            className={inputClass}
+            className={fieldInputClass()}
             dir="ltr"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.couponMinOrder}
-          </span>
+        </Field>
+        <Field label={dict.admin.couponMinOrder}>
           <input
             name="minOrderAmount"
             type="number"
             min="0"
             step="0.01"
             defaultValue="0"
-            className={inputClass}
+            className={fieldInputClass()}
             dir="ltr"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.couponMaxDiscount}
-          </span>
+        </Field>
+        <Field label={dict.admin.couponMaxDiscount}>
           <input
             name="maxDiscount"
             type="number"
             min="0"
             step="0.01"
             defaultValue="0"
-            className={inputClass}
+            className={fieldInputClass()}
             dir="ltr"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.couponMaxUses}
-          </span>
+        </Field>
+        <Field label={dict.admin.couponMaxUses}>
           <input
             name="maxUses"
             type="number"
             min="0"
             defaultValue="0"
-            className={inputClass}
+            className={fieldInputClass()}
             dir="ltr"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.couponExpires}
-          </span>
+        </Field>
+        <Field label={dict.admin.couponExpires} className="sm:col-span-2">
           <input
             name="expiresAt"
             type="date"
-            className={inputClass}
+            className={fieldInputClass()}
             dir="ltr"
           />
-        </label>
+        </Field>
         <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm sm:col-span-2">
+          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <Tag className="size-4" />
+          </span>
           <span className="flex-1 font-medium">{dict.admin.active}</span>
           <Switch
             checked={active}

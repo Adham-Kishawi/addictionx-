@@ -9,9 +9,7 @@ import {
 } from "@/features/admin/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
-
-const inputClass =
-  "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
+import { Field, fieldInputClass } from "@/components/ui/field";
 
 export function ShippingSettingsForm({
   dict,
@@ -48,52 +46,55 @@ export function ShippingSettingsForm({
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        <IconField
-          icon={Coins}
+        <Field
           label={dict.admin.shippingFee}
-          hint={dict.product.currency}
+          hint={`(${dict.product.currency})`}
         >
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={fee}
-            onChange={(e) => setFee(e.target.value)}
-            className={cn(inputClass, "ps-9")}
-            dir="ltr"
-            required
-          />
-        </IconField>
-        <IconField
-          icon={Gift}
+          <div className="relative">
+            <Coins className="absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={fee}
+              onChange={(e) => setFee(e.target.value)}
+              className={cn(fieldInputClass(), "ps-9")}
+              dir="ltr"
+              required
+            />
+          </div>
+        </Field>
+        <Field
           label={dict.admin.freeShippingThreshold}
-          hint={dict.product.currency}
+          hint={`(${dict.product.currency})`}
         >
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={threshold}
-            onChange={(e) => setThreshold(e.target.value)}
-            className={cn(inputClass, "ps-9")}
-            dir="ltr"
-            required
-          />
-        </IconField>
-        <IconField
-          icon={Truck}
-          label={dict.admin.defaultCarrier}
-          className="sm:col-span-2"
-        >
-          <input
-            type="text"
-            value={carrierValue}
-            onChange={(e) => setCarrierValue(e.target.value)}
-            className={cn(inputClass, "ps-9")}
-            dir="ltr"
-            required
-          />
-        </IconField>
+          <div className="relative">
+            <Gift className="absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={threshold}
+              onChange={(e) => setThreshold(e.target.value)}
+              className={cn(fieldInputClass(), "ps-9")}
+              dir="ltr"
+              required
+            />
+          </div>
+        </Field>
+        <Field label={dict.admin.defaultCarrier} className="sm:col-span-2">
+          <div className="relative">
+            <Truck className="absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={carrierValue}
+              onChange={(e) => setCarrierValue(e.target.value)}
+              className={cn(fieldInputClass(), "ps-9")}
+              dir="ltr"
+              required
+            />
+          </div>
+        </Field>
       </div>
 
       <div className="flex items-center gap-3">
@@ -119,32 +120,5 @@ export function ShippingSettingsForm({
         )}
       </div>
     </form>
-  );
-}
-
-function IconField({
-  icon: Icon,
-  label,
-  hint,
-  className,
-  children,
-}: {
-  icon: React.ElementType;
-  label: string;
-  hint?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className={cn("flex flex-col gap-1.5 text-sm", className)}>
-      <span className="font-medium text-muted-foreground">
-        {label}
-        {hint && <span className="ms-1 text-xs">({hint})</span>}
-      </span>
-      <div className="relative">
-        <Icon className="absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        {children}
-      </div>
-    </label>
   );
 }

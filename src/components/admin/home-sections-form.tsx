@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, AlertCircle, Save } from "lucide-react";
+import { Check, AlertCircle, Save, LayoutGrid } from "lucide-react";
 import {
   updateHomeSections,
   type UserActionState,
 } from "@/features/admin/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { Switch } from "@/components/ui/switch";
-
-const inputClass =
-  "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
+import {
+  Field,
+  fieldInputClass,
+  fieldTextareaClass,
+} from "@/components/ui/field";
 
 export function HomeSectionsForm({
   dict,
@@ -58,6 +60,9 @@ export function HomeSectionsForm({
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
       <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+          <LayoutGrid className="size-4" />
+        </span>
         <span className="flex-1">{dict.admin.showCollections}</span>
         <Switch
           checked={show}
@@ -68,81 +73,57 @@ export function HomeSectionsForm({
       </label>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.collectionsEyebrow} (AR)
-          </span>
+        <Field label={`${dict.admin.collectionsEyebrow} (AR)`}>
           <input
-            type="text"
             value={eyebrowAr}
             onChange={(e) => setEyebrowAr(e.target.value)}
-            className={inputClass}
+            className={fieldInputClass()}
             placeholder="مجموعاتنا"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.collectionsEyebrow} (EN)
-          </span>
+        </Field>
+        <Field label={`${dict.admin.collectionsEyebrow} (EN)`}>
           <input
-            type="text"
             value={eyebrowEn}
             onChange={(e) => setEyebrowEn(e.target.value)}
-            className={inputClass}
+            className={fieldInputClass()}
             dir="ltr"
             placeholder="Our Collections"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.collectionsTitle} (AR)
-          </span>
+        </Field>
+        <Field label={`${dict.admin.collectionsTitle} (AR)`}>
           <input
-            type="text"
             value={titleAr}
             onChange={(e) => setTitleAr(e.target.value)}
-            className={inputClass}
+            className={fieldInputClass()}
             placeholder="مجموعاتنا"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.collectionsTitle} (EN)
-          </span>
+        </Field>
+        <Field label={`${dict.admin.collectionsTitle} (EN)`}>
           <input
-            type="text"
             value={titleEn}
             onChange={(e) => setTitleEn(e.target.value)}
-            className={inputClass}
+            className={fieldInputClass()}
             dir="ltr"
             placeholder="Our Collections"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.collectionsSubtitle} (AR)
-          </span>
-          <input
-            type="text"
+        </Field>
+        <Field label={`${dict.admin.collectionsSubtitle} (AR)`}>
+          <textarea
             value={subtitleAr}
             onChange={(e) => setSubtitleAr(e.target.value)}
-            className={inputClass}
+            className={fieldTextareaClass()}
             placeholder="ثلاث حالات مزاجية، عوالم كاملة"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-          <span className="font-medium text-muted-foreground">
-            {dict.admin.collectionsSubtitle} (EN)
-          </span>
-          <input
-            type="text"
+        </Field>
+        <Field label={`${dict.admin.collectionsSubtitle} (EN)`}>
+          <textarea
             value={subtitleEn}
             onChange={(e) => setSubtitleEn(e.target.value)}
-            className={inputClass}
+            className={fieldTextareaClass()}
             dir="ltr"
             placeholder="Three moods, entire worlds"
           />
-        </label>
+        </Field>
       </div>
 
       <p className="-mt-2 text-xs text-muted-foreground">

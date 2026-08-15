@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updateAdminNotificationEmail } from "@/features/admin/actions";
 import type { Locale } from "@/lib/i18n/dictionary";
-import { cn } from "@/lib/utils";
+import { Field, fieldInputClass } from "@/components/ui/field";
 
 type Props = {
   initialEmail: string;
@@ -43,13 +43,14 @@ export function AdminNotificationEmailForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      <div>
-        <label
-          htmlFor="adminNotificationEmail"
-          className="mb-2 block text-sm font-medium"
-        >
-          {dict.admin.adminNotificationEmail}
-        </label>
+      <Field
+        label={dict.admin.adminNotificationEmail}
+        hint={
+          status === "error" ? undefined : dict.admin.adminNotificationEmailHint
+        }
+        error={status === "error" ? dict.admin.paymentSettingsError : undefined}
+        htmlFor="adminNotificationEmail"
+      >
         <input
           id="adminNotificationEmail"
           type="email"
@@ -58,27 +59,17 @@ export function AdminNotificationEmailForm({
             setValue(e.target.value);
             setStatus("idle");
           }}
-          className={cn(
-            "h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-            status === "error" ? "border-destructive" : "border-border",
-          )}
+          className={fieldInputClass(status === "error")}
+          aria-invalid={status === "error"}
           placeholder="you@gmail.com"
           dir="ltr"
         />
-        <p className="mt-1 text-xs text-muted-foreground">
-          {dict.admin.adminNotificationEmailHint}
-        </p>
         {status === "ok" && (
-          <p className="mt-1 text-xs text-emerald-500">
+          <p className="text-xs text-emerald-500">
             {dict.admin.adminNotificationEmailSaved}
           </p>
         )}
-        {status === "error" && (
-          <p className="mt-1 text-xs text-destructive">
-            {dict.admin.paymentSettingsError}
-          </p>
-        )}
-      </div>
+      </Field>
       <Button
         type="submit"
         size="sm"

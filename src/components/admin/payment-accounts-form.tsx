@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updatePaymentAccounts } from "@/features/admin/actions";
 import type { Locale } from "@/lib/i18n/dictionary";
-import { cn } from "@/lib/utils";
+import { Field, fieldInputClass } from "@/components/ui/field";
 
 const schema = z.object({
   instapayNumber: z.string().trim(),
@@ -84,135 +84,99 @@ export function PaymentAccountsForm({ config, locale, dict }: Props) {
       <div className="rounded-2xl border border-border bg-card p-6">
         <h2 className="mb-4 text-lg font-semibold">InstaPay</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="instapayNumber"
-              className="mb-2 block text-sm font-medium"
-            >
-              {dict.admin.instapayAccountNumber}
-            </label>
+          <Field
+            label={dict.admin.instapayAccountNumber}
+            error={errors.instapayNumber?.message}
+            htmlFor="instapayNumber"
+          >
             <input
               id="instapayNumber"
               type="text"
               {...register("instapayNumber")}
-              className={inputClass(!!errors.instapayNumber)}
+              className={fieldInputClass(!!errors.instapayNumber)}
+              aria-invalid={!!errors.instapayNumber}
               placeholder="you@instapay"
               dir="ltr"
             />
-            {errors.instapayNumber && (
-              <p className="mt-1 text-xs text-destructive">
-                {errors.instapayNumber.message}
-              </p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="instapayPhone"
-              className="mb-2 block text-sm font-medium"
-            >
-              {dict.admin.instapayPhone}
-            </label>
+          </Field>
+          <Field
+            label={dict.admin.instapayPhone}
+            error={errors.instapayPhone?.message}
+            htmlFor="instapayPhone"
+          >
             <input
               id="instapayPhone"
               type="text"
               {...register("instapayPhone")}
-              className={inputClass(!!errors.instapayPhone)}
+              className={fieldInputClass(!!errors.instapayPhone)}
+              aria-invalid={!!errors.instapayPhone}
               placeholder="01XXXXXXXXX"
               dir="ltr"
             />
-            {errors.instapayPhone && (
-              <p className="mt-1 text-xs text-destructive">
-                {errors.instapayPhone.message}
-              </p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="instapayName"
-              className="mb-2 block text-sm font-medium"
-            >
-              {dict.admin.instapayAccountName}
-            </label>
+          </Field>
+          <Field
+            label={dict.admin.instapayAccountName}
+            error={errors.instapayName?.message}
+            htmlFor="instapayName"
+          >
             <input
               id="instapayName"
               type="text"
               {...register("instapayName")}
-              className={inputClass(!!errors.instapayName)}
+              className={fieldInputClass(!!errors.instapayName)}
+              aria-invalid={!!errors.instapayName}
               placeholder="ADDICTIONX"
             />
-            {errors.instapayName && (
-              <p className="mt-1 text-xs text-destructive">
-                {errors.instapayName.message}
-              </p>
-            )}
-          </div>
+          </Field>
         </div>
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-6">
         <h2 className="mb-4 text-lg font-semibold">Vodafone Cash</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="vodafoneCashNumber"
-              className="mb-2 block text-sm font-medium"
-            >
-              {dict.admin.vodafoneCashNumber}
-            </label>
+          <Field
+            label={dict.admin.vodafoneCashNumber}
+            error={errors.vodafoneCashNumber?.message}
+            htmlFor="vodafoneCashNumber"
+          >
             <input
               id="vodafoneCashNumber"
               type="text"
               {...register("vodafoneCashNumber")}
-              className={inputClass(!!errors.vodafoneCashNumber)}
+              className={fieldInputClass(!!errors.vodafoneCashNumber)}
+              aria-invalid={!!errors.vodafoneCashNumber}
               placeholder="01XXXXXXXXX"
               dir="ltr"
             />
-            {errors.vodafoneCashNumber && (
-              <p className="mt-1 text-xs text-destructive">
-                {errors.vodafoneCashNumber.message}
-              </p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="vodafoneCashNameAr"
-              className="mb-2 block text-sm font-medium"
-            >
-              {dict.admin.vodafoneCashNameAr}
-            </label>
+          </Field>
+          <Field
+            label={dict.admin.vodafoneCashNameAr}
+            error={errors.vodafoneCashNameAr?.message}
+            htmlFor="vodafoneCashNameAr"
+          >
             <input
               id="vodafoneCashNameAr"
               type="text"
               {...register("vodafoneCashNameAr")}
-              className={inputClass(!!errors.vodafoneCashNameAr)}
+              className={fieldInputClass(!!errors.vodafoneCashNameAr)}
+              aria-invalid={!!errors.vodafoneCashNameAr}
               placeholder="رانيا"
             />
-            {errors.vodafoneCashNameAr && (
-              <p className="mt-1 text-xs text-destructive">
-                {errors.vodafoneCashNameAr.message}
-              </p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="vodafoneCashNameEn"
-              className="mb-2 block text-sm font-medium"
-            >
-              {dict.admin.vodafoneCashNameEn}
-            </label>
+          </Field>
+          <Field
+            label={dict.admin.vodafoneCashNameEn}
+            error={errors.vodafoneCashNameEn?.message}
+            htmlFor="vodafoneCashNameEn"
+          >
             <input
               id="vodafoneCashNameEn"
               type="text"
               {...register("vodafoneCashNameEn")}
-              className={inputClass(!!errors.vodafoneCashNameEn)}
+              className={fieldInputClass(!!errors.vodafoneCashNameEn)}
+              aria-invalid={!!errors.vodafoneCashNameEn}
               placeholder="Rania"
             />
-            {errors.vodafoneCashNameEn && (
-              <p className="mt-1 text-xs text-destructive">
-                {errors.vodafoneCashNameEn.message}
-              </p>
-            )}
-          </div>
+          </Field>
         </div>
       </div>
 
@@ -226,12 +190,5 @@ export function PaymentAccountsForm({ config, locale, dict }: Props) {
         {dict.admin.save}
       </Button>
     </form>
-  );
-}
-
-function inputClass(hasError: boolean) {
-  return cn(
-    "h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-    hasError ? "border-destructive" : "border-border",
   );
 }
