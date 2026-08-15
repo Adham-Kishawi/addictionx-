@@ -100,9 +100,44 @@ export default async function AccountOrderDetailPage({
                 <span className="text-muted-foreground">
                   {dict.account.trackingNumber}
                 </span>
-                <span className="font-medium" dir="ltr">
-                  {order.shipment.trackingNumber}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium" dir="ltr">
+                    {order.shipment.trackingNumber}
+                  </span>
+                  {(() => {
+                    const carrier = (
+                      order.shipment.carrier ?? ""
+                    ).toLowerCase();
+                    const tn = encodeURIComponent(
+                      order.shipment.trackingNumber,
+                    );
+                    if (carrier.includes("bosta")) {
+                      return (
+                        <a
+                          href={`https://app.bosta.co/tracking?trackingNumber=${tn}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary underline-offset-2 hover:underline"
+                        >
+                          {dict.account.trackBosta}
+                        </a>
+                      );
+                    }
+                    if (carrier.includes("aramex")) {
+                      return (
+                        <a
+                          href={`https://www.aramex.com/us/en/track/results?ShipmentNumber=${tn}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary underline-offset-2 hover:underline"
+                        >
+                          {dict.account.trackAramex}
+                        </a>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
               </div>
             )}
             <div className="flex items-center justify-between gap-2">
