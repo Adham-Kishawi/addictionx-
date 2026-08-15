@@ -500,6 +500,9 @@ model Collection {
   descriptionAr String?
   descriptionEn String?
   sortOrder   Int      @default(0)
+  // Show the collection in the home "Our Collections" section — independent
+  // from isActive (which hides it from the site entirely).
+  showInHome  Boolean  @default(true)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

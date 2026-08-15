@@ -20,12 +20,20 @@ export interface CollectionRow {
 
 // Collections are managed from the dashboard. The storefront still has a local
 // fallback so a temporary database outage does not take the public site offline.
-export async function getCollections(): Promise<CollectionRow[]> {
+// `homeOnly` filters to the collections the dashboard picked for the home
+// "Our Collections" section (showInHome) — everywhere else all active
+// collections are shown.
+export async function getCollections(opts?: {
+  homeOnly?: boolean;
+}): Promise<CollectionRow[]> {
   try {
     const rows = await prisma.collection.findMany({
       // isActive = "show this collection on the site" — the dashboard can hide
       // a collection (and its home-slider slide) without deleting it.
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        ...(opts?.homeOnly ? { showInHome: true } : {}),
+      },
       orderBy: { sortOrder: "asc" },
       select: {
         slug: true,

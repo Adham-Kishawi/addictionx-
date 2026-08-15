@@ -4,8 +4,8 @@ import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { CollectionForm } from "@/components/admin/collection-form";
 import { CollectionEdit } from "@/components/admin/collection-edit";
 import { CollectionDelete } from "@/components/admin/collection-delete";
-import { CollectionSliderControls } from "@/components/admin/collection-slider-controls";
-import { SlidersHorizontal } from "lucide-react";
+import { CollectionActiveToggle } from "@/components/admin/collection-active-toggle";
+import { HomeCollectionsManager } from "@/components/admin/home-collections-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +47,14 @@ export default async function AdminCollectionsPage({
         {dict.admin.collections}
       </h1>
 
+      <div className="mb-8">
+        <HomeCollectionsManager
+          collections={collections}
+          locale={locale}
+          dict={dict}
+        />
+      </div>
+
       <div className="mb-6">
         <CollectionForm dict={dict} />
       </div>
@@ -57,17 +65,7 @@ export default async function AdminCollectionsPage({
         </p>
       ) : (
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5 rounded-2xl border border-dashed border-border bg-card/20 px-4 py-3">
-            <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <SlidersHorizontal className="size-4 text-primary" />
-              {dict.admin.sliderControl}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {dict.admin.sliderControlHint}
-            </p>
-          </div>
-
-          {collections.map((collection, index) => {
+          {collections.map((collection) => {
             const collectionProducts =
               productsByCollection.get(collection.slug) ?? [];
             return (
@@ -105,11 +103,9 @@ export default async function AdminCollectionsPage({
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <CollectionSliderControls
+                    <CollectionActiveToggle
                       slug={collection.slug}
                       isActive={collection.isActive}
-                      isFirst={index === 0}
-                      isLast={index === collections.length - 1}
                       dict={dict}
                     />
                     <CollectionDelete

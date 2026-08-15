@@ -55,7 +55,7 @@ export default async function Home({
   const [allProducts, collections, wishlist, homeSections, homeSlides] =
     await Promise.all([
       getProducts(),
-      getCollections(),
+      getCollections({ homeOnly: true }),
       getWishlistIds(),
       getHomeSectionsConfig(),
       getHomeSlides(),

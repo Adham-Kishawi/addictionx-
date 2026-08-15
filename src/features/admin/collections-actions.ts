@@ -130,45 +130,9 @@ export async function updateCollection(
 }
 
 // ============================================================
-// Home slider slide management — reorder + show/hide.
-// The home slider is built from the collections (one slide each), so the
-// dashboard controls the slide order (sortOrder) and which slides appear at
-// all (isActive).
+// Site-wide visibility — hides a collection from the whole site
+// (home section, collections hub, footer) without deleting it.
 // ============================================================
-
-export async function reorderCollection(
-  slug: string,
-  direction: "up" | "down",
-): Promise<CollectionActionState> {
-  await requirePermission("collections");
-
-  const list = await prisma.collection.findMany({
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    select: { slug: true },
-  });
-  const index = list.findIndex((c) => c.slug === slug);
-  const swapWith = direction === "up" ? index - 1 : index + 1;
-  if (index < 0 || swapWith < 0 || swapWith >= list.length) {
-    return { error: "INVALID" };
-  }
-
-  // Swap the positions, then renumber every row 10,20,30,… in one transaction.
-  // Renumbering (instead of swapping two values) keeps the order consistent
-  // even when collections share the same sortOrder.
-  [list[index], list[swapWith]] = [list[swapWith], list[index]];
-
-  await prisma.$transaction(
-    list.map((c, i) =>
-      prisma.collection.update({
-        where: { slug: c.slug },
-        data: { sortOrder: (i + 1) * 10 },
-      }),
-    ),
-  );
-
-  revalidatePath("/", "layout");
-  return { success: true };
-}
 
 export async function toggleCollectionActive(
   slug: string,
@@ -181,6 +145,147 @@ export async function toggleCollectionActive(
   await prisma.collection.update({
     where: { slug },
     data: { isActive: !collection.isActive },
+  });
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+// ============================================================
+// Home "Our Collections" section — dashboard controls that mirror
+// the product slider manager: pick which collections appear on the
+// home page (showInHome), reorder them with drag & drop, hide/show
+// them and edit their image + captions. `isActive` (site-wide) is
+// untouched here — a collection can be in the home section while
+// staying hidden from the rest of the site, or vice versa.
+// ============================================================
+
+export async function reorderCollections(
+  orderedSlugs: string[],
+): Promise<CollectionActionState> {
+  await requirePermission("collections");
+
+  const unique = [...new Set(orderedSlugs)];
+  if (unique.length < 2 || unique.length !== orderedSlugs.length) {
+    return { error: "INVALID" };
+  }
+  const existing = await prisma.collection.findMany({
+    select: { slug: true },
+  });
+  const known = new Set(existing.map((c) => c.slug));
+  if (unique.some((slug) => !known.has(slug))) return { error: "INVALID" };
+
+  // Renumber every row 10,20,30,… in one transaction so the order stays
+  // consistent even when collections share the same sortOrder.
+  await prisma.$transaction(
+    unique.map((slug, i) =>
+      prisma.collection.update({
+        where: { slug },
+        data: { sortOrder: (i + 1) * 10 },
+      }),
+    ),
+  );
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+export async function addCollectionToHome(
+  slug: string,
+): Promise<CollectionActionState> {
+  await requirePermission("collections");
+
+  const collection = await prisma.collection.findUnique({ where: { slug } });
+  if (!collection) return { error: "NOT_FOUND" };
+
+  await prisma.collection.update({
+    where: { slug },
+    data: { showInHome: true },
+  });
+
+  // Renumber so the freshly-added collection lands last with a clean order.
+  const home = await prisma.collection.findMany({
+    where: { showInHome: true },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    select: { slug: true },
+  });
+  await renumberCollections(home.map((c) => c.slug));
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+export async function removeCollectionFromHome(
+  slug: string,
+): Promise<CollectionActionState> {
+  await requirePermission("collections");
+
+  const collection = await prisma.collection.findUnique({ where: { slug } });
+  if (!collection) return { error: "NOT_FOUND" };
+
+  await prisma.collection.update({
+    where: { slug },
+    data: { showInHome: false },
+  });
+
+  // Renumber the remaining home list so sortOrder stays dense.
+  const home = await prisma.collection.findMany({
+    where: { showInHome: true },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    select: { slug: true },
+  });
+  await renumberCollections(home.map((c) => c.slug));
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+async function renumberCollections(slugs: string[]) {
+  await prisma.$transaction(
+    slugs.map((s, i) =>
+      prisma.collection.update({
+        where: { slug: s },
+        data: { sortOrder: (i + 1) * 10 },
+      }),
+    ),
+  );
+}
+
+const sliderImageSchema = z.object({
+  image: z.string().trim().max(500).optional().default(""),
+  descriptionAr: z.string().trim().max(300).optional().default(""),
+  descriptionEn: z.string().trim().max(300).optional().default(""),
+});
+
+const isSafeCollectionImage = (v: string) =>
+  v === "" ||
+  v.startsWith("/") ||
+  v.startsWith("http://") ||
+  v.startsWith("https://");
+
+// Inline edit of the home-section card (image + captions), mirroring
+// updateSlide on the product slider.
+export async function updateCollectionSlider(
+  slug: string,
+  data: { image?: string; descriptionAr?: string; descriptionEn?: string },
+): Promise<CollectionActionState> {
+  await requirePermission("collections");
+
+  const collection = await prisma.collection.findUnique({ where: { slug } });
+  if (!collection) return { error: "NOT_FOUND" };
+
+  const parsed = sliderImageSchema.safeParse(data);
+  if (!parsed.success) return { error: "INVALID" };
+  const { image, descriptionAr, descriptionEn } = parsed.data;
+  if (!isSafeCollectionImage(image)) return { error: "INVALID_IMAGE" };
+
+  await prisma.collection.update({
+    where: { slug },
+    data: {
+      image: image || null,
+      descriptionAr: descriptionAr || null,
+      descriptionEn: descriptionEn || null,
+    },
   });
 
   revalidatePath("/", "layout");

@@ -554,6 +554,33 @@ export const dictionary = {
       sliderNoMatch: "لا يوجد منتجات مطابقة",
       sliderAlreadyAdded: "مضاف بالفعل",
       sliderDragHint: "اسحب البطاقة لترتيبها، أو استخدم الأسهم",
+      homeCollectionsPreview: "معاينة سكشن «مجموعاتنا»",
+      homeCollectionsPreviewHint:
+        "شكل سكشن «مجموعاتنا» في الصفحة الرئيسية — الكولكشنز المخفية من الموقع مش بتظهر هنا",
+      homeCollectionsPreviewTag: "مجموعة",
+      homeCollectionsEmpty:
+        "لسه مفيش كولكشنز في السكشن — ضيف كولكشن من القائمة فوق",
+      homeCollectionsStatsInHome: "في السكشن",
+      homeCollectionsStatsHidden: "خارج السكشن",
+      homeCollectionsStatsInactive: "مخفي من الموقع",
+      homeCollectionsAdd: "إضافة مجموعة للسكشن",
+      homeCollectionsAddHint:
+        "اختار كولكشن يظهر في سكشن «مجموعاتنا» بالصفحة الرئيسية — الترتيب أسفله",
+      homeCollectionsSearch: "ابحث عن مجموعة...",
+      homeCollectionsNoMatch: "لا توجد مجموعات مطابقة",
+      homeCollectionsAllAdded: "كل الكولكشنز مضافة للسكشن بالفعل",
+      homeCollectionsInactive: "مخفي من الموقع",
+      homeCollectionsDragHint:
+        "اسحب البطاقة لترتيب الكولكشنز، أو استخدم الأسهم",
+      homeCollectionsEdit: "تعديل بطاقة السكشن",
+      homeCollectionsRemove: "إزالة من السكشن",
+      homeCollectionsImage: "صورة البطاقة (اختياري)",
+      homeCollectionsImageNote:
+        "لو فاضية، هيظهر الخلفية الافتراضية للمجموعة أو صورة أول منتج فيها",
+      homeCollectionsDescAr: "وصف البطاقة بالعربية (اختياري)",
+      homeCollectionsDescEn: "وصف البطاقة بالإنجليزية (اختياري)",
+      homeCollectionsInactiveSite:
+        "مخفي من الموقع — هيظهر في السكشن بعد تفعيله",
       deleteCollectionChoice:
         "هذه المجموعة تحتوي على منتجات — اختر ماذا يحدث لها",
       deleteMoveProducts: "نقل المنتجات إلى مجموعة أخرى",
@@ -1235,6 +1262,33 @@ export const dictionary = {
       sliderNoMatch: "No matching products",
       sliderAlreadyAdded: "Already added",
       sliderDragHint: "Drag a card to reorder it, or use the arrows",
+      homeCollectionsPreview: "Our Collections preview",
+      homeCollectionsPreviewHint:
+        "How the section looks on the homepage — collections hidden from the site don't appear here",
+      homeCollectionsPreviewTag: "Collection",
+      homeCollectionsEmpty:
+        "No collections in the section yet — add one from the list above",
+      homeCollectionsStatsInHome: "in section",
+      homeCollectionsStatsHidden: "not in section",
+      homeCollectionsStatsInactive: "off site",
+      homeCollectionsAdd: "Add collection to section",
+      homeCollectionsAddHint:
+        'Pick a collection to appear in the home "Our Collections" section — order it below',
+      homeCollectionsSearch: "Search collections...",
+      homeCollectionsNoMatch: "No matching collections",
+      homeCollectionsAllAdded: "All collections are already in the section",
+      homeCollectionsInactive: "Off site",
+      homeCollectionsDragHint:
+        "Drag a card to reorder the collections, or use the arrows",
+      homeCollectionsEdit: "Edit section card",
+      homeCollectionsRemove: "Remove from section",
+      homeCollectionsImage: "Card image (optional)",
+      homeCollectionsImageNote:
+        "If left empty the section uses the collection's default backdrop or its first product's image",
+      homeCollectionsDescAr: "Card caption (Arabic, optional)",
+      homeCollectionsDescEn: "Card caption (English, optional)",
+      homeCollectionsInactiveSite:
+        "Hidden from the site — it will show in the section once activated",
       deleteCollectionChoice:
         "This collection has products — choose what happens to them",
       deleteMoveProducts: "Move products to another collection",
