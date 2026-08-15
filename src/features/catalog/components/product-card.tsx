@@ -49,6 +49,31 @@ export function ProductCard({
             }}
           />
 
+          {/* Thumbnail strip — every photo the product has (any number),
+              overlaid at the bottom so the listing shows all its images */}
+          {!product.isSoldOut && (product.images?.length ?? 0) > 1 && (
+            <div
+              aria-hidden
+              className="absolute inset-x-0 bottom-0 z-[6] flex flex-wrap justify-center gap-1.5 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-2 pb-2 pt-8"
+            >
+              {product.images!.map((url) => (
+                <span
+                  key={url}
+                  className="size-6 shrink-0 overflow-hidden rounded-md border border-white/40"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* Sweeping light bar (shine sweep) */}
           <div
             aria-hidden
