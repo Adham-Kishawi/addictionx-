@@ -60,6 +60,7 @@ export default async function AdminBestSellersPage({
           noBestSellers: dict.admin.noBestSellers,
           count: dict.admin.bestSellersCount,
           others: dict.admin.otherProducts,
+          errorGeneric: dict.admin.errorGeneric,
         }}
       />
     </div>

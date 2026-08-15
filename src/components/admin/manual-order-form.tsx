@@ -10,6 +10,8 @@ import type { Locale } from "@/lib/i18n/dictionary";
 export type ManualOrderProduct = {
   id: string;
   name: string;
+  basePrice: number;
+  stock: number;
   variants: { id: string; sizeMl: number; price: number; stock: number }[];
 };
 
@@ -58,12 +60,13 @@ export function ManualOrderForm({
   const totalQirsh = lines.reduce((sum, l) => {
     const product = products.find((p) => p.id === l.productId);
     const variant = product?.variants.find((v) => v.id === l.variantId);
-    return sum + (variant?.price ?? 0) * l.quantity;
+    const unitPrice = variant?.price ?? product?.basePrice ?? 0;
+    return sum + unitPrice * l.quantity;
   }, 0);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (lines.length === 0 || lines.some((l) => !l.productId || !l.variantId)) {
+    if (lines.length === 0 || lines.some((l) => !l.productId)) {
       setMessage({ type: "err", text: dict.admin.emptyLines });
       return;
     }
@@ -127,14 +130,19 @@ export function ManualOrderForm({
           <button
             type="button"
             onClick={addLine}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40"
+            disabled={products.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="size-3.5" />
             {dict.admin.addLine}
           </button>
         </div>
 
-        {lines.length === 0 ? (
+        {products.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
+            {dict.admin.noActiveProductsForOrder}
+          </p>
+        ) : lines.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
             {dict.admin.emptyLines}
           </p>
@@ -176,20 +184,31 @@ export function ManualOrderForm({
                     <label className="text-xs text-muted-foreground">
                       {dict.admin.selectSize}
                     </label>
-                    <select
-                      value={line.variantId}
-                      onChange={(e) =>
-                        updateLine(i, { variantId: e.target.value })
-                      }
-                      className="h-9 rounded-lg border border-border bg-background px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {product?.variants.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.sizeMl}ml — {formatPrice(v.price, locale)} (
-                          {v.stock})
-                        </option>
-                      ))}
-                    </select>
+                    {product && product.variants.length > 0 ? (
+                      <select
+                        value={line.variantId}
+                        onChange={(e) =>
+                          updateLine(i, { variantId: e.target.value })
+                        }
+                        className="h-9 rounded-lg border border-border bg-background px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        {product.variants.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.sizeMl}ml — {formatPrice(v.price, locale)} (
+                            {v.stock})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="flex h-9 items-center gap-1 rounded-lg border border-dashed border-border px-2 text-sm text-muted-foreground">
+                        <span>
+                          {formatPrice(product?.basePrice ?? 0, locale)}
+                        </span>
+                        <span className="text-xs opacity-70">
+                          ({product?.stock ?? 0})
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-1.5">

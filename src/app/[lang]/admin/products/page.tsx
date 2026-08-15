@@ -120,10 +120,10 @@ export default async function AdminProductsPage({
             </thead>
             <tbody>
               {products.map((product) => {
-                const totalStock = product.variants.reduce(
-                  (sum, v) => sum + v.stock,
-                  0,
-                );
+                const totalStock =
+                  product.variants.length > 0
+                    ? product.variants.reduce((sum, v) => sum + v.stock, 0)
+                    : product.stock;
                 const minPrice =
                   product.variants.length > 0
                     ? product.variants.reduce(

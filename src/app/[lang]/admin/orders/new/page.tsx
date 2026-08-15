@@ -23,6 +23,8 @@ export default async function NewOrderPage({
     select: {
       id: true,
       name: true,
+      basePrice: true,
+      stock: true,
       variants: {
         where: { isActive: true },
         select: { id: true, sizeMl: true, price: true, stock: true },
@@ -32,9 +34,13 @@ export default async function NewOrderPage({
     orderBy: { name: "asc" },
   });
 
-  const products: ManualOrderProduct[] = rows.filter(
-    (r) => r.variants.length > 0,
-  );
+  const products: ManualOrderProduct[] = rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    basePrice: r.basePrice,
+    stock: r.stock,
+    variants: r.variants,
+  }));
 
   return (
     <div className="mx-auto max-w-3xl">

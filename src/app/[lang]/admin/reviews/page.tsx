@@ -45,7 +45,7 @@ export default async function AdminReviewsPage({
 
       {reviews.length === 0 ? (
         <p className="py-16 text-center text-sm text-muted-foreground">
-          {dict.reviews.noReviews}
+          {dict.admin.noReviews}
         </p>
       ) : (
         <div className="flex flex-col gap-4">

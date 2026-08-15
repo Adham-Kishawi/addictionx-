@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Pencil, Flame } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Flame, AlertCircle } from "lucide-react";
 import { ProductArt } from "@/features/catalog/components/product-art";
 import { moveBestSeller, toggleBestSeller } from "@/features/admin/actions";
 import type { ProductImage } from "@prisma/client";
@@ -40,20 +40,29 @@ export function BestSellerManager({
     noBestSellers: string;
     count: string;
     others: string;
+    errorGeneric: string;
   };
 }) {
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const bestSellers = products
     .filter((p) => p.isBestSeller)
     .sort((a, b) => a.bestsellerOrder - b.bestsellerOrder);
   const regular = products.filter((p) => !p.isBestSeller);
 
-  const run = async (id: string, fn: () => Promise<void>) => {
+  const run = async (id: string, fn: () => Promise<unknown>) => {
     setPendingId(id);
+    setError(null);
     try {
-      await fn();
+      const res = await fn();
+      if (res && typeof res === "object" && "error" in res) {
+        setError(labels.errorGeneric);
+        return;
+      }
+    } catch {
+      setError(labels.errorGeneric);
     } finally {
       setPendingId(null);
       router.refresh();
@@ -166,6 +175,12 @@ export function BestSellerManager({
           {labels.count}: {bestSellers.length}
         </p>
       </div>
+      {error && (
+        <p className="mb-4 flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <AlertCircle className="size-4" />
+          {error}
+        </p>
+      )}
       <p className="mb-4 max-w-2xl text-sm text-muted-foreground">
         {labels.hint}
       </p>
