@@ -21,27 +21,40 @@ export function CollectionActiveToggle({
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={() => {
-        setPending(true);
-        void toggleCollectionActive(slug).finally(() => {
-          setPending(false);
-          router.refresh();
-        });
-      }}
-      title={isActive ? dict.admin.slideHidden : dict.admin.slideVisible}
-      aria-label={isActive ? dict.admin.slideHidden : dict.admin.slideVisible}
-      className={`inline-flex size-8 items-center justify-center rounded-lg border transition-colors disabled:pointer-events-none disabled:opacity-30 ${
-        isActive
-          ? "border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
-          : "border-border text-muted-foreground hover:border-destructive/40 hover:text-destructive"
-      }`}
-    >
-      {isActive ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-    </button>
+    <div className="flex flex-col items-center gap-1">
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => {
+          setPending(true);
+          setError(null);
+          void toggleCollectionActive(slug)
+            .then((res) => {
+              if (res?.error) setError(dict.admin.errorGeneric);
+            })
+            .catch((err) => {
+              console.error("toggleCollectionActive failed:", err);
+              setError(dict.admin.errorGeneric);
+            })
+            .finally(() => {
+              setPending(false);
+              router.refresh();
+            });
+        }}
+        title={isActive ? dict.admin.slideHidden : dict.admin.slideVisible}
+        aria-label={isActive ? dict.admin.slideHidden : dict.admin.slideVisible}
+        className={`inline-flex size-8 items-center justify-center rounded-lg border transition-colors disabled:pointer-events-none disabled:opacity-30 ${
+          isActive
+            ? "border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
+            : "border-border text-muted-foreground hover:border-destructive/40 hover:text-destructive"
+        }`}
+      >
+        {isActive ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+      </button>
+      {error && <span className="text-[10px] text-destructive">{error}</span>}
+    </div>
   );
 }

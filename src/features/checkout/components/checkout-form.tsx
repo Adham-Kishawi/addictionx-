@@ -24,6 +24,7 @@ import {
   useCartStore,
   getCartSubtotal,
   getCartItemCount,
+  cartItemKey,
 } from "@/stores/cart-store";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
@@ -132,6 +133,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
     | "COUPON_INVALID"
     | "PAYMENT_UNAVAILABLE"
     | "VALIDATION"
+    | "RATE_LIMITED"
     | null
   >(null);
   const [isPending, startTransition] = useTransition();
@@ -305,18 +307,17 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
           >
             <AlertCircle className="size-5 shrink-0" />
             <span>
-              {
-                dict.checkout.errors[
-                  error.toLowerCase() as
-                    | "generic"
-                    | "unavailable"
-                    | "stock"
-                    | "coupon_invalid"
-                    | "payment_unavailable"
-                    | "too_many_attempts"
-                    | "validation"
-                ]
-              }
+              {error === "RATE_LIMITED"
+                ? dict.checkout.errors.too_many_attempts
+                : dict.checkout.errors[
+                    error.toLowerCase() as
+                      | "generic"
+                      | "unavailable"
+                      | "stock"
+                      | "coupon_invalid"
+                      | "payment_unavailable"
+                      | "validation"
+                  ]}
             </span>
           </div>
         )}
@@ -555,6 +556,12 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
                 labels={{
                   uploadReceipt: dict.checkout.uploadReceipt,
                   uploadReceiptHint: dict.checkout.uploadReceiptHint,
+                  uploadBadType: dict.checkout.uploadBadType,
+                  uploadTooLarge: dict.checkout.uploadTooLarge,
+                  uploadAlt: dict.checkout.uploadAlt,
+                  uploadClick: dict.checkout.uploadClick,
+                  uploadDragDrop: dict.checkout.uploadDragDrop,
+                  uploadFormats: dict.checkout.uploadFormats,
                   transactionRef: dict.checkout.transactionRef,
                   transactionRefHint: dict.checkout.transactionRefHint,
                 }}
@@ -587,7 +594,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
         </h2>
         <ul className="mb-4 flex flex-col gap-3">
           {items.map((item) => (
-            <li key={item.productId} className="flex items-center gap-3">
+            <li key={cartItemKey(item)} className="flex items-center gap-3">
               <ProductArt
                 product={item}
                 showName={false}

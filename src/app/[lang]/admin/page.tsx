@@ -13,19 +13,9 @@ import { prisma } from "@/lib/prisma";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { formatPrice } from "@/features/catalog/data/products";
-import type { OrderStatus } from "@prisma/client";
+import { statusStyles, statusLabel } from "@/features/admin/status";
 
 export const dynamic = "force-dynamic";
-
-const statusStyles: Record<OrderStatus, string> = {
-  PENDING: "bg-amber-500/10 text-amber-500",
-  CONFIRMED: "bg-sky-500/10 text-sky-500",
-  PROCESSING: "bg-violet-500/10 text-violet-500",
-  SHIPPED: "bg-cyan-500/10 text-cyan-500",
-  DELIVERED: "bg-emerald-500/10 text-emerald-500",
-  CANCELLED: "bg-destructive/10 text-destructive",
-  REFUNDED: "bg-destructive/10 text-destructive",
-};
 
 export default async function AdminPage({
   params,
@@ -326,22 +316,6 @@ export default async function AdminPage({
       </div>
     </main>
   );
-}
-
-function statusLabel(
-  adminDict: ReturnType<typeof getDictionary>["admin"],
-  status: OrderStatus,
-) {
-  const map: Record<OrderStatus, string> = {
-    PENDING: adminDict.statusPending,
-    CONFIRMED: adminDict.statusConfirmed,
-    PROCESSING: adminDict.statusProcessing,
-    SHIPPED: adminDict.statusShipped,
-    DELIVERED: adminDict.statusDelivered,
-    CANCELLED: adminDict.statusCancelled,
-    REFUNDED: adminDict.statusRefunded,
-  };
-  return map[status];
 }
 
 type ChartDay = {

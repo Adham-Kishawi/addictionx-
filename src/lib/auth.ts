@@ -4,7 +4,9 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import { z } from "zod";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { rateLimiters, checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { Role } from "@prisma/client";
 
 const credentialsSchema = z.object({
@@ -36,6 +38,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const email = parsed.data.email.trim().toLowerCase();
+
+        // Brute-force protection: at most 5 attempts per email+IP per 15 min.
+        // Returning null keeps the generic "invalid credentials" response.
+        const h = await headers();
+        const ip = getClientIp(h);
+        const rateLimit = await checkRateLimit(
+          rateLimiters.login,
+          `login:${email}:${ip}`,
+        );
+        if (!rateLimit.success) return null;
+
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user?.passwordHash) return null;
 

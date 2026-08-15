@@ -20,6 +20,7 @@ import {
   notifyLowStock,
 } from "@/lib/email";
 import { siteConfig } from "@/config/site";
+import { storedImageId } from "@/lib/uploads";
 import type { OrderStatus } from "@prisma/client";
 
 // ============================================================
@@ -38,13 +39,16 @@ const productSchema = z.object({
     .regex(/^[a-z0-9-]+$/),
   description: z.string().trim().optional().default(""),
   descriptionEn: z.string().trim().optional().default(""),
-  collection: z.string().trim().optional().default("rush"),
+  // "" = not assigned to any collection (the admin picks from the dropdown)
+  collection: z.string().trim().optional().default(""),
   gender: z.enum(["MALE", "FEMALE", "UNISEX"]),
   basePrice: z.coerce.number().positive(),
   compareAtPrice: z.coerce.number().nonnegative().optional(),
   discountPercent: z.coerce.number().min(0).max(90).optional().default(0),
   rating: z.coerce.number().min(0).max(5).optional().default(0),
   reviewsCount: z.coerce.number().int().min(0).optional().default(0),
+  // Stock used only when the product has NO variants
+  stock: z.coerce.number().int().min(0).optional().default(0),
   isNew: z.boolean().optional().default(false),
   isBestSeller: z.boolean().optional().default(false),
   isFeatured: z.boolean().optional().default(false),
@@ -116,13 +120,14 @@ function readProductForm(fd: FormData) {
     slug: fd.get("slug"),
     description: fd.get("description") || "",
     descriptionEn: fd.get("descriptionEn") || "",
-    collection: fd.get("collection") || "rush",
+    collection: fd.get("collection") || "",
     gender: fd.get("gender") || "UNISEX",
     basePrice: fd.get("basePrice"),
     compareAtPrice: fd.get("compareAtPrice") || undefined,
     discountPercent: fd.get("discountPercent") || 0,
     rating: fd.get("rating") || 0,
     reviewsCount: fd.get("reviewsCount") || 0,
+    stock: fd.get("stock") || 0,
     isNew: fd.get("isNew") === "on",
     isBestSeller: fd.get("isBestSeller") === "on",
     isFeatured: fd.get("isFeatured") === "on",
@@ -185,19 +190,13 @@ function toCreateData(
     gender: p.gender,
     basePrice: egpToQirsh(p.basePrice),
     compareAtPrice,
+    stock: p.stock,
     isActive: p.isActive,
     isFeatured: p.isFeatured,
     isBestSeller: p.isBestSeller,
     isNew: p.isNew,
   };
 }
-
-// Returns the UploadedImage id for a DB-backed image URL, or null for static assets.
-const storedImageId = (url: string | null | undefined): string | null => {
-  if (!url) return null;
-  const m = url.match(/^\/api\/uploads\/([^/?#]+)$/);
-  return m ? m[1] : null;
-};
 
 export async function createProduct(
   _prev: AdminActionState | undefined,
@@ -208,7 +207,8 @@ export async function createProduct(
   let extras: ReturnType<typeof readProductForm>;
   try {
     extras = readProductForm(fd);
-  } catch {
+  } catch (err) {
+    console.error("createProduct: invalid form data:", err);
     return { error: "GENERIC" };
   }
 
@@ -234,10 +234,14 @@ export async function createProduct(
                 })),
               }
             : undefined,
-        variants: { create: ensureVariantSkus(variants, parsed.slug) },
+        // No variants = variant-less product sold at the base price
+        ...(ensureVariantSkus(variants, parsed.slug).length > 0
+          ? { variants: { create: ensureVariantSkus(variants, parsed.slug) } }
+          : {}),
       },
     });
-  } catch {
+  } catch (err) {
+    console.error("createProduct failed:", err);
     return { error: "GENERIC" };
   }
 
@@ -255,7 +259,8 @@ export async function updateProduct(
   let extras: ReturnType<typeof readProductForm>;
   try {
     extras = readProductForm(fd);
-  } catch {
+  } catch (err) {
+    console.error("updateProduct: invalid form data:", err);
     return { error: "GENERIC" };
   }
 
@@ -366,7 +371,8 @@ export async function updateProduct(
           ]
         : []),
     ]);
-  } catch {
+  } catch (err) {
+    console.error("updateProduct failed:", err);
     return { error: "GENERIC" };
   }
 
@@ -949,7 +955,7 @@ const manualOrderSchema = z.object({
     .array(
       z.object({
         productId: z.string().min(1),
-        variantId: z.string().min(1),
+        variantId: z.string().optional().default(""),
         quantity: z.number().int().min(1).max(99),
       }),
     )
@@ -1027,32 +1033,51 @@ export async function createManualOrder(
   try {
     const { lines, name, phone, governorate, address, notes } = parsed.data;
 
-    const variants = await prisma.productVariant.findMany({
-      where: { id: { in: lines.map((l) => l.variantId) } },
-      include: { product: { select: { id: true, name: true } } },
+    const products = await prisma.product.findMany({
+      where: {
+        isActive: true,
+        id: { in: [...new Set(lines.map((l) => l.productId))] },
+      },
+      select: {
+        id: true,
+        name: true,
+        basePrice: true,
+        stock: true,
+        variants: {
+          where: { isActive: true },
+          select: { id: true, sizeMl: true, price: true, stock: true },
+        },
+      },
     });
 
-    // Validate: every variant exists, the product is active, and the stock is sufficient
+    // Validate every line: the product exists and is active, the chosen
+    // variant belongs to it, and the stock is sufficient.
     for (const line of lines) {
-      const variant = variants.find((v) => v.id === line.variantId);
-      if (!variant || variant.productId !== line.productId) {
-        return { ok: false, error: "UNAVAILABLE" };
+      const product = products.find((p) => p.id === line.productId);
+      if (!product) return { ok: false, error: "UNAVAILABLE" };
+      if (line.variantId) {
+        const variant = product.variants.find((v) => v.id === line.variantId);
+        if (!variant) return { ok: false, error: "UNAVAILABLE" };
+        if (variant.stock < line.quantity) return { ok: false, error: "STOCK" };
+      } else {
+        if (product.stock < line.quantity) return { ok: false, error: "STOCK" };
       }
-      if (variant.stock < line.quantity) return { ok: false, error: "STOCK" };
     }
 
     const config = await getShippingConfig();
     let subtotal = 0;
     const orderLines = lines.map((l) => {
-      const variant = variants.find((v) => v.id === l.variantId)!;
-      const lineTotal = variant.price * l.quantity;
+      const product = products.find((p) => p.id === l.productId)!;
+      const variant = product.variants.find((v) => v.id === l.variantId);
+      const unitPrice = variant?.price ?? product.basePrice;
+      const lineTotal = unitPrice * l.quantity;
       subtotal += lineTotal;
       return {
-        productId: variant.productId,
-        variantId: variant.id,
-        productName: variant.product.name,
-        sizeMl: variant.sizeMl,
-        unitPrice: variant.price,
+        productId: product.id,
+        variantId: variant?.id ?? null,
+        productName: product.name,
+        sizeMl: variant?.sizeMl ?? null,
+        unitPrice,
         quantity: l.quantity,
         lineTotal,
       };
@@ -1068,11 +1093,19 @@ export async function createManualOrder(
 
     const order = await prisma.$transaction(async (tx) => {
       for (const line of orderLines) {
-        const updated = await tx.productVariant.updateMany({
-          where: { id: line.variantId, stock: { gte: line.quantity } },
-          data: { stock: { decrement: line.quantity } },
-        });
-        if (updated.count === 0) throw new Error("STOCK");
+        if (line.variantId) {
+          const updated = await tx.productVariant.updateMany({
+            where: { id: line.variantId, stock: { gte: line.quantity } },
+            data: { stock: { decrement: line.quantity } },
+          });
+          if (updated.count === 0) throw new Error("STOCK");
+        } else {
+          const updated = await tx.product.updateMany({
+            where: { id: line.productId, stock: { gte: line.quantity } },
+            data: { stock: { decrement: line.quantity } },
+          });
+          if (updated.count === 0) throw new Error("STOCK");
+        }
       }
 
       const notesText =
@@ -1110,11 +1143,14 @@ export async function createManualOrder(
       }),
     });
 
-    await notifyLowStock(orderLines.map((l) => l.variantId!));
+    await notifyLowStock(
+      orderLines.map((l) => l.variantId).filter((v): v is string => !!v),
+    );
 
     revalidatePath("/", "layout");
     return { ok: true, orderId: order.id, orderNumber: order.orderNumber };
   } catch (err) {
+    console.error("createManualOrder failed:", err);
     if (err instanceof Error && err.message === "STOCK") {
       return { ok: false, error: "STOCK" };
     }

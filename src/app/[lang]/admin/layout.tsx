@@ -27,15 +27,15 @@ export default async function AdminLayout({
       `/${locale}/login?callbackUrl=${encodeURIComponent(`/${locale}/admin`)}`,
     );
   }
-  if (session.user.role !== "ADMIN") {
-    redirect(`/${locale}/account`);
-  }
-
-  // Fresh permissions from the DB (JWT carries only the role).
+  // Role + permissions read fresh from the DB — the JWT only carries a
+  // snapshot that goes stale after an admin is demoted in the dashboard.
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { permissions: true },
+    select: { role: true, permissions: true },
   });
+  if (dbUser?.role !== "ADMIN") {
+    redirect(`/${locale}/account`);
+  }
   const permissions = dbUser?.permissions ?? [];
 
   const basePath = `/${locale}/admin`;

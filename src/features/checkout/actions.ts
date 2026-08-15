@@ -3,7 +3,6 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/config/site";
@@ -19,7 +18,7 @@ import {
   nameFor,
 } from "@/lib/shipping";
 import { isValidEgyptianPhone } from "@/lib/validation";
-import { rateLimiters, checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { rateLimiters, checkRateLimit } from "@/lib/rate-limit";
 import type { CartItem } from "@/stores/cart-store";
 import { isLocale, type Locale } from "@/lib/i18n/dictionary";
 
@@ -40,7 +39,9 @@ const inputSchema = z.object({
       z.object({
         productId: z.string().min(1),
         quantity: z.number().int().min(1).max(99),
-        sizeMl: z.number().int().positive(),
+        // Optional: products without variants have no size. When present it
+        // must match a real variant of the product (validated against the DB).
+        sizeMl: z.number().int().positive().optional(),
       }),
     )
     .min(1)
@@ -95,7 +96,8 @@ export type CreateOrderResult =
         | "STOCK"
         | "COUPON_INVALID"
         | "PAYMENT_UNAVAILABLE"
-        | "VALIDATION";
+        | "VALIDATION"
+        | "RATE_LIMITED";
     };
 
 export async function createOrder(
@@ -117,7 +119,7 @@ export async function createOrder(
   );
 
   if (!rateLimit.success) {
-    return { ok: false, error: "GENERIC" };
+    return { ok: false, error: "RATE_LIMITED" };
   }
 
   const parsed = inputSchema.safeParse(input);
@@ -155,12 +157,13 @@ export async function createOrder(
       include: { variants: { where: { isActive: true } } },
     });
 
-    // Build the order lines with the actual variant price from the DB
+    // Build the order lines with the actual price from the DB — either the
+    // selected variant's price or, for variant-less products, the base price.
     const lines: {
       productId: string;
-      variantId: string;
+      variantId: string | null;
       productName: string;
-      sizeMl: number;
+      sizeMl: number | null;
       unitPrice: number;
       quantity: number;
       lineTotal: number;
@@ -171,21 +174,37 @@ export async function createOrder(
       const product = products.find((p) => p.id === item.productId);
       if (!product) return { ok: false, error: "UNAVAILABLE" };
 
-      // Strict match on the requested size — never silently charge another size.
-      const variant = product.variants.find((v) => v.sizeMl === item.sizeMl);
-      if (!variant) return { ok: false, error: "UNAVAILABLE" };
+      if (item.sizeMl != null) {
+        // Strict match on the requested size — never silently charge another size.
+        const variant = product.variants.find((v) => v.sizeMl === item.sizeMl);
+        if (!variant) return { ok: false, error: "UNAVAILABLE" };
 
-      const lineTotal = variant.price * item.quantity;
-      subtotal += lineTotal;
-      lines.push({
-        productId: product.id,
-        variantId: variant.id,
-        productName: product.name,
-        sizeMl: variant.sizeMl,
-        unitPrice: variant.price,
-        quantity: item.quantity,
-        lineTotal,
-      });
+        const lineTotal = variant.price * item.quantity;
+        subtotal += lineTotal;
+        lines.push({
+          productId: product.id,
+          variantId: variant.id,
+          productName: product.name,
+          sizeMl: variant.sizeMl,
+          unitPrice: variant.price,
+          quantity: item.quantity,
+          lineTotal,
+        });
+      } else {
+        // Variant-less product: the base price is the selling price and the
+        // product-level stock is the only inventory to check.
+        const lineTotal = product.basePrice * item.quantity;
+        subtotal += lineTotal;
+        lines.push({
+          productId: product.id,
+          variantId: null,
+          productName: product.name,
+          sizeMl: null,
+          unitPrice: product.basePrice,
+          quantity: item.quantity,
+          lineTotal,
+        });
+      }
     }
 
     if (subtotal <= 0) return { ok: false, error: "GENERIC" };
@@ -248,12 +267,23 @@ export async function createOrder(
       order = await prisma.$transaction(async (tx) => {
         // Decrement stock atomically — if the stock is insufficient the whole order fails
         for (const line of lines) {
-          const updated = await tx.productVariant.updateMany({
-            where: { id: line.variantId, stock: { gte: line.quantity } },
-            data: { stock: { decrement: line.quantity } },
-          });
-          if (updated.count === 0) {
-            throw new Error("STOCK");
+          if (line.variantId) {
+            const updated = await tx.productVariant.updateMany({
+              where: { id: line.variantId, stock: { gte: line.quantity } },
+              data: { stock: { decrement: line.quantity } },
+            });
+            if (updated.count === 0) {
+              throw new Error("STOCK");
+            }
+          } else {
+            // Variant-less product — decrement the product-level stock.
+            const updated = await tx.product.updateMany({
+              where: { id: line.productId, stock: { gte: line.quantity } },
+              data: { stock: { decrement: line.quantity } },
+            });
+            if (updated.count === 0) {
+              throw new Error("STOCK");
+            }
           }
         }
 
@@ -400,7 +430,9 @@ export async function createOrder(
         subject: adminNewOrderEmail(locale).subject(order.orderNumber),
         html: adminNewOrderEmail(locale).html(mailInfo),
       }),
-      notifyLowStock(lines.map((l) => l.variantId)),
+      notifyLowStock(
+        lines.filter((l) => l.variantId).map((l) => l.variantId as string),
+      ),
     ]);
 
     return {
@@ -416,6 +448,7 @@ export async function createOrder(
     if (err instanceof Error && err.message === "COUPON") {
       return { ok: false, error: "COUPON_INVALID" };
     }
+    console.error("createOrder failed:", err);
     return { ok: false, error: "GENERIC" };
   }
 }

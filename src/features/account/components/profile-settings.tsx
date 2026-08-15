@@ -128,7 +128,9 @@ export function ProfileSettings({
             ? dict.account.wrongCurrentPassword
             : res?.error === "WEAK"
               ? dict.account.fieldPasswordStrength
-              : dict.account.passwordChangeError,
+              : res?.error === "TOO_MANY_ATTEMPTS"
+                ? dict.account.passwordRateLimited
+                : dict.account.passwordChangeError,
       });
     }
   };

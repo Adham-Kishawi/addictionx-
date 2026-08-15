@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { orderCancelledEmail, sendEmail } from "@/lib/email";
 import { isValidEgyptianPhone, isValidPassword } from "@/lib/validation";
+import { rateLimiters, checkRateLimit } from "@/lib/rate-limit";
 
 async function requireUser() {
   const session = await auth();
@@ -265,7 +266,7 @@ export async function updateProfile(
 }
 
 export type PasswordState = {
-  error?: "WRONG_PASSWORD" | "WEAK" | "GENERIC";
+  error?: "WRONG_PASSWORD" | "WEAK" | "GENERIC" | "TOO_MANY_ATTEMPTS";
   success?: boolean;
 };
 
@@ -279,6 +280,14 @@ export async function changePassword(
   fd: FormData,
 ): Promise<PasswordState> {
   const userId = await requireUser();
+
+  // Rate limit: 5 attempts per 15 minutes per user (password guessing)
+  const rateLimit = await checkRateLimit(
+    rateLimiters.passwordChange,
+    `pw:${userId}`,
+  );
+  if (!rateLimit.success) return { error: "TOO_MANY_ATTEMPTS" };
+
   const parsed = passwordSchema.safeParse({
     current: fd.get("current"),
     next: fd.get("next"),

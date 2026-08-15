@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { requirePermission } from "@/lib/admin-permissions";
 import { prisma } from "@/lib/prisma";
 import { parseImageAdjust } from "@/lib/image-adjust";
+import { storedImageId } from "@/lib/uploads";
 
 // ============================================================
 // Collections management from the dashboard (add / edit / delete)
@@ -39,11 +40,17 @@ export type CollectionActionState = {
   hiddenCount?: number;
 };
 
-// Returns the UploadedImage id for a DB-backed image URL, or null for static assets.
-const storedImageId = (url: string | null | undefined): string | null => {
-  if (!url) return null;
-  const m = url.match(/^\/api\/uploads\/([^/?#]+)$/);
-  return m ? m[1] : null;
+// Wraps a mutation so DB failures surface as { error: "GENERIC" } (with a
+// logged trace) instead of rejecting the server action silently.
+const guard = async (
+  fn: () => Promise<CollectionActionState>,
+): Promise<CollectionActionState> => {
+  try {
+    return await fn();
+  } catch (err) {
+    console.error("Collection action failed:", err);
+    return { error: "GENERIC" };
+  }
 };
 
 function readCollectionForm(fd: FormData) {
@@ -81,23 +88,25 @@ export async function createCollection(
   } = parsed;
   const adjust = parseImageAdjust(imageAdjust);
 
-  const existing = await prisma.collection.findUnique({ where: { slug } });
-  if (existing) return { error: "SLUG_TAKEN" };
+  return guard(async () => {
+    const existing = await prisma.collection.findUnique({ where: { slug } });
+    if (existing) return { error: "SLUG_TAKEN" };
 
-  await prisma.collection.create({
-    data: {
-      nameAr,
-      nameEn,
-      slug,
-      image: image || null,
-      imageAdjust: adjust ?? Prisma.DbNull,
-      descriptionAr: descriptionAr || null,
-      descriptionEn: descriptionEn || null,
-    },
+    await prisma.collection.create({
+      data: {
+        nameAr,
+        nameEn,
+        slug,
+        image: image || null,
+        imageAdjust: adjust ?? Prisma.DbNull,
+        descriptionAr: descriptionAr || null,
+        descriptionEn: descriptionEn || null,
+      },
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
   });
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 // Slug is the product link (Product.collection holds it as text) so it is
@@ -128,23 +137,25 @@ export async function updateCollection(
     parsed.data;
   const adjust = parseImageAdjust(imageAdjust);
 
-  const existing = await prisma.collection.findUnique({ where: { slug } });
-  if (!existing) return { error: "NOT_FOUND" };
+  return guard(async () => {
+    const existing = await prisma.collection.findUnique({ where: { slug } });
+    if (!existing) return { error: "NOT_FOUND" };
 
-  await prisma.collection.update({
-    where: { slug },
-    data: {
-      nameAr,
-      nameEn,
-      image: image || null,
-      imageAdjust: adjust ?? Prisma.DbNull,
-      descriptionAr: descriptionAr || null,
-      descriptionEn: descriptionEn || null,
-    },
+    await prisma.collection.update({
+      where: { slug },
+      data: {
+        nameAr,
+        nameEn,
+        image: image || null,
+        imageAdjust: adjust ?? Prisma.DbNull,
+        descriptionAr: descriptionAr || null,
+        descriptionEn: descriptionEn || null,
+      },
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
   });
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 // ============================================================
@@ -157,16 +168,18 @@ export async function toggleCollectionActive(
 ): Promise<CollectionActionState> {
   await requirePermission("collections");
 
-  const collection = await prisma.collection.findUnique({ where: { slug } });
-  if (!collection) return { error: "NOT_FOUND" };
+  return guard(async () => {
+    const collection = await prisma.collection.findUnique({ where: { slug } });
+    if (!collection) return { error: "NOT_FOUND" };
 
-  await prisma.collection.update({
-    where: { slug },
-    data: { isActive: !collection.isActive },
+    await prisma.collection.update({
+      where: { slug },
+      data: { isActive: !collection.isActive },
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
   });
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 // ============================================================
@@ -187,25 +200,27 @@ export async function reorderCollections(
   if (unique.length < 2 || unique.length !== orderedSlugs.length) {
     return { error: "INVALID" };
   }
-  const existing = await prisma.collection.findMany({
-    select: { slug: true },
+  return guard(async () => {
+    const existing = await prisma.collection.findMany({
+      select: { slug: true },
+    });
+    const known = new Set(existing.map((c) => c.slug));
+    if (unique.some((slug) => !known.has(slug))) return { error: "INVALID" };
+
+    // Renumber every row 10,20,30,… in one transaction so the order stays
+    // consistent even when collections share the same sortOrder.
+    await prisma.$transaction(
+      unique.map((slug, i) =>
+        prisma.collection.update({
+          where: { slug },
+          data: { sortOrder: (i + 1) * 10 },
+        }),
+      ),
+    );
+
+    revalidatePath("/", "layout");
+    return { success: true };
   });
-  const known = new Set(existing.map((c) => c.slug));
-  if (unique.some((slug) => !known.has(slug))) return { error: "INVALID" };
-
-  // Renumber every row 10,20,30,… in one transaction so the order stays
-  // consistent even when collections share the same sortOrder.
-  await prisma.$transaction(
-    unique.map((slug, i) =>
-      prisma.collection.update({
-        where: { slug },
-        data: { sortOrder: (i + 1) * 10 },
-      }),
-    ),
-  );
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 export async function addCollectionToHome(
@@ -213,24 +228,26 @@ export async function addCollectionToHome(
 ): Promise<CollectionActionState> {
   await requirePermission("collections");
 
-  const collection = await prisma.collection.findUnique({ where: { slug } });
-  if (!collection) return { error: "NOT_FOUND" };
+  return guard(async () => {
+    const collection = await prisma.collection.findUnique({ where: { slug } });
+    if (!collection) return { error: "NOT_FOUND" };
 
-  await prisma.collection.update({
-    where: { slug },
-    data: { showInHome: true },
+    await prisma.collection.update({
+      where: { slug },
+      data: { showInHome: true },
+    });
+
+    // Renumber so the freshly-added collection lands last with a clean order.
+    const home = await prisma.collection.findMany({
+      where: { showInHome: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: { slug: true },
+    });
+    await renumberCollections(home.map((c) => c.slug));
+
+    revalidatePath("/", "layout");
+    return { success: true };
   });
-
-  // Renumber so the freshly-added collection lands last with a clean order.
-  const home = await prisma.collection.findMany({
-    where: { showInHome: true },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    select: { slug: true },
-  });
-  await renumberCollections(home.map((c) => c.slug));
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 export async function removeCollectionFromHome(
@@ -238,24 +255,26 @@ export async function removeCollectionFromHome(
 ): Promise<CollectionActionState> {
   await requirePermission("collections");
 
-  const collection = await prisma.collection.findUnique({ where: { slug } });
-  if (!collection) return { error: "NOT_FOUND" };
+  return guard(async () => {
+    const collection = await prisma.collection.findUnique({ where: { slug } });
+    if (!collection) return { error: "NOT_FOUND" };
 
-  await prisma.collection.update({
-    where: { slug },
-    data: { showInHome: false },
+    await prisma.collection.update({
+      where: { slug },
+      data: { showInHome: false },
+    });
+
+    // Renumber the remaining home list so sortOrder stays dense.
+    const home = await prisma.collection.findMany({
+      where: { showInHome: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: { slug: true },
+    });
+    await renumberCollections(home.map((c) => c.slug));
+
+    revalidatePath("/", "layout");
+    return { success: true };
   });
-
-  // Renumber the remaining home list so sortOrder stays dense.
-  const home = await prisma.collection.findMany({
-    where: { showInHome: true },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    select: { slug: true },
-  });
-  await renumberCollections(home.map((c) => c.slug));
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 async function renumberCollections(slugs: string[]) {
@@ -295,27 +314,29 @@ export async function updateCollectionSlider(
 ): Promise<CollectionActionState> {
   await requirePermission("collections");
 
-  const collection = await prisma.collection.findUnique({ where: { slug } });
-  if (!collection) return { error: "NOT_FOUND" };
+  return guard(async () => {
+    const collection = await prisma.collection.findUnique({ where: { slug } });
+    if (!collection) return { error: "NOT_FOUND" };
 
-  const parsed = sliderImageSchema.safeParse(data);
-  if (!parsed.success) return { error: "INVALID" };
-  const { image, descriptionAr, descriptionEn, imageAdjust } = parsed.data;
-  if (!isSafeCollectionImage(image)) return { error: "INVALID_IMAGE" };
-  const adjust = parseImageAdjust(imageAdjust);
+    const parsed = sliderImageSchema.safeParse(data);
+    if (!parsed.success) return { error: "INVALID" };
+    const { image, descriptionAr, descriptionEn, imageAdjust } = parsed.data;
+    if (!isSafeCollectionImage(image)) return { error: "INVALID_IMAGE" };
+    const adjust = parseImageAdjust(imageAdjust);
 
-  await prisma.collection.update({
-    where: { slug },
-    data: {
-      image: image || null,
-      imageAdjust: adjust ?? Prisma.DbNull,
-      descriptionAr: descriptionAr || null,
-      descriptionEn: descriptionEn || null,
-    },
+    await prisma.collection.update({
+      where: { slug },
+      data: {
+        image: image || null,
+        imageAdjust: adjust ?? Prisma.DbNull,
+        descriptionAr: descriptionAr || null,
+        descriptionEn: descriptionEn || null,
+      },
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
   });
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 // Free deletion. When the collection has products the caller must tell us what
@@ -330,81 +351,83 @@ export async function deleteCollection(
 ): Promise<CollectionActionState> {
   await requirePermission("collections");
 
-  const collection = await prisma.collection.findUnique({ where: { slug } });
-  if (!collection) return { error: "NOT_FOUND" };
+  return guard(async () => {
+    const collection = await prisma.collection.findUnique({ where: { slug } });
+    if (!collection) return { error: "NOT_FOUND" };
 
-  const products = await prisma.product.findMany({
-    where: { collection: slug },
-    select: { id: true, slug: true },
-  });
+    const products = await prisma.product.findMany({
+      where: { collection: slug },
+      select: { id: true, slug: true },
+    });
 
-  if (products.length > 0) {
-    if (opts.moveTo && opts.moveTo !== slug) {
-      const target = await prisma.collection.findUnique({
-        where: { slug: opts.moveTo },
-        select: { id: true },
-      });
-      if (!target) return { error: "TARGET_NOT_FOUND" };
-      await prisma.product.updateMany({
-        where: { collection: slug },
-        data: { collection: opts.moveTo },
-      });
-    } else if (opts.deleteProducts) {
-      const productIds = products.map((p) => p.id);
-      const ordered = await prisma.orderItem.findMany({
-        where: { productId: { in: productIds } },
-        select: { productId: true },
-      });
-      const orderedIds = new Set(ordered.map((o) => o.productId));
-      const deletable = products.filter((p) => !orderedIds.has(p.id));
-      const hidden = products.filter((p) => orderedIds.has(p.id));
-
-      if (deletable.length > 0) {
-        const deletableIds = deletable.map((p) => p.id);
-        const imageRows = await prisma.productImage.findMany({
-          where: { productId: { in: deletableIds } },
+    if (products.length > 0) {
+      if (opts.moveTo && opts.moveTo !== slug) {
+        const target = await prisma.collection.findUnique({
+          where: { slug: opts.moveTo },
+          select: { id: true },
         });
-        const storedIds = imageRows
-          .map((img) => storedImageId(img.url))
-          .filter((v): v is string => Boolean(v));
-
-        await prisma.$transaction([
-          prisma.productVariant.deleteMany({
-            where: { productId: { in: deletableIds } },
-          }),
-          prisma.product.deleteMany({ where: { id: { in: deletableIds } } }),
-          ...(storedIds.length > 0
-            ? [
-                prisma.uploadedImage.deleteMany({
-                  where: { id: { in: storedIds } },
-                }),
-              ]
-            : []),
-        ]);
-      }
-
-      // Products that appear in orders cannot be hard-deleted (order history
-      // keeps a reference) — they are hidden so they vanish from the store.
-      if (hidden.length > 0) {
+        if (!target) return { error: "TARGET_NOT_FOUND" };
         await prisma.product.updateMany({
-          where: { id: { in: hidden.map((p) => p.id) } },
-          data: { isActive: false },
+          where: { collection: slug },
+          data: { collection: opts.moveTo },
         });
+      } else if (opts.deleteProducts) {
+        const productIds = products.map((p) => p.id);
+        const ordered = await prisma.orderItem.findMany({
+          where: { productId: { in: productIds } },
+          select: { productId: true },
+        });
+        const orderedIds = new Set(ordered.map((o) => o.productId));
+        const deletable = products.filter((p) => !orderedIds.has(p.id));
+        const hidden = products.filter((p) => orderedIds.has(p.id));
+
+        if (deletable.length > 0) {
+          const deletableIds = deletable.map((p) => p.id);
+          const imageRows = await prisma.productImage.findMany({
+            where: { productId: { in: deletableIds } },
+          });
+          const storedIds = imageRows
+            .map((img) => storedImageId(img.url))
+            .filter((v): v is string => Boolean(v));
+
+          await prisma.$transaction([
+            prisma.productVariant.deleteMany({
+              where: { productId: { in: deletableIds } },
+            }),
+            prisma.product.deleteMany({ where: { id: { in: deletableIds } } }),
+            ...(storedIds.length > 0
+              ? [
+                  prisma.uploadedImage.deleteMany({
+                    where: { id: { in: storedIds } },
+                  }),
+                ]
+              : []),
+          ]);
+        }
+
+        // Products that appear in orders cannot be hard-deleted (order history
+        // keeps a reference) — they are hidden so they vanish from the store.
+        if (hidden.length > 0) {
+          await prisma.product.updateMany({
+            where: { id: { in: hidden.map((p) => p.id) } },
+            data: { isActive: false },
+          });
+        }
+      } else {
+        return { error: "NEED_CHOICE", movedCount: products.length };
       }
-    } else {
-      return { error: "NEED_CHOICE", movedCount: products.length };
     }
-  }
 
-  // Clean up the collection's own stored image (if it was an upload).
-  const storedImage = storedImageId(collection.image);
-  await prisma.$transaction([
-    prisma.collection.delete({ where: { slug } }),
-    ...(storedImage
-      ? [prisma.uploadedImage.deleteMany({ where: { id: storedImage } })]
-      : []),
-  ]);
+    // Clean up the collection's own stored image (if it was an upload).
+    const storedImage = storedImageId(collection.image);
+    await prisma.$transaction([
+      prisma.collection.delete({ where: { slug } }),
+      ...(storedImage
+        ? [prisma.uploadedImage.deleteMany({ where: { id: storedImage } })]
+        : []),
+    ]);
 
-  revalidatePath("/", "layout");
-  return { success: true };
+    revalidatePath("/", "layout");
+    return { success: true };
+  });
 }

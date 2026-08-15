@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { requirePermission } from "@/lib/admin-permissions";
 import { prisma } from "@/lib/prisma";
+import { rateLimiters, checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 // ADDICTIONX email newsletter — subscribe from the footer without login.
 
@@ -18,6 +20,12 @@ export async function subscribeNewsletter(
   _prev: NewsletterState | undefined,
   fd: FormData,
 ): Promise<NewsletterState> {
+  // Rate limit: 10 subscriptions per 15 minutes per IP (spam / email flooding)
+  const h = await headers();
+  const ip = getClientIp(h);
+  const rateLimit = await checkRateLimit(rateLimiters.newsletter, `nl:${ip}`);
+  if (!rateLimit.success) return { error: true };
+
   const email = newsletterSchema.safeParse(fd.get("email"));
   if (!email.success) return { error: true };
 

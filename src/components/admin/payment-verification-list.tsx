@@ -61,6 +61,8 @@ type Props = {
       verifiedAt: string;
       verified: string;
       rejected: string;
+      receiptAlt: string;
+      errorGeneric: string;
     };
     checkout: {
       instapay: string;
@@ -84,21 +86,31 @@ export function PaymentVerificationList({
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [expandedProof, setExpandedProof] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleVerify = (proofId: string, orderId: string) => {
+    setError(null);
     startTransition(async () => {
-      await verifyPaymentProof(proofId, orderId, locale);
+      const res = await verifyPaymentProof(proofId, orderId, locale);
+      if (res?.ok === false) setError(dict.admin.errorGeneric);
     });
   };
 
   const handleReject = (proofId: string, note: string) => {
+    setError(null);
     startTransition(async () => {
-      await rejectPaymentProof(proofId, note, locale);
+      const res = await rejectPaymentProof(proofId, note, locale);
+      if (res?.ok === false) setError(dict.admin.errorGeneric);
     });
   };
 
   return (
     <div className="space-y-8">
+      {error && (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
       {/* Pending proofs */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">
@@ -171,7 +183,7 @@ export function PaymentVerificationList({
                       >
                         <Image
                           src={proof.receiptUrl}
-                          alt="Payment receipt"
+                          alt={dict.admin.receiptAlt}
                           width={200}
                           height={200}
                           className="h-40 w-40 object-cover transition-transform group-hover:scale-105"
@@ -215,7 +227,7 @@ export function PaymentVerificationList({
                   <div className="mt-4 rounded-lg border border-border bg-muted/30 p-4">
                     <Image
                       src={proof.receiptUrl}
-                      alt="Payment receipt (full)"
+                      alt={dict.admin.receiptAlt}
                       width={800}
                       height={600}
                       className="mx-auto max-h-96 w-auto rounded-lg"
@@ -234,68 +246,76 @@ export function PaymentVerificationList({
           {dict.admin.recentVerifications}
         </h2>
 
-        <div className="overflow-hidden rounded-lg border border-border">
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr className="text-left text-sm">
-                <th className="p-3 font-medium">{dict.admin.orderNumber}</th>
-                <th className="p-3 font-medium">{dict.admin.paymentMethod}</th>
-                <th className="p-3 font-medium">{dict.admin.status}</th>
-                <th className="p-3 font-medium">{dict.admin.verifiedBy}</th>
-                <th className="p-3 font-medium">{dict.admin.verifiedAt}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {verifiedProofs.map((proof) => (
-                <tr key={proof.id} className="text-sm">
-                  <td className="p-3">
-                    <Link
-                      href={`/${locale}/admin/orders/${proof.order.id}`}
-                      className="font-mono hover:text-primary"
-                    >
-                      {proof.order.orderNumber}
-                    </Link>
-                  </td>
-                  <td className="p-3">
-                    {proof.paymentMethod === "INSTAPAY"
-                      ? dict.checkout.instapay
-                      : dict.checkout.vodafoneCash}
-                  </td>
-                  <td className="p-3">
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        proof.status === "VERIFIED"
-                          ? "bg-emerald-500/10 text-emerald-600"
-                          : "bg-red-500/10 text-red-600",
-                      )}
-                    >
-                      {proof.status === "VERIFIED" ? (
-                        <>
-                          <CheckCircle className="size-3" />
-                          {dict.admin.verified}
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="size-3" />
-                          {dict.admin.rejected}
-                        </>
-                      )}
-                    </span>
-                  </td>
-                  <td className="p-3 text-muted-foreground">
-                    {proof.verifier?.name || "—"}
-                  </td>
-                  <td className="p-3 text-muted-foreground">
-                    {proof.verifiedAt
-                      ? new Date(proof.verifiedAt).toLocaleString(locale)
-                      : "—"}
-                  </td>
+        {verifiedProofs.length === 0 ? (
+          <div className="rounded-lg border border-border bg-muted/30 p-8 text-center text-muted-foreground">
+            {dict.admin.noPendingPayments}
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-lg border border-border">
+            <table className="w-full">
+              <thead className="bg-muted/50">
+                <tr className="text-left text-sm">
+                  <th className="p-3 font-medium">{dict.admin.orderNumber}</th>
+                  <th className="p-3 font-medium">
+                    {dict.admin.paymentMethod}
+                  </th>
+                  <th className="p-3 font-medium">{dict.admin.status}</th>
+                  <th className="p-3 font-medium">{dict.admin.verifiedBy}</th>
+                  <th className="p-3 font-medium">{dict.admin.verifiedAt}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {verifiedProofs.map((proof) => (
+                  <tr key={proof.id} className="text-sm">
+                    <td className="p-3">
+                      <Link
+                        href={`/${locale}/admin/orders/${proof.order.id}`}
+                        className="font-mono hover:text-primary"
+                      >
+                        {proof.order.orderNumber}
+                      </Link>
+                    </td>
+                    <td className="p-3">
+                      {proof.paymentMethod === "INSTAPAY"
+                        ? dict.checkout.instapay
+                        : dict.checkout.vodafoneCash}
+                    </td>
+                    <td className="p-3">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          proof.status === "VERIFIED"
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-red-500/10 text-red-600",
+                        )}
+                      >
+                        {proof.status === "VERIFIED" ? (
+                          <>
+                            <CheckCircle className="size-3" />
+                            {dict.admin.verified}
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="size-3" />
+                            {dict.admin.rejected}
+                          </>
+                        )}
+                      </span>
+                    </td>
+                    <td className="p-3 text-muted-foreground">
+                      {proof.verifier?.name || "—"}
+                    </td>
+                    <td className="p-3 text-muted-foreground">
+                      {proof.verifiedAt
+                        ? new Date(proof.verifiedAt).toLocaleString(locale)
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );

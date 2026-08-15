@@ -9,6 +9,12 @@ type PaymentProofUploadProps = {
   labels: {
     uploadReceipt: string;
     uploadReceiptHint: string;
+    uploadBadType: string;
+    uploadTooLarge: string;
+    uploadAlt: string;
+    uploadClick: string;
+    uploadDragDrop: string;
+    uploadFormats: string;
     transactionRef: string;
     transactionRefHint: string;
   };
@@ -21,6 +27,7 @@ export function PaymentProofUpload({
 }: PaymentProofUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,16 +36,17 @@ export function PaymentProofUpload({
 
     // Only accept images
     if (!file.type.startsWith("image/")) {
-      alert("Please upload an image file");
+      setError(labels.uploadBadType);
       return;
     }
 
     // Max 5MB
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      setError(labels.uploadTooLarge);
       return;
     }
 
+    setError(null);
     setFileName(file.name);
     onReceiptChange(file);
 
@@ -53,6 +61,7 @@ export function PaymentProofUpload({
   const handleRemove = () => {
     setPreview(null);
     setFileName(null);
+    setError(null);
     onReceiptChange(null);
     if (inputRef.current) {
       inputRef.current.value = "";
@@ -78,7 +87,7 @@ export function PaymentProofUpload({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
-              alt="Receipt preview"
+              alt={labels.uploadAlt}
               className="h-48 w-full object-cover"
             />
             <button
@@ -101,12 +110,16 @@ export function PaymentProofUpload({
           >
             <ImageIcon className="mb-3 size-10 text-muted-foreground" />
             <p className="mb-1 text-sm font-medium">
-              <span className="text-primary">Click to upload</span> or drag and
-              drop
+              <span className="text-primary">{labels.uploadClick}</span>{" "}
+              {labels.uploadDragDrop}
             </p>
-            <p className="text-xs text-muted-foreground">PNG, JPG up to 5MB</p>
+            <p className="text-xs text-muted-foreground">
+              {labels.uploadFormats}
+            </p>
           </label>
         )}
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         <input
           ref={inputRef}

@@ -51,6 +51,26 @@ export const rateLimiters = {
         prefix: "ratelimit:admin",
       })
     : null,
+
+  // Password changes - 5 per 15 minutes per user
+  passwordChange: redis
+    ? new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(5, "15 m"),
+        analytics: true,
+        prefix: "ratelimit:password",
+      })
+    : null,
+
+  // Newsletter signups - 10 per 15 minutes per IP
+  newsletter: redis
+    ? new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(10, "15 m"),
+        analytics: true,
+        prefix: "ratelimit:newsletter",
+      })
+    : null,
 };
 
 // Helper to check rate limit and return result

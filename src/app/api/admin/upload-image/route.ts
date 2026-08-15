@@ -20,7 +20,15 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
+  // Role read fresh from the DB — a demoted admin's JWT still carries ADMIN.
+  if (!session?.user) {
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  }
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+  if (dbUser?.role !== "ADMIN") {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 
