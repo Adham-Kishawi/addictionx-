@@ -204,9 +204,9 @@ export function ShippingZonesManager({
                                     run(() => deleteRegion(region.id));
                                 }}
                                 disabled={pending}
-                                className="inline-flex size-7 items-center justify-center rounded-md text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+                                className="inline-flex size-8 items-center justify-center rounded-lg text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
                               >
-                                <Trash2 className="size-3" />
+                                <Trash2 className="size-4" />
                               </button>
                             </span>
                           </li>
@@ -302,14 +302,14 @@ function GovForm({
         <button
           type="submit"
           disabled={pending}
-          className="h-9 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="h-10 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {dict.admin.save}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="h-9 rounded-lg border border-border px-4 text-sm text-muted-foreground transition-colors hover:bg-muted"
+          className="h-10 rounded-lg border border-border px-4 text-sm text-muted-foreground transition-colors hover:bg-muted"
         >
           {dict.admin.cancel}
         </button>

@@ -113,7 +113,7 @@ export function CollectionDelete({
                     size="sm"
                     disabled={!target || pending}
                     onClick={() => void run({ moveTo: target })}
-                    className="rounded-full"
+                    className="px-4"
                   >
                     {pending ? "..." : dict.admin.save}
                   </Button>

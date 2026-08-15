@@ -184,7 +184,7 @@ export function PaymentAccountsForm({ config, locale, dict }: Props) {
         type="submit"
         size="lg"
         disabled={isPending}
-        className="gap-2 rounded-full px-8"
+        className="gap-2 px-4"
       >
         {isPending && <Loader2 className="size-4 animate-spin" />}
         {dict.admin.save}

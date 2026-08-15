@@ -56,9 +56,11 @@ export default async function PaymentVerificationPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{dict.admin.paymentVerification}</h1>
-        <p className="mt-2 text-muted-foreground">
+      <div className="mb-6">
+        <h1 className="font-display text-3xl font-bold">
+          {dict.admin.paymentVerification}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           {dict.admin.paymentVerificationHint}
         </p>
       </div>

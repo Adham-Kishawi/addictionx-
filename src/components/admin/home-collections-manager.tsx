@@ -358,7 +358,7 @@ export function HomeCollectionsManager({
               selectedSlug ? void handleAdd(selectedSlug) : undefined
             }
             disabled={busy || !selectedSlug}
-            className="rounded-full px-6"
+            className="px-4"
           >
             <Plus className="size-4" />
             {dict.admin.homeCollectionsAdd}
@@ -538,7 +538,7 @@ export function HomeCollectionsManager({
                         size="sm"
                         disabled={busy}
                         onClick={() => void handleEditSave(collection.slug)}
-                        className="rounded-full px-5"
+                        className="px-4"
                       >
                         <Save className="size-4" />
                         {dict.admin.save}

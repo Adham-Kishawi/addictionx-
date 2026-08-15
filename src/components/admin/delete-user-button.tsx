@@ -43,9 +43,9 @@ export function DeleteUserButton({
         disabled={pending}
         aria-label={dict.admin.deleteUser}
         title={dict.admin.deleteUser}
-        className="inline-flex size-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
+        className="inline-flex size-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
       >
-        <Trash2 className="size-3.5" />
+        <Trash2 className="size-4" />
       </button>
       {error && (
         <span className="text-[0.65rem] text-destructive">

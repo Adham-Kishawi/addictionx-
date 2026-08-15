@@ -124,12 +124,12 @@ export function PaymentVerificationList({
       )}
       {/* Pending proofs */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-lg font-semibold">
           {dict.admin.pendingPayments} ({pendingProofs.length})
         </h2>
 
         {pendingProofs.length === 0 ? (
-          <div className="rounded-lg border border-border bg-muted/30 p-8 text-center">
+          <div className="rounded-2xl border border-border bg-muted/30 p-8 text-center">
             <Clock className="mx-auto mb-2 size-12 text-muted-foreground" />
             <p className="text-muted-foreground">
               {dict.admin.noPendingPayments}
@@ -140,7 +140,7 @@ export function PaymentVerificationList({
             {pendingProofs.map((proof) => (
               <div
                 key={proof.id}
-                className="rounded-lg border border-border bg-card p-6"
+                className="rounded-2xl border border-border bg-card/40 p-5"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   {/* Left: Order info */}
@@ -259,16 +259,16 @@ export function PaymentVerificationList({
 
       {/* Verified/Rejected history */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-lg font-semibold">
           {dict.admin.recentVerifications}
         </h2>
 
         {verifiedProofs.length === 0 ? (
-          <div className="rounded-lg border border-border bg-muted/30 p-8 text-center text-muted-foreground">
+          <div className="rounded-2xl border border-border bg-muted/30 p-8 text-center text-muted-foreground">
             {dict.admin.noPendingPayments}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card/40">
             <table className="w-full">
               <thead className="bg-muted/50">
                 <tr className="text-left text-sm">

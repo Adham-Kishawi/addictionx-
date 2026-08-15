@@ -74,7 +74,7 @@ export function AdminNotificationEmailForm({
         type="submit"
         size="sm"
         disabled={isPending}
-        className="gap-2 rounded-full px-6"
+        className="gap-2 px-4"
       >
         {isPending && <Loader2 className="size-4 animate-spin" />}
         {dict.admin.save}

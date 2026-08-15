@@ -131,7 +131,7 @@ export function CollectionEdit({
           type="submit"
           disabled={pending}
           size="sm"
-          className="ms-auto rounded-full px-5"
+          className="ms-auto px-4"
         >
           {pending ? (
             <Loader2 className="size-4 animate-spin" />

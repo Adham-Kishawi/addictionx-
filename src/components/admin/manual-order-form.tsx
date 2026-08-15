@@ -255,7 +255,7 @@ export function ManualOrderForm({
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {pending ? dict.common.loading : dict.admin.createOrder}
         </button>

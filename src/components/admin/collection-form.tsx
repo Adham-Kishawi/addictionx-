@@ -148,11 +148,7 @@ export function CollectionForm({ dict }: { dict: Dictionary }) {
       </div>
 
       <div className="mt-4 flex items-center gap-3">
-        <Button
-          type="submit"
-          disabled={pending || !image}
-          className="rounded-full px-6"
-        >
+        <Button type="submit" disabled={pending || !image} className="px-4">
           {pending ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (

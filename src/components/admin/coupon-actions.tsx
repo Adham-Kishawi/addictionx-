@@ -47,9 +47,9 @@ export function CouponActions({
         disabled={pending}
         aria-label={isActive ? dict.admin.deactivate : dict.admin.activate}
         title={isActive ? dict.admin.deactivate : dict.admin.activate}
-        className="inline-flex size-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+        className="inline-flex size-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
       >
-        <Power className="size-3.5" />
+        <Power className="size-4" />
       </button>
       <button
         type="button"
@@ -57,9 +57,9 @@ export function CouponActions({
         disabled={pending}
         aria-label={dict.admin.delete}
         title={dict.admin.delete}
-        className="inline-flex size-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
+        className="inline-flex size-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
       >
-        <Trash2 className="size-3.5" />
+        <Trash2 className="size-4" />
       </button>
     </span>
   );

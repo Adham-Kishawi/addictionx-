@@ -458,7 +458,7 @@ export function SliderManager({
             type="button"
             onClick={() => void handleAdd()}
             disabled={busy || !selectedId}
-            className="rounded-full px-6"
+            className="px-4"
           >
             {busy ? (
               <Loader2 className="size-4 animate-spin" />
@@ -674,7 +674,7 @@ export function SliderManager({
                         type="button"
                         size="sm"
                         onClick={() => void handleEditSave(slide.id)}
-                        className="rounded-full px-5"
+                        className="px-4"
                       >
                         <Save className="size-4" />
                         {dict.admin.save}

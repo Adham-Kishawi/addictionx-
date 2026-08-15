@@ -45,7 +45,7 @@ export function ProductActions({
   return (
     <div className="flex items-center gap-1">
       <Button
-        size="icon-sm"
+        size="icon"
         variant="ghost"
         disabled={pending}
         onClick={() => run(() => toggleProductActive(id))}
@@ -56,14 +56,14 @@ export function ProductActions({
 
       <Link
         href={`/${locale}/admin/products/${id}`}
-        className="inline-flex size-7 items-center justify-center rounded-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         aria-label={dict.admin.edit}
       >
         <Pencil className="size-4" />
       </Link>
 
       <Button
-        size="icon-sm"
+        size="icon"
         variant="ghost"
         disabled={pending}
         onClick={() => {

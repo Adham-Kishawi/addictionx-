@@ -8,6 +8,7 @@ import {
   type UpdateUserDetailsState,
 } from "@/features/admin/actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { Field, fieldInputClass } from "@/components/ui/field";
 
 export function EditUserForm({
   userId,
@@ -76,26 +77,32 @@ export function EditUserForm({
       className="rounded-xl border border-border bg-background p-4"
     >
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field
-          label={dict.admin.name}
-          name="name"
-          defaultValue={name ?? ""}
-          required
-        />
-        <Field
-          label={dict.account.email}
-          name="email"
-          type="email"
-          dir="ltr"
-          defaultValue={email ?? ""}
-          required
-        />
-        <Field
-          label={dict.admin.phone}
-          name="phone"
-          dir="ltr"
-          defaultValue={phone ?? ""}
-        />
+        <Field label={dict.admin.name}>
+          <input
+            name="name"
+            className={fieldInputClass()}
+            defaultValue={name ?? ""}
+            required
+          />
+        </Field>
+        <Field label={dict.account.email}>
+          <input
+            name="email"
+            type="email"
+            className={fieldInputClass()}
+            dir="ltr"
+            defaultValue={email ?? ""}
+            required
+          />
+        </Field>
+        <Field label={dict.admin.phone}>
+          <input
+            name="phone"
+            className={fieldInputClass()}
+            dir="ltr"
+            defaultValue={phone ?? ""}
+          />
+        </Field>
       </div>
 
       <div className="mt-3 flex items-center gap-2">
@@ -130,24 +137,5 @@ export function EditUserForm({
         )}
       </div>
     </form>
-  );
-}
-
-function Field({
-  label,
-  ...props
-}: {
-  label: string;
-} & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-muted-foreground">
-        {label}
-      </label>
-      <input
-        {...props}
-        className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25"
-      />
-    </div>
   );
 }
