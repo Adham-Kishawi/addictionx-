@@ -544,6 +544,16 @@ export const dictionary = {
       sliderRemove: "حذف الشريحة",
       sliderProductInactive:
         "المنتج مخفي حالياً — الشريحة مش هتظهر في الموقع لحد ما تفعّل المنتج",
+      sliderPreview: "معاينة حية",
+      sliderPreviewHint:
+        "شكل السلايدر في الصفحة الرئيسية — الشرائح المخفية أو منتجاتها المخفية مش بتظهر هنا",
+      sliderStatsVisible: "ظاهرة",
+      sliderStatsHidden: "مخفية",
+      sliderStatsInactive: "منتج غير نشط",
+      sliderSearch: "ابحث عن منتج...",
+      sliderNoMatch: "لا يوجد منتجات مطابقة",
+      sliderAlreadyAdded: "مضاف بالفعل",
+      sliderDragHint: "اسحب البطاقة لترتيبها، أو استخدم الأسهم",
       deleteCollectionChoice:
         "هذه المجموعة تحتوي على منتجات — اختر ماذا يحدث لها",
       deleteMoveProducts: "نقل المنتجات إلى مجموعة أخرى",

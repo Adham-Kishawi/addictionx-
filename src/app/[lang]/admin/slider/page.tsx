@@ -17,7 +17,7 @@ export default async function AdminSliderPage({
   await requirePermission("products", locale);
   const dict = getDictionary(locale);
 
-  const [slideRows, productRows] = await Promise.all([
+  const [slideRows, productRows, collectionRows] = await Promise.all([
     prisma.homeSlide.findMany({
       orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       include: {
@@ -29,9 +29,16 @@ export default async function AdminSliderPage({
             nameEn: true,
             collection: true,
             isActive: true,
+            basePrice: true,
             images: {
               orderBy: [{ isPrimary: "desc" }, { position: "asc" }],
               take: 1,
+            },
+            variants: {
+              where: { isActive: true },
+              orderBy: { price: "asc" },
+              take: 1,
+              select: { price: true },
             },
           },
         },
@@ -46,13 +53,35 @@ export default async function AdminSliderPage({
         name: true,
         nameEn: true,
         collection: true,
+        basePrice: true,
         images: {
           orderBy: [{ isPrimary: "desc" }, { position: "asc" }],
           take: 1,
         },
+        variants: {
+          where: { isActive: true },
+          orderBy: { price: "asc" },
+          take: 1,
+          select: { price: true },
+        },
+      },
+    }),
+    prisma.collection.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: {
+        slug: true,
+        nameAr: true,
+        nameEn: true,
+        descriptionAr: true,
+        descriptionEn: true,
       },
     }),
   ]);
+
+  const productPrice = (p: {
+    basePrice: number;
+    variants: { price: number }[];
+  }) => p.variants[0]?.price ?? p.basePrice;
 
   const slides = slideRows.map((s) => ({
     id: s.id,
@@ -69,6 +98,7 @@ export default async function AdminSliderPage({
       image: primaryImage(s.product.images),
       collection: s.product.collection,
       isActive: s.product.isActive,
+      price: productPrice(s.product),
     },
   }));
 
@@ -79,6 +109,15 @@ export default async function AdminSliderPage({
     nameEn: p.nameEn,
     image: primaryImage(p.images),
     collection: p.collection,
+    price: productPrice(p),
+  }));
+
+  const collections = collectionRows.map((c) => ({
+    slug: c.slug,
+    nameAr: c.nameAr,
+    nameEn: c.nameEn,
+    descriptionAr: c.descriptionAr,
+    descriptionEn: c.descriptionEn,
   }));
 
   return (
@@ -89,6 +128,7 @@ export default async function AdminSliderPage({
       <SliderManager
         slides={slides}
         products={products}
+        collections={collections}
         locale={locale}
         dict={dict}
       />
