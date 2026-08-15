@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { HeartbeatLine } from "@/components/motion/heartbeat-line";
 import { NewsletterForm } from "@/components/layout/newsletter-form";
+import { auth } from "@/lib/auth";
 import { siteConfig } from "@/config/site";
 import { getCollections } from "@/features/catalog/data/products-db";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
@@ -10,22 +11,32 @@ export async function Footer({ locale }: { locale: Locale }) {
   const year = new Date().getFullYear();
   const collections = await getCollections();
 
+  let showNewsletter = true;
+  try {
+    const session = await auth();
+    showNewsletter = session?.user?.role !== "ADMIN";
+  } catch {
+    showNewsletter = true;
+  }
+
   return (
     <footer className="border-t border-border bg-card/40">
       {/* Newsletter — first strip inside the footer, above all columns */}
-      <div className="border-b border-border/60">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-5 px-4 py-12 text-center sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-2">
-            <h3 className="font-display text-2xl font-bold sm:text-3xl">
-              {dict.newsletter.title}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {dict.newsletter.subtitle}
-            </p>
+      {showNewsletter && (
+        <div className="border-b border-border/60">
+          <div className="mx-auto flex max-w-7xl flex-col items-center gap-5 px-4 py-12 text-center sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-2">
+              <h3 className="font-display text-2xl font-bold sm:text-3xl">
+                {dict.newsletter.title}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {dict.newsletter.subtitle}
+              </p>
+            </div>
+            <NewsletterForm dict={dict} />
           </div>
-          <NewsletterForm dict={dict} />
         </div>
-      </div>
+      )}
 
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
         {/* About the brand */}

@@ -243,6 +243,10 @@ export const dictionary = {
       tabWishlist: "مفضلتي",
       tabSettings: "الإعدادات",
       settings: "الإعدادات",
+      adminBadge: "أدمن",
+      adminDashboard: "لوحة التحكم",
+      adminDashboardHint:
+        "إدارة المنتجات والطلبات والمتجر والتحليلات من لوحة التحكم",
       profileSettings: "إعدادات الحساب",
       profilePicture: "الصورة الشخصية",
       uploadPicture: "رفع صورة",
@@ -971,6 +975,10 @@ export const dictionary = {
       tabWishlist: "My Wishlist",
       tabSettings: "Settings",
       settings: "Settings",
+      adminBadge: "Admin",
+      adminDashboard: "Admin Dashboard",
+      adminDashboardHint:
+        "Manage products, orders, the store and analytics from the dashboard",
       profileSettings: "Profile Settings",
       profilePicture: "Profile Picture",
       uploadPicture: "Upload picture",

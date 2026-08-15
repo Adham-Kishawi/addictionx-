@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/admin-permissions";
 import type { Locale } from "@/lib/i18n/dictionary";
+
+const rejectionNoteSchema = z.string().trim().max(500).default("");
 
 /**
  * Verify a payment proof and mark the order as PAID.
@@ -87,7 +90,7 @@ export async function rejectPaymentProof(
         status: "REJECTED",
         verifiedBy: session.user.id,
         verifiedAt: new Date(),
-        rejectionNote,
+        rejectionNote: rejectionNoteSchema.parse(rejectionNote),
       },
     });
 

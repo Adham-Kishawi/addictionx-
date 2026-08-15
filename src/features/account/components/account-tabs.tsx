@@ -11,6 +11,7 @@ import {
   Clock,
   Settings,
   UserRound,
+  Shield,
 } from "lucide-react";
 import { ProductCard } from "@/features/catalog/components/product-card";
 import { AddressManager } from "@/features/account/components/address-manager";
@@ -48,6 +49,7 @@ export type AccountAddress = {
 export function AccountTabs({
   locale,
   dict,
+  isAdmin,
   user,
   orders,
   addresses,
@@ -55,6 +57,7 @@ export function AccountTabs({
 }: {
   locale: Locale;
   dict: Dictionary;
+  isAdmin: boolean;
   user: {
     name: string | null;
     email: string | null;
@@ -69,9 +72,25 @@ export function AccountTabs({
   const [tab, setTab] = useState<TabKey>("overview");
   const tabs: { key: TabKey; label: string; icon: typeof Package }[] = [
     { key: "overview", label: dict.account.tabOverview, icon: LayoutGrid },
-    { key: "orders", label: dict.account.tabOrders, icon: Package },
+    ...(isAdmin
+      ? []
+      : [
+          {
+            key: "orders" as const,
+            label: dict.account.tabOrders,
+            icon: Package,
+          },
+        ]),
     { key: "addresses", label: dict.account.tabAddresses, icon: MapPin },
-    { key: "wishlist", label: dict.account.tabWishlist, icon: Heart },
+    ...(isAdmin
+      ? []
+      : [
+          {
+            key: "wishlist" as const,
+            label: dict.account.tabWishlist,
+            icon: Heart,
+          },
+        ]),
     { key: "settings", label: dict.account.tabSettings, icon: Settings },
   ];
 
@@ -99,6 +118,12 @@ export function AccountTabs({
           <h1 className="font-display text-4xl font-bold">
             {user.name ?? user.email}
           </h1>
+          {isAdmin && (
+            <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+              <Shield className="size-3.5" />
+              {dict.account.adminBadge}
+            </span>
+          )}
           <p className="mt-1 text-sm text-muted-foreground" dir="ltr">
             {user.email}
           </p>
@@ -136,7 +161,31 @@ export function AccountTabs({
         ))}
       </div>
 
-      {tab === "overview" && (
+      {tab === "overview" && isAdmin && (
+        <div>
+          <Link
+            href={`/${locale}/admin`}
+            className="flex items-center justify-between gap-4 rounded-2xl border border-primary/30 bg-primary/5 p-6 transition-colors hover:border-primary/60 hover:bg-primary/10"
+          >
+            <div className="flex items-center gap-4">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Shield className="size-6" />
+              </span>
+              <div>
+                <p className="font-display text-lg font-bold">
+                  {dict.account.adminDashboard}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {dict.account.adminDashboardHint}
+                </p>
+              </div>
+            </div>
+            <ChevronLeft className="size-5 shrink-0 text-muted-foreground rtl:rotate-180" />
+          </Link>
+        </div>
+      )}
+
+      {tab === "overview" && !isAdmin && (
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard
             label={dict.account.tabOrders}

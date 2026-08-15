@@ -3,6 +3,7 @@
 // and never breaks the order flow — the notification is optional.
 // Templates are bilingual: English by default, Arabic when the user's locale is ar.
 import { Resend } from "resend";
+import { escapeHtml } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/dictionary";
 
 const API_KEY = process.env.RESEND_API_KEY;
@@ -129,7 +130,7 @@ function itemsTable(
   const rows = items
     .map(
       (it) => `<tr>
-        <td style="padding:8px 4px;border-bottom:1px solid #222;color:#e8e8e8;">${it.name} × ${it.qty}</td>
+        <td style="padding:8px 4px;border-bottom:1px solid #222;color:#e8e8e8;">${escapeHtml(it.name)} × ${it.qty}</td>
         <td style="padding:8px 4px;border-bottom:1px solid #222;color:#c9c9c9;text-align:${align};">${fmt(locale, it.priceQirsh * it.qty)}</td>
       </tr>`,
     )
@@ -230,7 +231,7 @@ export function lowStockEmail(
   const rows = items
     .map(
       (it) => `<tr>
-        <td style="padding:8px 4px;border-bottom:1px solid #222;color:#e8e8e8;">${it.name} — ${it.sizeMl}ml</td>
+        <td style="padding:8px 4px;border-bottom:1px solid #222;color:#e8e8e8;">${escapeHtml(it.name)} — ${it.sizeMl}ml</td>
         <td style="padding:8px 4px;border-bottom:1px solid #222;color:#f43f5e;text-align:left;font-weight:bold;">${it.stock} left</td>
       </tr>`,
     )
@@ -368,7 +369,7 @@ export function orderStatusEmail(locale: Locale) {
          <p>${isAr ? "طلبك رقم" : "Your order"} <b style="color:#f5c518;">${info.orderNumber}</b> ${
            isAr ? "أصبح الآن:" : "is now:"
          } <b>${labels[info.status] ?? info.status}</b></p>
-         ${info.extra ? `<p>${info.extra}</p>` : ""}
+         ${info.extra ? `<p>${escapeHtml(info.extra)}</p>` : ""}
          <p style="font-size:12px;color:#8a8a8a;">${
            isAr
              ? "لمزيد من التفاصيل، تفضل بزيارة صفحة طلباتك في المتجر."

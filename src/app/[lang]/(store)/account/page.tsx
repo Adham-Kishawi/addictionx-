@@ -30,43 +30,59 @@ export default async function AccountPage({
     );
   }
 
-  const [orders, addresses, wishlistRows, userRow] = await Promise.all([
-    prisma.order.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      include: { items: true },
-    }),
-    prisma.address.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.wishlistItem.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        product: {
-          include: {
-            variants: { where: { isActive: true }, orderBy: { price: "asc" } },
+  const userRow = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, createdAt: true, phone: true, image: true },
+  });
+
+  const isAdmin = userRow?.role === "ADMIN";
+
+  const addresses = await prisma.address.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const orderCards: AccountOrder[] = [];
+  let wishlist: NonNullable<ReturnType<typeof productFromRow>>[] = [];
+
+  if (!isAdmin) {
+    const [orderRows, wishlistRows] = await Promise.all([
+      prisma.order.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        include: { items: true },
+      }),
+      prisma.wishlistItem.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        include: {
+          product: {
+            include: {
+              variants: {
+                where: { isActive: true },
+                orderBy: { price: "asc" },
+              },
+            },
           },
         },
-      },
-    }),
-    prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { createdAt: true, phone: true, image: true },
-    }),
-  ]);
+      }),
+    ]);
 
-  const isAdmin = session.user.role === "ADMIN";
+    for (const order of orderRows) {
+      orderCards.push({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        total: order.total,
+        itemCount: order.items.reduce((sum, i) => sum + i.quantity, 0),
+        createdAt: order.createdAt.toISOString(),
+      });
+    }
 
-  const orderCards: AccountOrder[] = orders.map((order) => ({
-    id: order.id,
-    orderNumber: order.orderNumber,
-    status: order.status,
-    total: order.total,
-    itemCount: order.items.reduce((sum, i) => sum + i.quantity, 0),
-    createdAt: order.createdAt.toISOString(),
-  }));
+    wishlist = wishlistRows
+      .map((row) => productFromRow(row.product))
+      .filter((p): p is NonNullable<typeof p> => p !== null);
+  }
 
   const addressCards: AccountAddress[] = addresses.map((address) => ({
     id: address.id,
@@ -81,10 +97,6 @@ export default async function AccountPage({
     phone: address.phone,
     isDefault: address.isDefault,
   }));
-
-  const wishlist = wishlistRows
-    .map((row) => productFromRow(row.product))
-    .filter((p): p is NonNullable<typeof p> => p !== null);
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
@@ -104,6 +116,7 @@ export default async function AccountPage({
       <AccountTabs
         locale={locale}
         dict={dict}
+        isAdmin={isAdmin}
         user={{
           name: session.user.name ?? null,
           email: session.user.email ?? null,
