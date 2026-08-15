@@ -45,7 +45,7 @@ export function ShippingSettingsForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="flex flex-col gap-4">
         <Field
           label={dict.admin.shippingFee}
           hint={`(${dict.product.currency})`}
@@ -82,7 +82,7 @@ export function ShippingSettingsForm({
             />
           </div>
         </Field>
-        <Field label={dict.admin.defaultCarrier} className="sm:col-span-2">
+        <Field label={dict.admin.defaultCarrier}>
           <div className="relative">
             <Truck className="absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
