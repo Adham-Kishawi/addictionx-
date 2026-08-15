@@ -33,6 +33,11 @@ export function PurchaseBox({
       : true
     : product.isSoldOut;
 
+  // Stock remaining for the low-stock warning
+  const stockRemaining = hasVariants
+    ? (selectedSize?.stock ?? 0)
+    : (product.stock ?? 0);
+
   return (
     <div className="flex flex-col gap-4">
       {/* Price — updates when the selected size changes */}
@@ -94,6 +99,13 @@ export function PurchaseBox({
         isSoldOut={soldOut}
         selectedSize={selectedSize}
       />
+
+      {/* Low-stock warning — show when ≤5 units remain for selected size/product */}
+      {!soldOut && stockRemaining > 0 && stockRemaining <= 5 && (
+        <p className="text-sm font-medium text-amber-400">
+          {dict.product.onlyLeft.replace("{{n}}", String(stockRemaining))}
+        </p>
+      )}
     </div>
   );
 }

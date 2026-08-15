@@ -74,6 +74,16 @@ export function ProductCard({
                   {dict.product.sale}
                 </span>
               )}
+            {(() => {
+              const totalStock = product.sizes?.length
+                ? product.sizes.reduce((s, v) => s + v.stock, 0)
+                : (product.stock ?? 0);
+              return !product.isSoldOut && totalStock > 0 && totalStock <= 5 ? (
+                <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-2.5 py-1 text-[0.65rem] font-semibold tracking-wide text-amber-400">
+                  {dict.product.onlyLeft.replace("{{n}}", String(totalStock))}
+                </span>
+              ) : null;
+            })()}
           </div>
 
           {wishlisted !== null && (
