@@ -11,18 +11,25 @@ export type CartItem = {
   quantity: number;
   nameAr: string;
   nameEn: string;
-  price: number; // in piasters — the added variant's price
-  sizeMl: number;
+  price: number; // in piasters — the selected size's price (or base price)
+  // Selected size in ml — undefined for variant-less products
+  sizeMl?: number;
   art: { from: string; to: string; glow: string };
   image?: string;
 };
+
+// Cart lines are keyed by product + size: the same perfume in 100ml and 50ml
+// are two separate lines (each with its own price/quantity).
+export function cartItemKey(item: Pick<CartItem, "productId" | "sizeMl">) {
+  return item.sizeMl ? `${item.productId}:${item.sizeMl}` : item.productId;
+}
 
 type CartState = {
   items: CartItem[];
   isOpen: boolean;
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (key: string) => void;
+  updateQuantity: (key: string, quantity: number) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
@@ -36,13 +43,12 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item) =>
         set((state) => {
-          const existing = state.items.find(
-            (i) => i.productId === item.productId,
-          );
+          const key = cartItemKey(item);
+          const existing = state.items.find((i) => cartItemKey(i) === key);
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.productId === item.productId
+                cartItemKey(i) === key
                   ? { ...i, quantity: i.quantity + item.quantity }
                   : i,
               ),
@@ -55,18 +61,18 @@ export const useCartStore = create<CartState>()(
           };
         }),
 
-      removeItem: (productId) =>
+      removeItem: (key) =>
         set((state) => ({
-          items: state.items.filter((i) => i.productId !== productId),
+          items: state.items.filter((i) => cartItemKey(i) !== key),
         })),
 
-      updateQuantity: (productId, quantity) =>
+      updateQuantity: (key, quantity) =>
         set((state) => ({
           items:
             quantity <= 0
-              ? state.items.filter((i) => i.productId !== productId)
+              ? state.items.filter((i) => cartItemKey(i) !== key)
               : state.items.map((i) =>
-                  i.productId === productId ? { ...i, quantity } : i,
+                  cartItemKey(i) === key ? { ...i, quantity } : i,
                 ),
         })),
 
@@ -77,7 +83,7 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "addictionx-cart",
-      version: 2,
+      version: 3,
       // Old-version carts (without snapshot) are safely discarded
       migrate: () => ({ items: [], isOpen: false }),
     },

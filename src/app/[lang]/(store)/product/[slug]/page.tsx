@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Star } from "lucide-react";
 import { ProductGallery } from "@/features/catalog/components/product-gallery";
-import { AddToCartButton } from "@/features/catalog/components/add-to-cart-button";
+import { PurchaseBox } from "@/features/catalog/components/purchase-box";
 import {
   getProductBySlug,
   getCollections,
@@ -14,7 +14,6 @@ import { StarDisplay } from "@/features/reviews/components/star-input";
 import { ReviewForm } from "@/features/reviews/components/review-form";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatPrice } from "@/features/catalog/data/products";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { siteUrl } from "@/lib/site-url";
 import { Reveal } from "@/components/motion/reveal";
@@ -205,20 +204,8 @@ export default async function ProductPage({
               {description}
             </p>
 
-            {/* Price */}
-            <div className="flex items-baseline gap-3">
-              <span className="font-display text-3xl font-bold">
-                {formatPrice(product.price)}
-              </span>
-              <span className="text-muted-foreground">
-                {dict.product.currency}
-              </span>
-              {product.compareAtPrice && (
-                <span className="text-lg text-muted-foreground line-through">
-                  {formatPrice(product.compareAtPrice)}
-                </span>
-              )}
-            </div>
+            {/* Purchase box — price + size selector + add to cart */}
+            <PurchaseBox product={product} locale={locale} dict={dict} />
 
             {/* Notes — perfume pyramid (top → heart → base) */}
             <div className="rounded-2xl border border-border bg-card/40 p-5">
@@ -249,11 +236,6 @@ export default async function ProductPage({
             </div>
 
             <div className="flex flex-col gap-3">
-              <AddToCartButton
-                product={product}
-                locale={locale}
-                isSoldOut={product.isSoldOut}
-              />
               {wishlisted !== null && (
                 <div className="flex items-center gap-3">
                   <WishlistButton
@@ -368,7 +350,10 @@ function NoteRow({
       className={`group relative flex flex-col gap-3 rounded-2xl border border-border/60 bg-gradient-to-br from-background/80 to-background/40 p-4 backdrop-blur-sm transition-all hover:border-border hover:shadow-lg ${width}`}
     >
       <div className="flex items-center gap-2">
-        <span aria-hidden className={`size-2 rounded-full ${accent} shadow-lg`} />
+        <span
+          aria-hidden
+          className={`size-2 rounded-full ${accent} shadow-lg`}
+        />
         <span className="text-xs font-bold uppercase tracking-widest text-foreground/90">
           {label}
         </span>

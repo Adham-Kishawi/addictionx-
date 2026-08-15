@@ -145,6 +145,9 @@ model Product {
   basePrice     Int
   // Price before discount (for the sale badge) — null means no discount
   compareAtPrice Int?
+  // Stock for products WITHOUT variants (they have no size rows). Ignored when
+  // the product has variants — their per-variant stock is the source of truth.
+  stock         Int      @default(0)
   isActive      Boolean  @default(true)
   isFeatured    Boolean  @default(false)
   isBestSeller  Boolean  @default(false)
@@ -162,6 +165,7 @@ model Product {
   wishlistItems WishlistItem[]
   orderItems   OrderItem[]
   homeSlides   HomeSlide[]
+  collectionLinks CollectionProduct[]
 
   @@index([categoryId])
   @@index([brandId])
@@ -513,7 +517,32 @@ model Collection {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  productLinks CollectionProduct[]
+
   @@map("collections")
+}
+
+// ============================================================
+// Collection ↔ Product membership (many-to-many, prepared but not yet wired
+// into the product form / storefront). Today membership is decided by the
+// single optional Product.collection slug; this join table lets a product sit
+// in several collections at once. Each product still keeps its legacy slug
+// column (nullable) so existing readers keep working during the migration.
+// ============================================================
+
+model CollectionProduct {
+  id           String     @id @default(cuid())
+  productId    String
+  collectionId String
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, collectionId])
+  @@index([collectionId])
+  @@map("collection_products")
 }
 
 // ============================================================

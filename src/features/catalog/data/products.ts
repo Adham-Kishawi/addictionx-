@@ -11,6 +11,12 @@ export type PerfumeNotes = {
   base: string[];
 };
 
+export type ProductSize = {
+  sizeMl: number;
+  price: number; // in piasters — this size's actual price
+  stock: number;
+};
+
 export type Product = {
   id: string;
   slug: string;
@@ -18,12 +24,16 @@ export type Product = {
   nameEn: string;
   descriptionAr: string;
   descriptionEn: string;
-  price: number; // in piasters
+  price: number; // in piasters — cheapest variant (or basePrice when no variants)
   compareAtPrice?: number; // in piasters
   // The default variant size in ml — set from DB (not available in the mock)
   sizeMl?: number;
+  // Selectable sizes (variants) — empty for variant-less products
+  sizes?: ProductSize[];
+  // Stock used only when the product has NO variants
+  stock?: number;
   gender: Gender;
-  collection: string;
+  collection: string; // "" = not assigned to any collection
   notes: PerfumeNotes;
   rating: number;
   reviewsCount: number;
@@ -31,6 +41,7 @@ export type Product = {
   isBestseller: boolean;
   // Manual order inside the homepage Best Sellers section (admin-managed)
   bestsellerOrder?: number;
+  createdAt?: string;
   isSoldOut?: boolean;
   // If the image is missing, ProductArt with the gradient is shown
   image?: string;

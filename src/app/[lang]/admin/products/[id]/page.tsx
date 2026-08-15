@@ -47,7 +47,7 @@ export default async function EditProductPage({
     slug: product.slug,
     description: product.description ?? "",
     descriptionEn: product.descriptionEn ?? "",
-    collection: product.collection ?? "rush",
+    collection: product.collection ?? "",
     gender: product.gender,
     basePrice: (product.basePrice / 100).toString(),
     compareAtPrice:
@@ -57,6 +57,7 @@ export default async function EditProductPage({
     discountPercent: "",
     rating: String(product.rating),
     reviewsCount: String(product.reviewsCount),
+    stock: String(product.stock ?? 0),
     isNew: product.isNew,
     isBestSeller: product.isBestSeller,
     isFeatured: product.isFeatured,

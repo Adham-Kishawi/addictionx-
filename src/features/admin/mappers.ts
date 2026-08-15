@@ -18,9 +18,19 @@ export function toStorefrontProduct(p: DbProductRow): Product {
     descriptionEn: p.descriptionEn ?? p.description ?? "",
     images: p.images?.map((img) => img.url) ?? undefined,
     image: p.images?.[0]?.url ?? undefined,
-    price: p.basePrice,
+    price: p.variants[0]?.price ?? p.basePrice,
     gender: (p.gender as string).toLowerCase() as Product["gender"],
-    collection: p.collection ?? "rush",
+    collection: p.collection ?? "",
+    sizes: p.variants.map((v) => ({
+      sizeMl: v.sizeMl,
+      price: v.price,
+      stock: v.stock,
+    })),
+    stock: p.stock,
+    isSoldOut:
+      p.variants.length > 0
+        ? p.variants.every((v) => v.stock === 0)
+        : p.stock === 0,
     notes: { top: [], heart: [], base: [] },
     rating: p.rating,
     reviewsCount: p.reviewsCount,

@@ -137,6 +137,7 @@ export function productFromRow(db: DbProduct): Product {
   }) as Product["art"];
 
   const price = db.variants[0]?.price ?? db.basePrice;
+  const hasVariants = db.variants.length > 0;
   const stockTotal = db.variants.reduce((sum, v) => sum + v.stock, 0);
 
   return {
@@ -149,15 +150,22 @@ export function productFromRow(db: DbProduct): Product {
     price,
     compareAtPrice: db.compareAtPrice ?? undefined,
     sizeMl: db.variants[0]?.sizeMl,
+    sizes: db.variants.map((v) => ({
+      sizeMl: v.sizeMl,
+      price: v.price,
+      stock: v.stock,
+    })),
+    stock: db.stock,
     gender: (db.gender as string).toLowerCase() as Product["gender"],
-    collection: db.collection ?? "rush",
+    collection: db.collection ?? "",
     notes,
     rating: db.rating,
     reviewsCount: db.reviewsCount,
     isNew: db.isNew,
     isBestseller: db.isBestSeller,
     bestsellerOrder: db.bestsellerOrder,
-    isSoldOut: stockTotal === 0,
+    isSoldOut: hasVariants ? stockTotal === 0 : db.stock === 0,
+    createdAt: db.createdAt.toISOString(),
     art,
     image: db.images?.[0]?.url ?? undefined,
     images: db.images?.map((img) => img.url) ?? undefined,

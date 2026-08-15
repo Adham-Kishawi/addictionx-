@@ -26,6 +26,7 @@ export type ProductFormInitial = {
   discountPercent: string;
   rating: string;
   reviewsCount: string;
+  stock: string;
   isNew: boolean;
   isBestSeller: boolean;
   isFeatured: boolean;
@@ -46,13 +47,14 @@ const emptyInitial: ProductFormInitial = {
   slug: "",
   description: "",
   descriptionEn: "",
-  collection: "rush",
+  collection: "",
   gender: "UNISEX",
   basePrice: "",
   compareAtPrice: "",
   discountPercent: "",
   rating: "0",
   reviewsCount: "0",
+  stock: "",
   isNew: false,
   isBestSeller: false,
   isFeatured: false,
@@ -158,11 +160,12 @@ export function ProductForm({
 
     // Every variant row must have a size and a price — invalid rows are dropped
     // by the server, so catch them here before the admin thinks they saved them.
+    // A product with ZERO variants is valid (sold at the base price).
     const hasInvalidVariant = variants.some(
       (v) =>
         !v.sizeMl || Number(v.sizeMl) <= 0 || !v.price || Number(v.price) <= 0,
     );
-    if (variants.length === 0 || hasInvalidVariant) {
+    if (hasInvalidVariant) {
       setError(dict.admin.errorInvalidVariant);
       return;
     }
@@ -181,6 +184,7 @@ export function ProductForm({
     fd.set("discountPercent", form.discountPercent);
     fd.set("rating", form.rating);
     fd.set("reviewsCount", form.reviewsCount);
+    fd.set("stock", form.stock);
     fd.set("isNew", form.isNew ? "on" : "");
     fd.set("isBestSeller", form.isBestSeller ? "on" : "");
     fd.set("isFeatured", form.isFeatured ? "on" : "");
@@ -289,6 +293,7 @@ export function ProductForm({
               onChange={(e) => set("collection", e.target.value)}
               className={inputClass}
             >
+              <option value="">{dict.admin.noCollection}</option>
               {collectionOptions.map((c) => (
                 <option key={c.slug} value={c.slug}>
                   {c.slug} — {locale === "ar" ? c.nameAr : c.nameEn}
@@ -558,6 +563,23 @@ export function ProductForm({
           </Button>
         </div>
 
+        {/* Variant-less products: stock lives on the product itself */}
+        <div className="mb-4 rounded-xl border border-dashed border-border bg-muted/20 p-4">
+          <Field label={dict.admin.productStock}>
+            <input
+              type="number"
+              min="0"
+              value={form.stock}
+              onChange={(e) => set("stock", e.target.value)}
+              className={inputClass}
+              dir="ltr"
+            />
+          </Field>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            {dict.admin.noVariantsHint}
+          </p>
+        </div>
+
         <div className="flex flex-col gap-3">
           {variants.map((variant, i) => (
             <div key={i} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -602,7 +624,7 @@ export function ProductForm({
                     dir="ltr"
                   />
                 </Field>
-                {variants.length > 1 && (
+                {variants.length > 0 && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -619,6 +641,11 @@ export function ProductForm({
               </div>
             </div>
           ))}
+          {variants.length === 0 && (
+            <p className="rounded-lg border border-dashed border-border bg-muted/20 px-3 py-3 text-sm text-muted-foreground">
+              {dict.admin.noVariantsHint}
+            </p>
+          )}
         </div>
       </section>
 

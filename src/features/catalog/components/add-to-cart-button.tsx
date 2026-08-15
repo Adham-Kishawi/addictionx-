@@ -7,21 +7,32 @@ import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart-store";
 import { flyToCart } from "@/components/motion/fly-to-cart";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
-import type { Product } from "@/features/catalog/data/products";
+import type { Product, ProductSize } from "@/features/catalog/data/products";
 
 export function AddToCartButton({
   product,
   locale,
   isSoldOut,
+  selectedSize,
 }: {
   product: Product;
   locale: Locale;
   isSoldOut?: boolean;
+  selectedSize?: ProductSize;
 }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const dict = getDictionary(locale);
+
+  const hasVariants = (product.sizes?.length ?? 0) > 0;
+  const price = selectedSize?.price ?? product.price;
+  const sizeMl = selectedSize?.sizeMl;
+  // A variant product without a selected size can never be added — treat as sold out.
+  const soldOut =
+    isSoldOut ||
+    (hasVariants && !selectedSize) ||
+    (selectedSize ? selectedSize.stock === 0 : false);
 
   const handleAdd = (e: MouseEvent<HTMLButtonElement>) => {
     addItem({
@@ -29,8 +40,8 @@ export function AddToCartButton({
       quantity,
       nameAr: product.nameAr,
       nameEn: product.nameEn,
-      price: product.price,
-      sizeMl: product.sizeMl ?? 100,
+      price,
+      sizeMl,
       art: product.art,
       image: product.image,
     });
@@ -72,7 +83,7 @@ export function AddToCartButton({
       <motion.div whileTap={{ scale: 0.97 }}>
         <Button
           size="lg"
-          disabled={isSoldOut || added}
+          disabled={soldOut || added}
           onClick={handleAdd}
           className="h-12 w-full rounded-full text-base"
         >
@@ -90,7 +101,7 @@ export function AddToCartButton({
             ) : (
               <>
                 <ShoppingBag className="size-5" />
-                {isSoldOut ? dict.product.outOfStock : dict.product.addToCart}
+                {soldOut ? dict.product.outOfStock : dict.product.addToCart}
               </>
             )}
           </motion.span>

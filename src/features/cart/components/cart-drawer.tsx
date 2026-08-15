@@ -11,6 +11,7 @@ import {
   useCartStore,
   getCartSubtotal,
   getCartItemCount,
+  cartItemKey,
 } from "@/stores/cart-store";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 
@@ -136,7 +137,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
                       const name = locale === "ar" ? item.nameAr : item.nameEn;
                       return (
                         <li
-                          key={item.productId}
+                          key={cartItemKey(item)}
                           className="flex gap-3 rounded-xl border border-border bg-card p-3"
                         >
                           <ProductArt
@@ -146,13 +147,20 @@ export function CartDrawer({ locale }: { locale: Locale }) {
                           />
                           <div className="flex min-w-0 flex-1 flex-col">
                             <div className="flex items-start justify-between gap-2">
-                              <h3 className="truncate text-sm font-semibold">
-                                {name}
-                              </h3>
+                              <div className="min-w-0">
+                                <h3 className="truncate text-sm font-semibold">
+                                  {name}
+                                </h3>
+                                {item.sizeMl && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {item.sizeMl}ml
+                                  </p>
+                                )}
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="icon-xs"
-                                onClick={() => removeItem(item.productId)}
+                                onClick={() => removeItem(cartItemKey(item))}
                                 aria-label={dict.cart.remove}
                                 className="text-muted-foreground hover:text-destructive"
                               >
@@ -167,7 +175,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
                                   size="icon-xs"
                                   onClick={() =>
                                     updateQuantity(
-                                      item.productId,
+                                      cartItemKey(item),
                                       item.quantity + 1,
                                     )
                                   }
@@ -183,7 +191,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
                                   size="icon-xs"
                                   onClick={() =>
                                     updateQuantity(
-                                      item.productId,
+                                      cartItemKey(item),
                                       item.quantity - 1,
                                     )
                                   }
