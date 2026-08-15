@@ -309,10 +309,10 @@ export function ProductCarousel({
                   const role = roleOf(i);
                   const s = ROLE_STYLES[role];
                   const isCenter = role === "center";
-                  const cn = collectionNames?.[product.collection];
-                  const wordmark = isRtl
-                    ? (cn?.nameAr ?? product.nameAr)
-                    : (cn?.nameEn ?? product.nameEn);
+                  // The giant wordmark behind each bottle is the product's OWN
+                  // name — never the collection label, so the text always
+                  // matches the bottle it rides behind.
+                  const wordmark = isRtl ? product.nameAr : product.nameEn;
                   return (
                     <div
                       key={product.id}
@@ -430,8 +430,12 @@ export function ProductCarousel({
                 const meta = slideMeta?.[activeProduct.collection];
                 const caption =
                   locale === "ar"
-                    ? (direct?.ar ?? meta?.descriptionAr)
-                    : (direct?.en ?? meta?.descriptionEn);
+                    ? (direct?.ar ??
+                      activeProduct.descriptionAr ??
+                      meta?.descriptionAr)
+                    : (direct?.en ??
+                      activeProduct.descriptionEn ??
+                      meta?.descriptionEn);
                 if (caption) {
                   return (
                     <p className="max-w-md text-xs text-muted-foreground sm:text-sm">
