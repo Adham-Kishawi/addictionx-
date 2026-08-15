@@ -124,6 +124,10 @@ export async function createOrder(
 
   const parsed = inputSchema.safeParse(input);
   if (!parsed.success) {
+    console.error(
+      "createOrder validation failed:",
+      JSON.stringify(parsed.error.flatten(), null, 2),
+    );
     return { ok: false, error: "VALIDATION" };
   }
 

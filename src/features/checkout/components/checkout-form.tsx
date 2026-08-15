@@ -178,15 +178,23 @@ export function CheckoutForm({
   const discount = coupon?.discount ?? 0;
 
   const schema = z.object({
-    name: z.string().trim().min(2, dict.checkout.validation.name),
+    name: z.string().trim().min(2, dict.checkout.validation.name).max(120),
     phone: z
       .string()
       .trim()
       .min(10, dict.checkout.validation.phone)
       .refine(isValidEgyptianPhone, dict.checkout.validation.phone),
-    governorateId: z.string().min(1, dict.checkout.validation.governorate),
-    regionId: z.string().min(1, dict.checkout.validation.region),
-    address: z.string().trim().min(5, dict.checkout.validation.address),
+    governorateId: z
+      .string()
+      .trim()
+      .min(1, dict.checkout.validation.governorate)
+      .max(60),
+    regionId: z.string().trim().min(1, dict.checkout.validation.region).max(60),
+    address: z
+      .string()
+      .trim()
+      .min(5, dict.checkout.validation.address)
+      .max(300),
   });
 
   // Effective prefill: session profile (initialValues) wins; guests fall back

@@ -176,7 +176,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
                                   onClick={() =>
                                     updateQuantity(
                                       cartItemKey(item),
-                                      item.quantity + 1,
+                                      Math.min(99, item.quantity + 1),
                                     )
                                   }
                                   aria-label="+"
