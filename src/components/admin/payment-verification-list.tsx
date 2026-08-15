@@ -33,6 +33,10 @@ type PaymentProofWithOrder = {
       name: string | null;
       email: string | null;
     } | null;
+    address: {
+      fullName: string;
+      phone: string;
+    } | null;
   };
   verifier?: {
     name: string | null;
@@ -162,7 +166,9 @@ export function PaymentVerificationList({
                     <div className="text-sm text-muted-foreground">
                       <p>
                         {dict.admin.customer}:{" "}
-                        {proof.order.user?.name || dict.admin.guest}
+                        {proof.order.user?.name ||
+                          proof.order.address?.fullName ||
+                          dict.admin.guest}
                       </p>
                       <p>
                         {dict.cart.total}: {formatPrice(proof.order.total)}{" "}

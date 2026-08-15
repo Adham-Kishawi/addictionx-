@@ -1,10 +1,10 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { headers } from "next/headers";
 import { getAdminNotificationEmail } from "@/lib/store-config";
 import {
   orderConfirmationEmail,
@@ -19,7 +19,7 @@ import {
   nameFor,
 } from "@/lib/shipping";
 import { isValidEgyptianPhone } from "@/lib/validation";
-import { rateLimiters, checkRateLimit } from "@/lib/rate-limit";
+import { rateLimiters, checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { CartItem } from "@/stores/cart-store";
 import { isLocale, type Locale } from "@/lib/i18n/dictionary";
 
@@ -104,19 +104,18 @@ export type CreateOrderResult =
 export async function createOrder(
   input: CreateOrderInput,
 ): Promise<CreateOrderResult> {
+  // Guest checkout: a signed-in session is optional. Orders are stored with a
+  // null userId (and the shipping address keeps the details) so customers can
+  // pay without creating an account. The admin dashboard shows guest orders
+  // with the address info instead of an account link.
   const session = await auth();
-  if (!session?.user) {
-    redirect(
-      `/${input.locale}/login?callbackUrl=${encodeURIComponent(
-        `/${input.locale}/checkout`,
-      )}`,
-    );
-  }
+  const userId = session?.user?.id ?? null;
 
-  // Rate limit: 10 orders per hour per user
+  // Rate limit: 10 orders per hour per user (or per IP for guests).
+  const h = await headers();
   const rateLimit = await checkRateLimit(
     rateLimiters.order,
-    `order:${session.user.id}`,
+    userId ? `order:${userId}` : `order:guest:${getClientIp(h)}`,
   );
 
   if (!rateLimit.success) {
@@ -306,7 +305,7 @@ export async function createOrder(
 
         const addressRow = await tx.address.create({
           data: {
-            userId: session.user.id,
+            userId,
             fullName: name,
             phone,
             governorate: govName,
@@ -319,7 +318,7 @@ export async function createOrder(
         const created = await tx.order.create({
           data: {
             orderNumber,
-            userId: session.user.id,
+            userId,
             status: "PENDING",
             paymentMethod,
             paymentStatus: "PENDING",
@@ -357,7 +356,7 @@ export async function createOrder(
               data: buffer,
               mimeType,
               isPrivate: true,
-              ownerId: session.user.id,
+              ownerId: userId,
             },
           });
 
@@ -414,10 +413,12 @@ export async function createOrder(
       })),
     };
     // Notifications never fail the order — they are sent after successful creation
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { email: true },
-    });
+    const user = userId
+      ? await prisma.user.findUnique({
+          where: { id: userId },
+          select: { email: true },
+        })
+      : null;
     const adminEmail = await getAdminNotificationEmail();
     const isManualPayment =
       paymentMethod === "INSTAPAY" || paymentMethod === "VODAFONE_CASH";

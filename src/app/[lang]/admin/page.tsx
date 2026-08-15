@@ -89,7 +89,7 @@ export default async function AdminPage({
     prisma.order.findMany({
       take: 6,
       orderBy: { createdAt: "desc" },
-      include: { user: true, items: true },
+      include: { user: true, items: true, address: true },
     }),
     prisma.productVariant.findMany({
       where: { stock: { lte: 5 } },
@@ -361,7 +361,10 @@ export default async function AdminPage({
                         </Link>
                       </td>
                       <td className="py-3 text-muted-foreground">
-                        {order.user?.name ?? order.user?.email ?? "—"}
+                        {order.user?.name ??
+                          order.user?.email ??
+                          order.address?.fullName ??
+                          "—"}
                       </td>
                       <td className="py-3 text-muted-foreground">
                         {dateFmt.format(order.createdAt)}

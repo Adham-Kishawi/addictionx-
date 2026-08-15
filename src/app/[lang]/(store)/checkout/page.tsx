@@ -46,7 +46,11 @@ export default async function CheckoutPage({
         {dict.checkout.title}
       </h1>
       <p className="mb-10 text-muted-foreground">{dict.cart.shippingNotice}</p>
-      <CheckoutForm locale={locale} initialValues={initialValues} />
+      <CheckoutForm
+        locale={locale}
+        initialValues={initialValues}
+        isLoggedIn={Boolean(session?.user?.id)}
+      />
     </main>
   );
 }

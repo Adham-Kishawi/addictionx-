@@ -94,9 +94,11 @@ export default async function AdminOrderDetailPage({
             {dict.admin.customer}
           </div>
           <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-            <span className="text-foreground">{order.user?.name ?? "—"}</span>
+            <span className="text-foreground">
+              {order.user?.name ?? order.address?.fullName ?? "—"}
+            </span>
             <span dir="ltr" className="text-start">
-              {order.user?.email ?? "—"}
+              {order.user?.email ?? order.address?.phone ?? "—"}
             </span>
           </div>
 

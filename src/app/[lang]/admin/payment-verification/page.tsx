@@ -31,6 +31,7 @@ export default async function PaymentVerificationPage({
       order: {
         include: {
           user: true,
+          address: true,
         },
       },
     },
@@ -46,6 +47,7 @@ export default async function PaymentVerificationPage({
       order: {
         include: {
           user: true,
+          address: true,
         },
       },
       verifier: true,

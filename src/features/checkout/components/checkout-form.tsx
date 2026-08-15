@@ -65,12 +65,18 @@ type InitialValues = {
   address: string;
 };
 
+// Guest autofill: shoppers who pay without an account get their shipping
+// details remembered on this browser so the next checkout is pre-filled.
+const AUTOFILL_KEY = "addictionx:checkout-autofill";
+
 export function CheckoutForm({
   locale,
   initialValues,
+  isLoggedIn,
 }: {
   locale: Locale;
   initialValues?: InitialValues;
+  isLoggedIn?: boolean;
 }) {
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
@@ -184,6 +190,30 @@ export function CheckoutForm({
     address: z.string().min(5, dict.checkout.validation.address),
   });
 
+  // Effective prefill: session profile (initialValues) wins; guests fall back
+  // to the last details saved on this device (localStorage autofill).
+  const [autofill, setAutofill] = useState<InitialValues | undefined>(
+    initialValues,
+  );
+  useEffect(() => {
+    if (isLoggedIn) return;
+    try {
+      const raw = window.localStorage.getItem(AUTOFILL_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<InitialValues>;
+      if (!saved || typeof saved !== "object") return;
+      setAutofill({
+        name: saved.name ?? "",
+        phone: saved.phone ?? "",
+        governorateName: saved.governorateName ?? "",
+        regionName: saved.regionName ?? "",
+        address: saved.address ?? "",
+      });
+    } catch {
+      // Corrupted autofill — ignore and let the shopper type fresh values.
+    }
+  }, [isLoggedIn]);
+
   const {
     register,
     handleSubmit,
@@ -193,11 +223,11 @@ export function CheckoutForm({
   } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: initialValues?.name ?? "",
-      phone: initialValues?.phone ?? "",
+      name: autofill?.name ?? "",
+      phone: autofill?.phone ?? "",
       governorateId: "",
       regionId: "",
-      address: initialValues?.address ?? "",
+      address: autofill?.address ?? "",
     },
   });
 
@@ -209,11 +239,12 @@ export function CheckoutForm({
   const activeRegion = activeRegions.find((r) => r.id === selectedRegion);
 
   // Match the last saved address (by name) to a zone id once zones load, so
-  // returning customers get their governorate/region prefilled too.
+  // returning customers (or guests with saved details) get their governorate
+  // and region prefilled too.
   useEffect(() => {
-    if (!zones.length || !initialValues) return;
-    const govName = initialValues.governorateName.trim();
-    const regName = initialValues.regionName.trim();
+    if (!zones.length || !autofill) return;
+    const govName = autofill.governorateName.trim();
+    const regName = autofill.regionName.trim();
     if (!govName) return;
     const gov = zones.find(
       (z) =>
@@ -234,7 +265,7 @@ export function CheckoutForm({
       );
       if (region) setValue("regionId", region.id);
     }
-  }, [zones, initialValues, setValue]);
+  }, [zones, autofill, setValue]);
 
   // Shipping fee: per-region when available, else flat; free above threshold.
   const shippingFee =
@@ -258,13 +289,15 @@ export function CheckoutForm({
           {dict.checkout.successText}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button
-            render={<Link href={`/${locale}/account`} />}
-            size="lg"
-            className="rounded-full px-8"
-          >
-            {dict.checkout.viewOrders}
-          </Button>
+          {isLoggedIn && (
+            <Button
+              render={<Link href={`/${locale}/account`} />}
+              size="lg"
+              className="rounded-full px-8"
+            >
+              {dict.checkout.viewOrders}
+            </Button>
+          )}
           <Button
             render={<Link href={`/${locale}/catalog`} />}
             variant="outline"
@@ -358,6 +391,32 @@ export function CheckoutForm({
         transactionRef: transactionRef || undefined,
       });
       if (result.ok) {
+        // Remember these details for the next checkout (guest autofill) —
+        // saves on the device only; a signed-in profile always takes priority.
+        try {
+          const gov = zones.find((z) => z.id === data.governorateId);
+          const region = gov?.regions.find((r) => r.id === data.regionId);
+          window.localStorage.setItem(
+            AUTOFILL_KEY,
+            JSON.stringify({
+              name: data.name,
+              phone: data.phone,
+              governorateName: gov
+                ? locale === "ar"
+                  ? gov.nameAr
+                  : gov.nameEn
+                : "",
+              regionName: region
+                ? locale === "ar"
+                  ? region.nameAr
+                  : region.nameEn
+                : "",
+              address: data.address,
+            }),
+          );
+        } catch {
+          // Storage unavailable — the order still succeeded.
+        }
         clearCart();
         setPlaced({
           orderId: result.orderId,

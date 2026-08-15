@@ -40,7 +40,7 @@ export default async function AdminOrdersPage({
   const [orders, totalOrders] = await Promise.all([
     prisma.order.findMany({
       where,
-      include: { user: true, items: true },
+      include: { user: true, items: true, address: true },
       orderBy: { createdAt: "desc" },
       skip: (currentPage - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -121,7 +121,10 @@ export default async function AdminOrdersPage({
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {order.user?.name ?? order.user?.email ?? "—"}
+                    {order.user?.name ??
+                      order.user?.email ??
+                      order.address?.fullName ??
+                      "—"}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {formatDate(order.createdAt, locale)}
