@@ -29,6 +29,7 @@ import {
   cartItemKey,
 } from "@/stores/cart-store";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
+import { isValidEgyptianPhone } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 import { PaymentProofUpload } from "@/components/checkout/payment-proof-upload";
 
@@ -177,17 +178,15 @@ export function CheckoutForm({
   const discount = coupon?.discount ?? 0;
 
   const schema = z.object({
-    name: z.string().min(2, dict.checkout.validation.name),
+    name: z.string().trim().min(2, dict.checkout.validation.name),
     phone: z
       .string()
+      .trim()
       .min(10, dict.checkout.validation.phone)
-      .refine(
-        (v) => /^(?:\+?20)?01[0125][0-9]{8}$/.test(v.replace(/[\s-]/g, "")),
-        dict.checkout.validation.phone,
-      ),
+      .refine(isValidEgyptianPhone, dict.checkout.validation.phone),
     governorateId: z.string().min(1, dict.checkout.validation.governorate),
     regionId: z.string().min(1, dict.checkout.validation.region),
-    address: z.string().min(5, dict.checkout.validation.address),
+    address: z.string().trim().min(5, dict.checkout.validation.address),
   });
 
   // Effective prefill: session profile (initialValues) wins; guests fall back

@@ -231,6 +231,7 @@ export const dictionary = {
       email: "البريد الإلكتروني",
       password: "كلمة المرور",
       name: "الاسم الكامل",
+      phone: "رقم الهاتف (اختياري)",
       login: "تسجيل الدخول",
       register: "إنشاء حساب",
       continueWithGoogle: "المتابعة بحساب Google",
@@ -258,6 +259,7 @@ export const dictionary = {
       fieldNameError: "يجب ألا يقل الاسم عن حرفين",
       fieldEmailError: "أدخل بريدًا إلكترونيًا صحيحًا",
       fieldPasswordError: "كلمة المرور يجب ألا تقل عن 8 أحرف",
+      fieldPhoneError: "أدخل رقم هاتف مصري صحيح",
       fieldPasswordStrength:
         "كلمة المرور يجب ألا تقل عن 8 أحرف وتحتوي على حرف ورقم",
       fieldPasswordMismatch: "كلمتا المرور غير متطابقتين",
@@ -496,6 +498,8 @@ export const dictionary = {
       id: "المعرّف",
       coupons: "الكوبونات",
       settings: "الإعدادات",
+      settingsDesc:
+        "إعدادات المتجر العامة — إشعارات البريد وطرق الدفع وقسم المجموعات",
       onSale: "على العرض",
       discountPercent: "نسبة الخصم (%)",
       discountPercentHint: "تُحسب تلقائيًا من سعر البيع الأصلي",
@@ -1024,6 +1028,7 @@ export const dictionary = {
       email: "Email",
       password: "Password",
       name: "Full Name",
+      phone: "Phone Number (optional)",
       login: "Sign In",
       register: "Create Account",
       continueWithGoogle: "Continue with Google",
@@ -1050,6 +1055,7 @@ export const dictionary = {
       fieldNameError: "Name must be at least 2 characters",
       fieldEmailError: "Enter a valid email address",
       fieldPasswordError: "Password must be at least 8 characters",
+      fieldPhoneError: "Enter a valid Egyptian phone number",
       fieldPasswordStrength:
         "Password must be at least 8 characters and include a letter and a number",
       fieldPasswordMismatch: "Passwords do not match",
@@ -1290,6 +1296,8 @@ export const dictionary = {
       id: "ID",
       coupons: "Coupons",
       settings: "Settings",
+      settingsDesc:
+        "General store settings — email notifications, payment methods and the collections section",
       onSale: "On Sale",
       discountPercent: "Discount (%)",
       discountPercentHint: "Calculated automatically from the original price",

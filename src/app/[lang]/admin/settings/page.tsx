@@ -29,43 +29,75 @@ export default async function AdminSettingsPage({
   ]);
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="mb-6 font-display text-3xl font-bold">
-        {dict.admin.settings}
-      </h1>
+    <div className="flex w-full flex-col gap-6">
+      <h1 className="font-display text-3xl font-bold">{dict.admin.settings}</h1>
+      <p className="text-sm text-muted-foreground">{dict.admin.settingsDesc}</p>
 
-      <section className="mb-6 rounded-2xl border border-border bg-card/40 p-6">
-        <div className="mb-5 flex items-center gap-2 text-sm font-semibold">
-          <Bell className="size-4 text-primary" />
-          {dict.admin.adminNotificationEmail}
+      <section className="w-full overflow-hidden rounded-2xl border border-border bg-card/40">
+        <div className="flex items-center gap-2 border-b border-border px-6 py-4">
+          <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
+            <Bell className="size-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold">
+              {dict.admin.adminNotificationEmail}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {dict.admin.adminNotificationEmailHint}
+            </p>
+          </div>
         </div>
-        <AdminNotificationEmailForm
-          initialEmail={notificationEmail}
-          locale={locale}
-          dict={dict}
-        />
+        <div className="p-6">
+          <AdminNotificationEmailForm
+            initialEmail={notificationEmail}
+            locale={locale}
+            dict={dict}
+          />
+        </div>
       </section>
 
-      <section className="mb-6 rounded-2xl border border-border bg-card/40 p-6">
-        <div className="mb-5 flex items-center gap-2 text-sm font-semibold">
-          <CreditCard className="size-4 text-primary" />
-          {dict.admin.paymentSettings}
+      <section className="w-full overflow-hidden rounded-2xl border border-border bg-card/40">
+        <div className="flex items-center gap-2 border-b border-border px-6 py-4">
+          <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
+            <CreditCard className="size-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold">
+              {dict.admin.paymentSettings}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {dict.admin.paymentSettingsDesc}
+            </p>
+          </div>
         </div>
-        <PaymentSettingsForm dict={dict} initial={payment} />
+        <div className="p-6">
+          <PaymentSettingsForm dict={dict} initial={payment} />
+        </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card/40 p-6">
-        <div className="mb-5 flex items-center gap-2 text-sm font-semibold">
-          <Layers className="size-4 text-primary" />
-          {dict.admin.homeCollectionsSettings}
+      <section className="w-full overflow-hidden rounded-2xl border border-border bg-card/40">
+        <div className="flex items-center gap-2 border-b border-border px-6 py-4">
+          <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
+            <Layers className="size-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold">
+              {dict.admin.homeCollectionsSettings}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {dict.admin.fieldsOptional}
+            </p>
+          </div>
         </div>
-        <HomeSectionsForm
-          dict={dict}
-          showCollections={homeSections.showCollections}
-          eyebrow={homeSections.collectionsEyebrow}
-          title={homeSections.collectionsTitle}
-          subtitle={homeSections.collectionsSubtitle}
-        />
+        <div className="p-6">
+          <HomeSectionsForm
+            dict={dict}
+            showCollections={homeSections.showCollections}
+            eyebrow={homeSections.collectionsEyebrow}
+            title={homeSections.collectionsTitle}
+            subtitle={homeSections.collectionsSubtitle}
+          />
+        </div>
       </section>
     </div>
   );

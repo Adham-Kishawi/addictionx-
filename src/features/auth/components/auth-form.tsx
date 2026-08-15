@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -11,8 +11,13 @@ import { Eye, EyeOff } from "lucide-react";
 import { HeartbeatLine } from "@/components/motion/heartbeat-line";
 import { Button } from "@/components/ui/button";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
+import { isValidEgyptianPhone } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 import { registerAction } from "@/features/auth/actions";
+
+// Same key as the checkout form — guest checkout saves the shipping details
+// here, so registration can pre-fill name + phone for a returning customer.
+const AUTOFILL_KEY = "addictionx:checkout-autofill";
 
 function GoogleIcon() {
   return (
@@ -78,6 +83,12 @@ export function AuthForm({
         .string()
         .min(1, dict.account.fieldRequired)
         .email(dict.account.fieldEmailError),
+      phone: z
+        .string()
+        .optional()
+        .refine((v) => !v || isValidEgyptianPhone(v), {
+          message: dict.account.fieldPhoneError,
+        }),
       password: isLogin
         ? z.string().min(1, dict.account.fieldRequired)
         : z
@@ -99,10 +110,27 @@ export function AuthForm({
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
+    defaultValues: { phone: "" },
   });
+
+  // Pre-fill the customer's checkout details (name + phone saved by guest
+  // checkout) so registering after an order doesn't retype everything.
+  useEffect(() => {
+    if (isLogin) return;
+    try {
+      const raw = window.localStorage.getItem(AUTOFILL_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { name?: string; phone?: string };
+      if (saved?.name) setValue("name", saved.name);
+      if (saved?.phone) setValue("phone", saved.phone);
+    } catch {
+      // Corrupted autofill — ignore.
+    }
+  }, [isLogin, setValue]);
 
   const signInAfterAuth = async (email: string, password: string) => {
     const res = await signIn("credentials", {
@@ -135,6 +163,7 @@ export function AuthForm({
     const formData = new FormData();
     formData.set("name", values.name ?? "");
     formData.set("email", values.email);
+    formData.set("phone", values.phone ?? "");
     formData.set("password", values.password);
 
     const result = await registerAction({}, formData);
@@ -204,6 +233,19 @@ export function AuthForm({
             dir="ltr"
           />
         </Field>
+
+        {!isLogin && (
+          <Field label={dict.account.phone} error={errors.phone?.message}>
+            <input
+              type="tel"
+              inputMode="tel"
+              {...register("phone")}
+              className={inputClass(!!errors.phone)}
+              placeholder="010 0000 0000"
+              dir="ltr"
+            />
+          </Field>
+        )}
 
         <Field label={dict.account.password} error={errors.password?.message}>
           <div className="relative">
