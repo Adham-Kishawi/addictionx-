@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { requirePermission } from "@/lib/admin-permissions";
+import { requireAnyPermission } from "@/lib/admin-permissions";
 import { prisma } from "@/lib/prisma";
 import { parseImageAdjust } from "@/lib/image-adjust";
 import { storedImageId } from "@/lib/uploads";
@@ -80,7 +80,7 @@ export async function addSlide(
   productId: string,
   data: SlideData,
 ): Promise<SliderActionState> {
-  await requirePermission("products");
+  await requireAnyPermission(["slider", "products"]);
 
   const parsed = parseSlideData(data);
   if (!parsed.ok) return { error: "INVALID_IMAGE" };
@@ -123,7 +123,7 @@ export async function updateSlide(
   id: string,
   data: SlideData,
 ): Promise<SliderActionState> {
-  await requirePermission("products");
+  await requireAnyPermission(["slider", "products"]);
 
   const parsed = parseSlideData(data);
   if (!parsed.ok) return { error: "INVALID_IMAGE" };
@@ -157,7 +157,7 @@ export async function updateSlide(
 }
 
 export async function removeSlide(id: string): Promise<SliderActionState> {
-  await requirePermission("products");
+  await requireAnyPermission(["slider", "products"]);
 
   return guard(async () => {
     const slide = await prisma.homeSlide.findUnique({ where: { id } });
@@ -182,7 +182,7 @@ export async function removeSlide(id: string): Promise<SliderActionState> {
 export async function reorderSlides(
   orderedIds: string[],
 ): Promise<SliderActionState> {
-  await requirePermission("products");
+  await requireAnyPermission(["slider", "products"]);
 
   const ids = [...new Set(orderedIds.map((s) => s.trim()).filter(Boolean))];
   return guard(async () => {
@@ -213,7 +213,7 @@ export async function reorderSlides(
 export async function toggleSlideActive(
   id: string,
 ): Promise<SliderActionState> {
-  await requirePermission("products");
+  await requireAnyPermission(["slider", "products"]);
 
   return guard(async () => {
     const slide = await prisma.homeSlide.findUnique({ where: { id } });

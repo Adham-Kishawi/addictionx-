@@ -466,6 +466,10 @@ export const dictionary = {
       cannotDeleteSelf: "لا يمكنك حذف حسابك",
       userDeleteError: "فشل حذف المستخدم",
       deleteConfirm: "هل أنت متأكد من الحذف؟",
+      editUser: "تعديل البيانات",
+      userEdited: "تم تحديث بيانات المستخدم",
+      userEditError: "فشل تحديث بيانات المستخدم",
+      phone: "رقم الهاتف",
       productHasOrders:
         "لا يمكن حذف هذا المنتج — له طلبات مسجلة. استخدم زر الإخفاء بدلًا من ذلك.",
       productDeleteError: "فشل حذف المنتج",
@@ -688,6 +692,10 @@ export const dictionary = {
       permAdmins: "إدارة الأدمن",
       permNewsletter: "النشرة",
       permSettings: "الإعدادات",
+      permSlider: "السلايدر",
+      permShipping: "الشحن",
+      permBestsellers: "الأكثر مبيعًا",
+      permPaymentVerification: "التحقق من الدفع",
       permissionsHint:
         "أدمن بصلاحيات فارغة = كامل الصلاحيات. حدد الأقسام التي يصل إليها.",
       homeSections: "أقسام الصفحة الرئيسية",
@@ -1252,6 +1260,10 @@ export const dictionary = {
       cannotDeleteSelf: "You cannot delete your own account",
       userDeleteError: "Failed to delete user",
       deleteConfirm: "Are you sure you want to delete?",
+      editUser: "Edit data",
+      userEdited: "User data updated",
+      userEditError: "Failed to update user data",
+      phone: "Phone number",
       productHasOrders:
         "Cannot delete this product — it has orders on record. Use the hide toggle instead.",
       productDeleteError: "Failed to delete product",
@@ -1480,6 +1492,10 @@ export const dictionary = {
       permAdmins: "Admin management",
       permNewsletter: "Newsletter",
       permSettings: "Settings",
+      permSlider: "Slider",
+      permShipping: "Shipping",
+      permBestsellers: "Best sellers",
+      permPaymentVerification: "Payment verification",
       permissionsHint:
         "An admin with no permissions = full access. Select the sections they can reach.",
       homeSections: "Homepage Sections",

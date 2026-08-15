@@ -489,7 +489,7 @@ export function ProductForm({
 
       {/* ============ Flags ============ */}
       <Section icon={Sparkles} title={dict.admin.productFlags}>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2">
           {flags.map((flag) => (
             <ToggleCard
               key={flag.key}
@@ -988,7 +988,9 @@ function ToggleCard({
       >
         <Icon className="size-4" />
       </span>
-      <span className="flex-1 text-sm font-medium">{label}</span>
+      <span className="min-w-0 flex-1 text-sm font-medium leading-snug">
+        {label}
+      </span>
       <span
         className={cn(
           "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",

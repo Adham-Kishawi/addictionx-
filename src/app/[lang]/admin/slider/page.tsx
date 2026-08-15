@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { requirePermission } from "@/lib/admin-permissions";
+import { requireAnyPermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { SliderManager } from "@/components/admin/slider-manager";
 import type { ImageAdjust } from "@/lib/image-adjust";
@@ -15,7 +15,7 @@ export default async function AdminSliderPage({
 }) {
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
-  await requirePermission("products", locale);
+  await requireAnyPermission(["slider", "products"], locale);
   const dict = getDictionary(locale);
 
   const [slideRows, productRows, collectionRows] = await Promise.all([

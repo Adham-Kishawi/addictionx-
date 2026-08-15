@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { requirePermission } from "@/lib/admin-permissions";
+import { requireAnyPermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { BestSellerManager } from "@/components/admin/best-seller-manager";
 
@@ -12,7 +12,7 @@ export default async function AdminBestSellersPage({
 }) {
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
-  await requirePermission("products", locale);
+  await requireAnyPermission(["bestsellers", "products"], locale);
   const dict = getDictionary(locale);
 
   const products = await prisma.product.findMany({

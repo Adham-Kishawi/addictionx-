@@ -14,6 +14,10 @@ import {
   Mail,
   Settings,
   Crown,
+  Image,
+  Truck,
+  Flame,
+  BadgeCheck,
 } from "lucide-react";
 import { updateUserPermissions } from "@/features/admin/actions";
 import { ADMIN_PERMISSIONS } from "@/lib/admin-permissions-core";
@@ -59,6 +63,13 @@ export function UserPermissionsEditor({
     admins: { label: dict.admin.permAdmins, icon: Shield },
     newsletter: { label: dict.admin.permNewsletter, icon: Mail },
     settings: { label: dict.admin.permSettings, icon: Settings },
+    slider: { label: dict.admin.permSlider, icon: Image },
+    shipping: { label: dict.admin.permShipping, icon: Truck },
+    bestsellers: { label: dict.admin.permBestsellers, icon: Flame },
+    "payment-verification": {
+      label: dict.admin.permPaymentVerification,
+      icon: BadgeCheck,
+    },
   };
 
   const toggle = (perm: string) =>

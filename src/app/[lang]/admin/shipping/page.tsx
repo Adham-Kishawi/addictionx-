@@ -1,5 +1,5 @@
 import { Truck, MapPinned } from "lucide-react";
-import { requirePermission } from "@/lib/admin-permissions";
+import { requireAnyPermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { getShippingConfig } from "@/lib/store-config";
 import { getAllGovernorates } from "@/lib/shipping";
@@ -15,7 +15,7 @@ export default async function AdminShippingPage({
 }) {
   const { lang } = await params;
   const locale = isLocale(lang) ? lang : defaultLocale;
-  await requirePermission("settings", locale);
+  await requireAnyPermission(["shipping", "settings", "products"], locale);
   const dict = getDictionary(locale);
 
   const [config, zones] = await Promise.all([

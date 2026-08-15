@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requirePermission } from "@/lib/admin-permissions";
+import { requireAnyPermission } from "@/lib/admin-permissions";
 import { prisma } from "@/lib/prisma";
 import { savePaymentSettings } from "@/lib/shipping";
 
@@ -32,7 +32,7 @@ export async function createGovernorate(
   _prev: ZoneActionState | undefined,
   fd: FormData,
 ): Promise<ZoneActionState> {
-  await requirePermission("settings");
+  await requireAnyPermission(["shipping", "settings", "products"]);
   const parsed = governorateSchema.safeParse({
     nameAr: fd.get("nameAr"),
     nameEn: fd.get("nameEn"),
@@ -58,7 +58,7 @@ export async function createGovernorate(
 export async function toggleGovernorateActive(
   governorateId: string,
 ): Promise<ZoneActionState> {
-  await requirePermission("settings");
+  await requireAnyPermission(["shipping", "settings", "products"]);
   const row = await prisma.governorate.findUnique({
     where: { id: governorateId },
     select: { isActive: true },
@@ -77,7 +77,7 @@ export async function toggleGovernorateActive(
 export async function deleteGovernorate(
   governorateId: string,
 ): Promise<ZoneActionState> {
-  await requirePermission("settings");
+  await requireAnyPermission(["shipping", "settings", "products"]);
   await prisma.governorate.deleteMany({ where: { id: governorateId } });
   revalidatePath("/", "layout");
   return { success: true };
@@ -92,7 +92,7 @@ export async function createRegion(
   _prev: ZoneActionState | undefined,
   fd: FormData,
 ): Promise<ZoneActionState> {
-  await requirePermission("settings");
+  await requireAnyPermission(["shipping", "settings", "products"]);
   const parsed = regionSchema.safeParse({
     nameAr: fd.get("nameAr"),
     nameEn: fd.get("nameEn"),
@@ -122,7 +122,7 @@ export async function createRegion(
 export async function toggleRegionActive(
   regionId: string,
 ): Promise<ZoneActionState> {
-  await requirePermission("settings");
+  await requireAnyPermission(["shipping", "settings", "products"]);
   const row = await prisma.region.findUnique({
     where: { id: regionId },
     select: { isActive: true },
@@ -139,7 +139,7 @@ export async function toggleRegionActive(
 }
 
 export async function deleteRegion(regionId: string): Promise<ZoneActionState> {
-  await requirePermission("settings");
+  await requireAnyPermission(["shipping", "settings", "products"]);
   await prisma.region.deleteMany({ where: { id: regionId } });
   revalidatePath("/", "layout");
   return { success: true };
@@ -153,7 +153,7 @@ export async function updatePaymentSettings(
   _prev: ZoneActionState | undefined,
   fd: FormData,
 ): Promise<ZoneActionState> {
-  await requirePermission("settings");
+  await requireAnyPermission(["shipping", "settings", "products"]);
   const parsed = paymentSettingsSchema.safeParse({
     cardEnabled: fd.get("cardEnabled") === "on",
     walletEnabled: fd.get("walletEnabled") === "on",

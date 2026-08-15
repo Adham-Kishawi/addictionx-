@@ -8,6 +8,10 @@ export const ADMIN_PERMISSIONS = [
   "admins",
   "newsletter",
   "settings",
+  "slider",
+  "shipping",
+  "bestsellers",
+  "payment-verification",
 ] as const;
 
 export type AdminPermission = (typeof ADMIN_PERMISSIONS)[number];

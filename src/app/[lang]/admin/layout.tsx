@@ -39,7 +39,11 @@ export default async function AdminLayout({
   const permissions = dbUser?.permissions ?? [];
 
   const basePath = `/${locale}/admin`;
+  const hasAny = (keys: AdminPermission[]) =>
+    keys.some((k) => hasPermission(permissions, k));
   // Which sections this admin may access — dashboard is always visible.
+  // Newer sections keep a fallback to their parent permission so existing
+  // admins (granted before those scopes existed) don't lose access.
   const visible = [
     "products",
     "slider",
@@ -55,13 +59,16 @@ export default async function AdminLayout({
     "settings",
   ].filter((key) =>
     key === "users"
-      ? hasPermission(permissions, "users") ||
-        hasPermission(permissions, "admins")
-      : key === "bestsellers" || key === "shipping" || key === "slider"
-        ? hasPermission(permissions, "products")
+      ? hasAny(["users", "admins"])
+      : key === "slider"
+        ? hasAny(["slider", "products"])
         : key === "payment-verification"
-          ? hasPermission(permissions, "orders")
-          : hasPermission(permissions, key as AdminPermission),
+          ? hasAny(["payment-verification", "orders"])
+          : key === "bestsellers"
+            ? hasAny(["bestsellers", "products"])
+            : key === "shipping"
+              ? hasAny(["shipping", "settings", "products"])
+              : hasPermission(permissions, key as AdminPermission),
   );
 
   const navLabels = {

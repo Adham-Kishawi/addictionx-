@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { requirePermission } from "@/lib/admin-permissions";
+import { requireAnyPermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { PaymentVerificationList } from "@/components/admin/payment-verification-list";
 
@@ -22,7 +22,7 @@ export default async function PaymentVerificationPage({
   const dict = getDictionary(locale);
 
   // Require "orders" permission (payment verification is part of order management)
-  await requirePermission("orders", locale);
+  await requireAnyPermission(["payment-verification", "orders"], locale);
 
   // Fetch all pending payment proofs with their orders
   const pendingProofs = await prisma.paymentProof.findMany({

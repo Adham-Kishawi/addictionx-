@@ -7,6 +7,7 @@ import { UserRoleSelect } from "@/components/admin/user-role-select";
 import { AddUserForm } from "@/components/admin/add-user-form";
 import { DeleteUserButton } from "@/components/admin/delete-user-button";
 import { UserPermissionsEditor } from "@/components/admin/user-permissions-editor";
+import { EditUserForm } from "@/components/admin/edit-user-form";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,11 @@ export default async function AdminUsersPage({
   const canManageAdmins =
     session?.user?.role === "ADMIN" &&
     (hasPermission(dbUser?.permissions ?? [], "admins") ||
+      (dbUser?.permissions ?? []).length === 0);
+  const canEditUsers =
+    session?.user?.role === "ADMIN" &&
+    (hasPermission(dbUser?.permissions ?? [], "users") ||
+      hasPermission(dbUser?.permissions ?? [], "admins") ||
       (dbUser?.permissions ?? []).length === 0);
 
   return (
@@ -114,6 +120,14 @@ export default async function AdminUsersPage({
                       userId={user.id}
                       self={isSelf}
                       dict={dict}
+                    />
+                    <EditUserForm
+                      userId={user.id}
+                      name={user.name}
+                      email={user.email}
+                      phone={user.phone}
+                      dict={dict}
+                      disabled={!canEditUsers || isSelf}
                     />
                   </div>
                 </div>

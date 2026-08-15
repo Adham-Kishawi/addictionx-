@@ -421,7 +421,7 @@ export async function toggleProductActive(id: string) {
 // ============================================================
 
 export async function toggleBestSeller(id: string) {
-  await requirePermission("products");
+  await requireAnyPermission(["bestsellers", "products"]);
   const product = await prisma.product.findUnique({ where: { id } });
   if (!product) return;
   if (!product.isBestSeller) {
@@ -446,7 +446,7 @@ export async function toggleBestSeller(id: string) {
 }
 
 export async function moveBestSeller(id: string, direction: "up" | "down") {
-  await requirePermission("products");
+  await requireAnyPermission(["bestsellers", "products"]);
   const bestsellers = await prisma.product.findMany({
     where: { isBestSeller: true },
     orderBy: { bestsellerOrder: "asc" },
@@ -745,7 +745,7 @@ export async function updateShippingSettings(
   _prev: UserActionState | undefined,
   fd: FormData,
 ): Promise<UserActionState> {
-  await requirePermission("settings");
+  await requireAnyPermission(["shipping", "settings", "products"]);
 
   const parsed = shippingSettingsSchema.safeParse({
     shippingFee: fd.get("shippingFee"),
@@ -943,6 +943,57 @@ export async function updateUserRole(
   revalidatePath("/", "layout");
 }
 
+const updateUserDetailsSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  email: z.string().trim().email().max(255),
+  phone: z.string().trim().min(8).max(20).optional().or(z.literal("")),
+});
+
+export type UpdateUserDetailsState = { error?: string; success?: boolean };
+
+export async function updateUserDetails(
+  userId: string,
+  _prev: UpdateUserDetailsState | undefined,
+  fd: FormData,
+): Promise<UpdateUserDetailsState> {
+  const session = await auth();
+  if (!session?.user) return { error: "UNAUTHORIZED" };
+  if (session.user.id === userId) return { error: "UNAUTHORIZED" };
+
+  // Editing customer data is a day-to-day "users" task; editing an admin's
+  // data is sensitive and stays gated behind "admins".
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (!target) return { error: "NOT_FOUND" };
+
+  if (target.role === "ADMIN") {
+    await requirePermission("admins");
+  } else {
+    await requireAnyPermission(["users", "admins"]);
+  }
+
+  const parsed = updateUserDetailsSchema.safeParse({
+    name: fd.get("name"),
+    email: fd.get("email"),
+    phone: fd.get("phone") ?? "",
+  });
+  if (!parsed.success) return { error: "INVALID" };
+
+  const { name, email, phone } = parsed.data;
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing && existing.id !== userId) return { error: "EMAIL_EXISTS" };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { name, email, phone: phone || null },
+  });
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
 // ============================================================
 // Manual order from the admin — for phone/WhatsApp orders (COD)
 // Prices are read from the DB only, like createOrder on the storefront
@@ -987,7 +1038,7 @@ export async function updatePaymentAccounts(
   input: PaymentAccountsInput,
   locale: string,
 ) {
-  await requirePermission("settings");
+  await requireAnyPermission(["shipping", "settings", "products"]);
 
   try {
     await prisma.$transaction([
