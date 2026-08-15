@@ -102,7 +102,7 @@ export function ImageUploader({
       >
         {value ? (
           <>
-            <div className="relative aspect-[16/8] w-full">
+            <div className="relative aspect-[16/4] w-full">
               <Image
                 src={value}
                 alt=""
@@ -121,13 +121,13 @@ export function ImageUploader({
             </span>
           </>
         ) : (
-          <div className="flex aspect-[16/8] w-full flex-col items-center justify-center gap-1.5 py-6 text-center">
+          <div className="flex aspect-[16/4] w-full flex-col items-center justify-center gap-1 py-4 text-center">
             {uploading ? (
-              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
             ) : (
-              <ImagePlus className="size-6 text-muted-foreground" />
+              <ImagePlus className="size-5 text-muted-foreground" />
             )}
-            <span className="text-sm font-medium text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground">
               {uploading ? dict.admin.uploading : dict.admin.uploadImage}
             </span>
             <span className="px-4 text-[11px] text-muted-foreground/70">
