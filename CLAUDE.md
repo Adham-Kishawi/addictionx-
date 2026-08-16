@@ -405,7 +405,7 @@ walid's request: **the customer must be visually amazed** — every storefront s
 - `src/lib/email.ts`: `sendEmail` wrapper (Resend) ← works **without keys** (just logs, never breaks the flow). Inline-styled templates: `orderConfirmationEmail` (customer) + `adminNewOrderEmail` (admin `ADMIN_EMAIL`/`siteConfig.adminEmail`) + `orderStatusEmail` (status change) + `orderCancelledEmail` + `shippingInfoEmail`.
 - **Integration points:** `createOrder` (after a successful transaction — confirmation email to customer + new-order email to admin) · `updateOrderStatus` (status-change notification to customer) · `updateShipment` (tracking data) · `cancelOrder` (cancellation notification to customer).
 - **Rule:** sending via `Promise.allSettled` — email failure **never fails** order creation/update.
-- `.env` needed: `RESEND_API_KEY` (needed from walid; without it it only logs and does not send) + optional `EMAIL_FROM`/`ADMIN_EMAIL`.
+- `.env` needed: `RESEND_API_KEY` (provided by walid — configured locally + Vercel Production) + `EMAIL_FROM` (currently `ADDICTIONX <onboarding@resend.dev>` — ONLY delivers to the account owner until a sending domain is verified in Resend) + optional `ADMIN_EMAIL`.
 
 ### 20. Google sign-in (OAuth)
 
@@ -662,7 +662,7 @@ src/
 - Order cancellation (customer)
 - Low-stock alerts (admin, threshold: 5 units)
 - Payment verification confirmations
-- Works without keys (logs only) until RESEND_API_KEY added
+- Works without keys (logs only) until RESEND_API_KEY added — **key now configured**; real delivery still requires a verified Resend sending domain
 
 **Visual Experience (Cinematic Dark Design):**
 
@@ -707,10 +707,9 @@ src/
 
 ### 🚧 Pending (Requires Walid's Input)
 
-1. **RESEND_API_KEY** — email currently logs only (no actual sending)
-2. **AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET** — Google sign-in button shows but fails without keys
-3. **Real product images** — currently seeded with placeholder; need per-product uploads
-4. **Payment gateway integration** — Card/Wallet methods are UI-only placeholders (no actual processing)
+1. **Resend sending domain** — RESEND_API_KEY added (walid), but `EMAIL_FROM` is `onboarding@resend.dev` (test sender): emails deliver ONLY to the account owner until a domain is verified at resend.com/domains and `EMAIL_FROM` is updated
+2. **Real product images** — currently seeded with placeholder; need per-product uploads
+3. **Payment gateway integration** — Card/Wallet methods are UI-only placeholders (no actual processing)
 
 ### 💡 Suggested Next Steps (Future Enhancements)
 
@@ -807,8 +806,8 @@ src/
 
 ### Still pending from walid (external data)
 
-- `RESEND_API_KEY` (Resend — resend.com → API Keys → `re_...`) — email works without keys (logging only) until added.
-- `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` (console.cloud.google.com → APIs & Services → Credentials → OAuth client ID → **Web application** → redirect URI: `http://localhost:3100/api/auth/callback/google`).
+- [x] `RESEND_API_KEY` provided by walid (configured — see item 1 above for the remaining sending-domain step).
+- [x] `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` (Google OAuth client — resolved: client_id was 73 chars on Vercel, now the correct 72-char one; sign-in verified end-to-end).
 - Cloudinary (the 3rd) **canceled** — not important per walid. Images will be managed from the admin dashboard itself.
 
 - [x] Resolved brief conflicts and installed the stack (npm instead of pnpm — npmmirror source)
