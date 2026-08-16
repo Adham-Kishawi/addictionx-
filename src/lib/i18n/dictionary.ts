@@ -548,6 +548,10 @@ export const dictionary = {
         "البريد الذي يستقبل إشعارات الطلبات والمدفوعات (مثل Gmail الخاص بك)",
       adminNotificationEmailSaved: "تم حفظ بريد الإشعارات",
       paymentSettingsError: "فشل حفظ الإعدادات",
+      cancelOrder: "إلغاء الطلب",
+      cancelOrderConfirm:
+        "متأكد من إلغاء هذا الطلب؟ سيتم إعادة الكمية إلى المخزون.",
+      cancelOrderConfirmed: "تم إلغاء الطلب",
       shippingZones: "مناطق الشحن",
       shippingZonesDesc:
         "حدد رسوم التوصيل لكل محافظة ومنطقة — يتراجع المتجر للرسوم الافتراضية عند عدم التطابق.",
@@ -1345,6 +1349,10 @@ export const dictionary = {
         "Email that receives order & payment notifications (e.g. your Gmail)",
       adminNotificationEmailSaved: "Notification email saved",
       paymentSettingsError: "Failed to save settings",
+      cancelOrder: "Cancel order",
+      cancelOrderConfirm:
+        "Are you sure you want to cancel this order? Stock will be restored.",
+      cancelOrderConfirmed: "Order cancelled",
       shippingZones: "Shipping Zones",
       shippingZonesDesc:
         "Set a delivery fee for each governorate and region — the store falls back to the flat fee when there is no match.",

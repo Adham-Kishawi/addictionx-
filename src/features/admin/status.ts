@@ -23,6 +23,27 @@ const statusKeyMap: Record<OrderStatus, keyof Dictionary["admin"]> = {
 
 export const ORDER_STATUSES = Object.keys(statusKeyMap) as OrderStatus[];
 
+// Logical status flow. An order moves forward one stage at a time and can be
+// cancelled from any non-terminal live stage. CANCELLED/REFUNDED are terminal.
+export const ALLOWED_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> =
+  {
+    PENDING: ["CONFIRMED", "CANCELLED"],
+    CONFIRMED: ["PROCESSING", "CANCELLED", "REFUNDED"],
+    PROCESSING: ["SHIPPED", "CANCELLED", "REFUNDED"],
+    SHIPPED: ["DELIVERED", "CANCELLED", "REFUNDED"],
+    DELIVERED: ["REFUNDED"],
+    CANCELLED: [],
+    REFUNDED: [],
+  };
+
+export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
+  return ALLOWED_TRANSITIONS[from].includes(to);
+}
+
+export function isTerminal(status: OrderStatus): boolean {
+  return ALLOWED_TRANSITIONS[status].length === 0;
+}
+
 export function statusLabel(
   adminDict: Dictionary["admin"],
   status: OrderStatus,

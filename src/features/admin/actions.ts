@@ -24,6 +24,7 @@ import {
   notifyLowStock,
 } from "@/lib/email";
 import { storedImageId } from "@/lib/uploads";
+import { canTransition } from "@/features/admin/status";
 import type { OrderStatus } from "@prisma/client";
 
 // ============================================================
@@ -488,6 +489,10 @@ export async function updateOrderStatus(orderId: string, status: string) {
     },
   });
   if (!order) return;
+
+  // Enforce the logical flow — reject jumps that aren't allowed (e.g.
+  // PENDING → DELIVERED, or leaving a terminal CANCELLED/REFUNDED state).
+  if (!canTransition(order.status, next)) return;
 
   const cancelledOrRefunded = (s: OrderStatus) =>
     s === "CANCELLED" || s === "REFUNDED";

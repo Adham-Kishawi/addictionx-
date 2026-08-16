@@ -11,9 +11,14 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/admin-permissions";
 import { getDictionary, isLocale, defaultLocale } from "@/lib/i18n/dictionary";
 import { formatPrice } from "@/features/catalog/data/products";
-import { statusLabel, statusStyles } from "@/features/admin/status";
+import {
+  statusLabel,
+  statusStyles,
+  canTransition,
+} from "@/features/admin/status";
 import { OrderStatusSelect } from "@/components/admin/order-status-select";
 import { ShipmentForm } from "@/components/admin/shipment-form";
+import { CancelOrderButton } from "@/components/admin/cancel-order-button";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +88,13 @@ export default async function AdminOrderDetailPage({
             status={order.status}
             dict={dict}
           />
+          {canTransition(order.status, "CANCELLED") && (
+            <CancelOrderButton
+              orderId={order.id}
+              label={dict.admin.cancelOrder}
+              confirmLabel={dict.admin.cancelOrderConfirm}
+            />
+          )}
         </div>
       </div>
 
