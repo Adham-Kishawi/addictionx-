@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, AlertCircle, Save, CreditCard, Smartphone } from "lucide-react";
+import { Check, AlertCircle, Save, CreditCard } from "lucide-react";
 import { updatePaymentSettings } from "@/features/admin/zones-actions";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { PaymentSettings } from "@/lib/shipping";
@@ -18,7 +18,6 @@ export function PaymentSettingsForm({
 }) {
   const router = useRouter();
   const [card, setCard] = useState(initial.cardEnabled);
-  const [wallet, setWallet] = useState(initial.walletEnabled);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -30,7 +29,6 @@ export function PaymentSettingsForm({
     setFailed(false);
     const fd = new FormData();
     if (card) fd.set("cardEnabled", "on");
-    if (wallet) fd.set("walletEnabled", "on");
     const res = await updatePaymentSettings(undefined, fd);
     setPending(false);
     if (res.success) {
@@ -48,12 +46,6 @@ export function PaymentSettingsForm({
         label={dict.admin.enableCard}
         checked={card}
         onChange={setCard}
-      />
-      <ToggleRow
-        icon={Smartphone}
-        label={dict.admin.enableWallet}
-        checked={wallet}
-        onChange={setWallet}
       />
 
       <p className="text-xs text-muted-foreground">

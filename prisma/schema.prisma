@@ -300,7 +300,6 @@ enum OrderStatus {
 enum PaymentMethod {
   CASH_ON_DELIVERY
   CARD
-  WALLET
   INSTAPAY
   VODAFONE_CASH
 }

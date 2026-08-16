@@ -21,7 +21,6 @@ const regionSchema = z.object({
 
 const paymentSettingsSchema = z.object({
   cardEnabled: z.boolean(),
-  walletEnabled: z.boolean(),
 });
 
 // ============================================================
@@ -156,13 +155,11 @@ export async function updatePaymentSettings(
   await requireAnyPermission(["shipping", "settings", "products"]);
   const parsed = paymentSettingsSchema.safeParse({
     cardEnabled: fd.get("cardEnabled") === "on",
-    walletEnabled: fd.get("walletEnabled") === "on",
   });
   if (!parsed.success) return { error: "INVALID" };
 
   await savePaymentSettings({
     cardEnabled: parsed.data.cardEnabled,
-    walletEnabled: parsed.data.walletEnabled,
   });
 
   revalidatePath("/", "layout");

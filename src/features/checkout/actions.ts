@@ -55,7 +55,6 @@ const inputSchema = z.object({
   paymentMethod: z.enum([
     "CASH_ON_DELIVERY",
     "CARD",
-    "WALLET",
     "INSTAPAY",
     "VODAFONE_CASH",
   ]),
@@ -73,8 +72,7 @@ export type CreateOrderInput = {
   governorateId: string;
   regionId: string;
   address: string;
-  paymentMethod:
-    "CASH_ON_DELIVERY" | "CARD" | "WALLET" | "INSTAPAY" | "VODAFONE_CASH";
+  paymentMethod: "CASH_ON_DELIVERY" | "CARD" | "INSTAPAY" | "VODAFONE_CASH";
   idempotencyKey: string;
   couponCode?: string;
   receiptData?: string;
@@ -148,10 +146,7 @@ export async function createOrder(
 
   try {
     const paymentSettings = await getPaymentSettings();
-    if (
-      (paymentMethod === "CARD" && !paymentSettings.cardEnabled) ||
-      (paymentMethod === "WALLET" && !paymentSettings.walletEnabled)
-    ) {
+    if (paymentMethod === "CARD" && !paymentSettings.cardEnabled) {
       return { ok: false, error: "PAYMENT_UNAVAILABLE" };
     }
 

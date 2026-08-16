@@ -21,7 +21,6 @@ export type GovernorateDto = {
 
 export type PaymentSettings = {
   cardEnabled: boolean;
-  walletEnabled: boolean;
 };
 
 // Only active governorates and their active regions, sorted for display.
@@ -94,14 +93,13 @@ export async function getPaymentSettings(): Promise<PaymentSettings> {
     const row = await prisma.storeSetting.findUnique({
       where: { key: "payment_settings" },
     });
-    if (!row) return { cardEnabled: true, walletEnabled: false };
+    if (!row) return { cardEnabled: true };
     const parsed = JSON.parse(row.value) as Partial<PaymentSettings>;
     return {
       cardEnabled: parsed.cardEnabled !== false,
-      walletEnabled: parsed.walletEnabled === true,
     };
   } catch {
-    return { cardEnabled: true, walletEnabled: false };
+    return { cardEnabled: true };
   }
 }
 

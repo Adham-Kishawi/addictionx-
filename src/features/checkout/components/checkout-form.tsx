@@ -13,7 +13,6 @@ import {
   AlertCircle,
   Tag,
   X,
-  Wallet,
   Smartphone,
   Copy,
   Check,
@@ -45,7 +44,7 @@ type Zone = {
   }[];
 };
 
-type PaymentSettings = { cardEnabled: boolean; walletEnabled: boolean };
+type PaymentSettings = { cardEnabled: boolean };
 
 type PaymentAccountsConfig = {
   instapayNumber: string;
@@ -89,7 +88,6 @@ export function CheckoutForm({
   const [zones, setZones] = useState<Zone[]>([]);
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
     cardEnabled: false,
-    walletEnabled: false,
   });
   const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccountsConfig>(
     {
@@ -157,7 +155,7 @@ export function CheckoutForm({
   }, []);
 
   const [paymentMethod, setPaymentMethod] = useState<
-    "CASH_ON_DELIVERY" | "CARD" | "WALLET" | "INSTAPAY" | "VODAFONE_CASH"
+    "CASH_ON_DELIVERY" | "CARD" | "INSTAPAY" | "VODAFONE_CASH"
   >("CASH_ON_DELIVERY");
   const [placed, setPlaced] = useState<{
     orderId: string;
@@ -660,14 +658,6 @@ export function CheckoutForm({
             title={dict.checkout.card}
             hint={dict.checkout.cardHint}
             disabled={!paymentSettings.cardEnabled}
-          />
-          <PaymentOption
-            active={paymentMethod === "WALLET"}
-            onClick={() => setPaymentMethod("WALLET")}
-            icon={<Wallet className="size-5" />}
-            title={dict.checkout.wallet}
-            hint={dict.checkout.walletHint}
-            disabled={!paymentSettings.walletEnabled}
           />
 
           {/* Payment instructions for InstaPay and Vodafone Cash */}
