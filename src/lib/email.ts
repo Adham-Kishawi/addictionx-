@@ -7,7 +7,10 @@ import { escapeHtml } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/dictionary";
 
 const API_KEY = process.env.RESEND_API_KEY;
-const FROM = process.env.EMAIL_FROM ?? "ADDICTIONX <no-reply@addictionx.com>";
+// Fallback must be a Resend-authorized sender: onboarding@resend.dev only
+// delivers to the account owner until a domain we own is verified in Resend.
+// Never default to a domain we don't control (e.g. no-reply@addictionx.com).
+const FROM = process.env.EMAIL_FROM ?? "ADDICTIONX <onboarding@resend.dev>";
 const SITE_NAME = "ADDICTIONX";
 
 let client: Resend | null = null;

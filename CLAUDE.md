@@ -402,10 +402,13 @@ walid's request: **the customer must be visually amazed** — every storefront s
 
 ### 19. Email notifications (Resend) — for every update
 
-- `src/lib/email.ts`: `sendEmail` wrapper (Resend) ← works **without keys** (just logs, never breaks the flow). Inline-styled templates: `orderConfirmationEmail` (customer) + `adminNewOrderEmail` (admin `ADMIN_EMAIL`/`siteConfig.adminEmail`) + `orderStatusEmail` (status change) + `orderCancelledEmail` + `shippingInfoEmail`.
-- **Integration points:** `createOrder` (after a successful transaction — confirmation email to customer + new-order email to admin) · `updateOrderStatus` (status-change notification to customer) · `updateShipment` (tracking data) · `cancelOrder` (cancellation notification to customer).
+- `src/lib/email.ts`: `sendEmail` wrapper (Resend) ← works **without keys** (just logs, never breaks the flow). Inline-styled templates: `orderConfirmationEmail` (customer) + `adminNewOrderEmail` (admin) + `orderStatusEmail` (status change) + `orderCancelledEmail` + `shippingInfoEmail` + `lowStockEmail` + `paymentStatusEmail` + `adminManualPaymentEmail`.
+- **Admin recipient resolution** (`src/lib/store-config.ts` → `getAdminNotificationEmail`): `store_settings.admin_notification_email` (DB, editable from the dashboard) → `ADMIN_EMAIL` env → `siteConfig.adminEmail`. Currently set in DB to the Resend account owner (walid's inbox) so admin notifications deliver.
+- **Integration points:** `createOrder` (after a successful transaction — confirmation email to customer + new-order email to admin) · `updateOrderStatus` (status-change notification to customer) · `updateShipment` (tracking data) · `cancelOrder` (cancellation notification to customer) · `notifyLowStock` (threshold ≤ 5) · payment proof verify/reject.
 - **Rule:** sending via `Promise.allSettled` — email failure **never fails** order creation/update.
-- `.env` needed: `RESEND_API_KEY` (provided by walid — configured locally + Vercel Production) + `EMAIL_FROM` (currently `ADDICTIONX <onboarding@resend.dev>` — ONLY delivers to the account owner until a sending domain is verified in Resend) + optional `ADMIN_EMAIL`.
+- `.env` needed: `RESEND_API_KEY` (configured locally + Vercel Production) + `EMAIL_FROM` (currently `ADDICTIONX <onboarding@resend.dev>` — the only Resend-authorized sender without a custom domain; **delivers ONLY to the account owner**) + optional `ADMIN_EMAIL`.
+- **⚠️ Domain ownership — do NOT touch `addictionx.com`:** the domain is **NOT owned/controlled by this project** (third-party registrar, registered 2015, nameservers `nsg1/nsg2.namebrightdns.com` under external control). **Never** switch its nameservers, never modify/delete its DNS records, never transfer or buy it. Adding it to the Vercel project config ≠ ownership. Any Resend DNS records for it must be created only in a DNS provider we actually control, and only with authorization.
+- **Consequence:** sending to **arbitrary customer addresses (order confirmations, etc.) is currently blocked** (Resend returns `403 validation_error` for non-owner recipients on `onboarding@resend.dev`). Admin-facing emails reach the owner's inbox today. To send to customers, a **domain we own** must be verified at resend.com/domains, then `EMAIL_FROM` updated accordingly.
 
 ### 20. Google sign-in (OAuth)
 
@@ -662,7 +665,7 @@ src/
 - Order cancellation (customer)
 - Low-stock alerts (admin, threshold: 5 units)
 - Payment verification confirmations
-- Works without keys (logs only) until RESEND_API_KEY added — **key now configured**; real delivery still requires a verified Resend sending domain
+- Admin notifications deliver to the **Resend account owner** via `onboarding@resend.dev` (DB setting `admin_notification_email` = owner inbox). Sending to arbitrary customers is **blocked** until a domain **we own** is verified in Resend — `addictionx.com` is **third-party, NOT ours**, never touch its DNS.
 
 **Visual Experience (Cinematic Dark Design):**
 
@@ -707,7 +710,7 @@ src/
 
 ### 🚧 Pending (Requires Walid's Input)
 
-1. **Resend sending domain** — RESEND_API_KEY added (walid), but `EMAIL_FROM` is `onboarding@resend.dev` (test sender): emails deliver ONLY to the account owner until a domain is verified at resend.com/domains and `EMAIL_FROM` is updated
+1. **Customer-facing emails need a domain we OWN** — `RESEND_API_KEY` + `EMAIL_FROM` (owner inbox delivery working) are configured. Admin notifications deliver to the Resend account owner. To send order confirmations etc. to **customers**, a **domain actually owned/controlled by us** must be verified at resend.com/domains and `EMAIL_FROM` updated. ⚠️ `addictionx.com` is **third-party (not ours)** — **never** change its nameservers/DNS records. Resend DNS records must be added only in a DNS provider we control.
 2. **Real product images** — currently seeded with placeholder; need per-product uploads
 3. **Payment gateway integration** — Card/Wallet methods are UI-only placeholders (no actual processing)
 
@@ -806,7 +809,7 @@ src/
 
 ### Still pending from walid (external data)
 
-- [x] `RESEND_API_KEY` provided by walid (configured — see item 1 above for the remaining sending-domain step).
+- [x] `RESEND_API_KEY` provided by walid (configured). ⚠️ **`addictionx.com` is NOT owned by the project** (third-party registrar/control) — it was only attached to the Vercel project as a domain config; never change its nameservers/DNS. Admin emails deliver to the Resend account owner; customer emails need a domain we actually own verified in Resend.
 - [x] `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` (Google OAuth client — resolved: client_id was 73 chars on Vercel, now the correct 72-char one; sign-in verified end-to-end).
 - Cloudinary (the 3rd) **canceled** — not important per walid. Images will be managed from the admin dashboard itself.
 
