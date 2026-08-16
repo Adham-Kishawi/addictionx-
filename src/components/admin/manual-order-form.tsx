@@ -77,6 +77,7 @@ export function ManualOrderForm({
     const res = await createManualOrder({
       name: String(fd.get("name") ?? ""),
       phone: String(fd.get("phone") ?? ""),
+      email: String(fd.get("email") ?? ""),
       governorate: String(fd.get("governorate") ?? ""),
       address: String(fd.get("address") ?? ""),
       notes: String(fd.get("notes") ?? ""),
@@ -114,6 +115,12 @@ export function ManualOrderForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={dict.checkout.fullName} name="name" required />
           <Field label={dict.checkout.phone} name="phone" required dir="ltr" />
+          <Field
+            label={dict.account.email}
+            name="email"
+            type="email"
+            dir="ltr"
+          />
           <Field
             label={dict.checkout.governorate}
             name="governorate"

@@ -21,7 +21,7 @@ export default async function CheckoutPage({
     session?.user?.id
       ? prisma.user.findUnique({
           where: { id: session.user.id },
-          select: { name: true, phone: true },
+          select: { name: true, phone: true, email: true },
         })
       : Promise.resolve(null),
     session?.user?.id
@@ -35,6 +35,7 @@ export default async function CheckoutPage({
   const initialValues = {
     name: userRow?.name ?? "",
     phone: userRow?.phone ?? "",
+    email: userRow?.email ?? "",
     governorateName: lastAddress?.governorate ?? "",
     regionName: lastAddress?.city ?? "",
     address: lastAddress?.street ?? "",

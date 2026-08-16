@@ -315,6 +315,10 @@ model Order {
   id            String        @id @default(cuid())
   orderNumber   String        @unique
   userId        String?
+  // Customer contact email captured at checkout. Guests don't have an account,
+  // so this is what all customer-facing notifications are sent to. Falls back
+  // to the account email (user.email) for signed-in shoppers.
+  customerEmail String?
   status        OrderStatus   @default(PENDING)
   paymentMethod PaymentMethod
   // Server-tracked payment lifecycle — never set from the client. COD orders

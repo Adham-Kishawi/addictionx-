@@ -60,6 +60,7 @@ type CouponState = { code: string; discount: number } | null;
 type InitialValues = {
   name: string;
   phone: string;
+  email: string;
   governorateName: string;
   regionName: string;
   address: string;
@@ -182,6 +183,12 @@ export function CheckoutForm({
       .trim()
       .min(10, dict.checkout.validation.phone)
       .refine(isValidEgyptianPhone, dict.checkout.validation.phone),
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email(dict.checkout.validation.email)
+      .max(120),
     governorateId: z
       .string()
       .trim()
@@ -210,6 +217,7 @@ export function CheckoutForm({
       setAutofill({
         name: saved.name ?? "",
         phone: saved.phone ?? "",
+        email: saved.email ?? "",
         governorateName: saved.governorateName ?? "",
         regionName: saved.regionName ?? "",
         address: saved.address ?? "",
@@ -230,6 +238,7 @@ export function CheckoutForm({
     defaultValues: {
       name: autofill?.name ?? "",
       phone: autofill?.phone ?? "",
+      email: autofill?.email ?? "",
       governorateId: "",
       regionId: "",
       address: autofill?.address ?? "",
@@ -383,6 +392,7 @@ export function CheckoutForm({
         items,
         name: data.name,
         phone: data.phone,
+        email: data.email,
         governorateId: data.governorateId,
         regionId: data.regionId,
         address: data.address,
@@ -406,6 +416,7 @@ export function CheckoutForm({
             JSON.stringify({
               name: data.name,
               phone: data.phone,
+              email: data.email,
               governorateName: gov
                 ? locale === "ar"
                   ? gov.nameAr
@@ -495,6 +506,23 @@ export function CheckoutForm({
               />
             </Field>
           </div>
+
+          <Field
+            label={dict.account.email}
+            error={errors.email?.message}
+            required
+          >
+            <input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              {...register("email")}
+              className={inputClass(!!errors.email)}
+              aria-invalid={!!errors.email}
+              placeholder="you@example.com"
+              dir="ltr"
+            />
+          </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field

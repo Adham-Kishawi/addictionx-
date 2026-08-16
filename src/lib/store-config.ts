@@ -170,3 +170,18 @@ export async function getAdminNotificationEmail(): Promise<string> {
     return process.env.ADMIN_EMAIL || siteConfig.adminEmail;
   }
 }
+
+// ============================================================
+// Outgoing email sender — changeable from the dashboard. Must be a
+// sender verified on the Brevo account (or Brevo rejects the mail).
+// Falls back to the EMAIL_FROM env var, then the site contact email.
+// ============================================================
+
+export async function getEmailFrom(): Promise<string> {
+  try {
+    const from = await readSetting("email_from");
+    return from || process.env.EMAIL_FROM || siteConfig.contactEmail;
+  } catch {
+    return process.env.EMAIL_FROM || siteConfig.contactEmail;
+  }
+}

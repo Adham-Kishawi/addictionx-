@@ -8,7 +8,7 @@ import {
   Heart,
   LayoutGrid,
   ChevronLeft,
-  Clock,
+  Wallet,
   Settings,
   UserRound,
   Shield,
@@ -81,7 +81,15 @@ export function AccountTabs({
             icon: Package,
           },
         ]),
-    { key: "addresses", label: dict.account.tabAddresses, icon: MapPin },
+    ...(isAdmin
+      ? []
+      : [
+          {
+            key: "addresses" as const,
+            label: dict.account.tabAddresses,
+            icon: MapPin,
+          },
+        ]),
     ...(isAdmin
       ? []
       : [
@@ -193,9 +201,9 @@ export function AccountTabs({
             icon={Package}
           />
           <StatCard
-            label={dict.admin.revenue}
+            label={dict.account.totalSpent}
             value={formatPrice(totalSpent)}
-            icon={Clock}
+            icon={Wallet}
           />
           <StatCard
             label={dict.account.tabWishlist}

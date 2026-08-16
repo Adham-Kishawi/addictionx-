@@ -8,16 +8,12 @@ import type { Locale } from "@/lib/i18n/dictionary";
 
 const API_KEY = process.env.BREVO_API_KEY;
 const SITE_NAME = "ADDICTIONX";
-// EMAIL_FROM must be the Brevo-verified sender, e.g. "ADDICTIONX <me@myemail>".
-const EMAIL_FROM = process.env.EMAIL_FROM;
 
 function senderFrom(from: string | undefined): { name: string; email: string } {
   const m = from?.match(/^\s*([^<]+)\s*<([^>]+)>\s*$/);
   if (m) return { name: m[1].trim(), email: m[2].trim() };
   return { name: SITE_NAME, email: from?.trim() ?? "" };
 }
-
-const sender = senderFrom(EMAIL_FROM);
 
 type MailPayload = {
   to: string | string[];
@@ -26,11 +22,19 @@ type MailPayload = {
 };
 
 export async function sendEmail(payload: MailPayload): Promise<boolean> {
-  if (!API_KEY || !sender.email || !payload.to) {
-    console.info("[email] skipped (no BREVO_API_KEY/sender or no recipient)", {
+  if (!API_KEY || !payload.to) {
+    console.info("[email] skipped (no BREVO_API_KEY or no recipient)", {
       to: payload.to,
       subject: payload.subject,
     });
+    return false;
+  }
+  // The sender is a store setting (changeable from the dashboard) — resolve it
+  // per call so a switch applies without redeploying. Must be verified in Brevo.
+  const { getEmailFrom } = await import("@/lib/store-config");
+  const sender = senderFrom(await getEmailFrom());
+  if (!sender.email) {
+    console.info("[email] skipped (no sender configured)");
     return false;
   }
   const to = Array.isArray(payload.to) ? payload.to : [payload.to];
@@ -488,6 +492,110 @@ export function orderStatusEmail(locale: Locale) {
              ? "لمزيد من التفاصيل، تفضل بزيارة صفحة طلباتك في المتجر."
              : "For more details, visit your orders page."
          }</p>`,
+      );
+    },
+  };
+}
+
+// Admin alert every time an order moves forward in the pipeline (confirmed /
+// processing / shipped / delivered / cancelled). Keeps the whole team in the
+// loop without opening the dashboard — one notification per transition.
+export function adminOrderStatusEmail(locale: Locale) {
+  const isAr = locale === "ar";
+  const labels = isAr ? STATUS_LABELS_AR : STATUS_LABELS_EN;
+  return {
+    subject(orderNumber: string, status: string) {
+      return isAr
+        ? `تحديث الطلب ${orderNumber} — ${labels[status] ?? status}`
+        : `Order update ${orderNumber} — ${labels[status] ?? status}`;
+    },
+    html(info: {
+      orderNumber: string;
+      status: string;
+      totalQirsh: number;
+      customerName: string | null;
+    }) {
+      return shell(
+        locale,
+        isAr
+          ? `تحديث الطلب ${info.orderNumber}`
+          : `Order update ${info.orderNumber}`,
+        `<div style="font-size:18px;font-weight:bold;color:#f5c518;">${
+          isAr ? "تحديث حالة طلب" : "Order status update"
+        }</div>
+         <p>${isAr ? "الطلب" : "Order"} <b style="color:#f5c518;">${info.orderNumber}</b> ${
+           isAr ? "أصبح:" : "is now:"
+         } <b>${labels[info.status] ?? info.status}</b></p>
+         <p>${isAr ? "الإجمالي:" : "Total:"} <b>${fmt(locale, info.totalQirsh)}</b> — ${
+           isAr ? "العميل:" : "Customer:"
+         } <b>${escapeHtml(info.customerName ?? "-")}</b></p>
+         <p style="font-size:12px;color:#8a8a8a;">${
+           isAr
+             ? "تابع الطلب من لوحة التحكم."
+             : "Follow the order from the admin dashboard."
+         }</p>`,
+      );
+    },
+  };
+}
+
+// Admin alert for orders stuck in a live stage past their time threshold.
+export function stuckOrdersEmail(locale: Locale, adminUrl = "") {
+  const isAr = locale === "ar";
+  const labels = isAr ? STATUS_LABELS_AR : STATUS_LABELS_EN;
+  return {
+    subject(count: number) {
+      return isAr
+        ? `${count} طلبات بحاجة إلى متابعة ⚠️`
+        : `${count} stuck orders need attention ⚠️`;
+    },
+    html(
+      orders: {
+        orderNumber: string;
+        status: string;
+        stuckHours: number;
+        totalQirsh: number;
+        customerName: string | null;
+        phone: string | null;
+      }[],
+    ) {
+      const rows = orders
+        .map(
+          (o) => `<tr>
+        <td style="padding:8px 4px;border-bottom:1px solid #222;color:#f5c518;"><b>${o.orderNumber}</b></td>
+        <td style="padding:8px 4px;border-bottom:1px solid #222;color:#e8e8e8;">${labels[o.status] ?? o.status}</td>
+        <td style="padding:8px 4px;border-bottom:1px solid #222;color:#f43f5e;font-weight:bold;">${Math.round(o.stuckHours)}h</td>
+        <td style="padding:8px 4px;border-bottom:1px solid #222;color:#e8e8e8;">${escapeHtml(o.customerName ?? "-")}${o.phone ? `<br/><span style="color:#8a8a8a;font-size:12px;" dir="ltr">${escapeHtml(o.phone)}</span>` : ""}</td>
+        <td style="padding:8px 4px;border-bottom:1px solid #222;color:#e8e8e8;">${fmt(locale, o.totalQirsh)}</td>
+      </tr>`,
+        )
+        .join("");
+      return shell(
+        locale,
+        isAr ? "طلبات بحاجة إلى متابعة" : "Stuck orders alert",
+        `<div style="font-size:18px;font-weight:bold;color:#f43f5e;">${
+          isAr
+            ? "طلبات متوقفة تحتاج متابعة ⚠️"
+            : "Orders stuck — take action ⚠️"
+        }</div>
+         <p>${
+           isAr
+             ? "هذه الطلبات لم تتغير حالتها لفترة تتجاوز الحد المحدد:"
+             : "These orders have not moved for longer than their threshold:"
+         }</p>
+         <table width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0;">
+           <tr>
+             <th style="text-align:left;color:#8a8a8a;font-weight:normal;font-size:12px;padding:4px;">${isAr ? "الطلب" : "Order"}</th>
+             <th style="text-align:left;color:#8a8a8a;font-weight:normal;font-size:12px;padding:4px;">${isAr ? "الحالة" : "Status"}</th>
+             <th style="text-align:left;color:#8a8a8a;font-weight:normal;font-size:12px;padding:4px;">${isAr ? "المدة" : "Stuck"}</th>
+             <th style="text-align:left;color:#8a8a8a;font-weight:normal;font-size:12px;padding:4px;">${isAr ? "العميل" : "Customer"}</th>
+             <th style="text-align:left;color:#8a8a8a;font-weight:normal;font-size:12px;padding:4px;">${isAr ? "الإجمالي" : "Total"}</th>
+           </tr>
+           ${rows}
+         </table>
+         <p><a href="${adminUrl}" style="color:#f5c518;">${
+           isAr ? "افتح لوحة إدارة الطلبات" : "Open the orders dashboard"
+         }</a></p>`,
       );
     },
   };

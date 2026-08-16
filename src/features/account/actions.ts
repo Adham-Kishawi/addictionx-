@@ -6,7 +6,12 @@ import { z } from "zod";
 import { compare, hash } from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { orderCancelledEmail, sendEmail } from "@/lib/email";
+import {
+  orderCancelledEmail,
+  adminOrderStatusEmail,
+  sendEmail,
+} from "@/lib/email";
+import { getAdminNotificationEmail } from "@/lib/store-config";
 import { isValidEgyptianPhone, isValidPassword } from "@/lib/validation";
 import { rateLimiters, checkRateLimit } from "@/lib/rate-limit";
 
@@ -174,7 +179,10 @@ export async function cancelOrder(orderId: string): Promise<{
       userId: true,
       status: true,
       orderNumber: true,
-      user: { select: { email: true } },
+      total: true,
+      customerEmail: true,
+      user: { select: { email: true, name: true } },
+      address: { select: { fullName: true } },
     },
   });
   if (!order || order.userId !== userId) return { error: "NOT_FOUND" };
@@ -206,13 +214,30 @@ export async function cancelOrder(orderId: string): Promise<{
 
   revalidatePath("/", "layout");
 
-  if (order.user?.email) {
+  const customerEmail = order.customerEmail ?? order.user?.email;
+  if (customerEmail) {
     await sendEmail({
-      to: order.user.email,
+      to: customerEmail,
       subject: orderCancelledEmail("en").subject(order.orderNumber),
       html: orderCancelledEmail("en").html(order.orderNumber),
     });
   }
+
+  // The admin is notified whenever a customer cancels an order.
+  const adminEmail = await getAdminNotificationEmail();
+  await sendEmail({
+    to: adminEmail,
+    subject: adminOrderStatusEmail("en").subject(
+      order.orderNumber,
+      "CANCELLED",
+    ),
+    html: adminOrderStatusEmail("en").html({
+      orderNumber: order.orderNumber,
+      status: "CANCELLED",
+      totalQirsh: order.total,
+      customerName: order.user?.name ?? order.address?.fullName ?? null,
+    }),
+  }).catch(() => {});
 
   return { success: true };
 }

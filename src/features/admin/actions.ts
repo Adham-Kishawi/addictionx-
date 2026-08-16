@@ -20,11 +20,15 @@ import {
   orderStatusEmail,
   shippingInfoEmail,
   adminNewOrderEmail,
+  adminOrderStatusEmail,
   sendEmail,
   notifyLowStock,
 } from "@/lib/email";
 import { storedImageId } from "@/lib/uploads";
 import { canTransition } from "@/features/admin/status";
+import { siteConfig } from "@/config/site";
+import { findStuckOrders } from "@/features/admin/stuck-orders";
+import { stuckOrdersEmail } from "@/lib/email";
 import type { OrderStatus } from "@prisma/client";
 
 // ============================================================
@@ -485,7 +489,10 @@ export async function updateOrderStatus(orderId: string, status: string) {
     select: {
       orderNumber: true,
       status: true,
-      user: { select: { email: true } },
+      total: true,
+      customerEmail: true,
+      user: { select: { email: true, name: true } },
+      address: { select: { fullName: true } },
     },
   });
   if (!order) return;
@@ -504,11 +511,12 @@ export async function updateOrderStatus(orderId: string, status: string) {
     });
 
     if (next === "SHIPPED") {
+      const config = await getShippingConfig();
       await tx.shipment.upsert({
         where: { orderId },
         create: {
           orderId,
-          carrier: "Bosta",
+          carrier: config.carrier,
           status: "SHIPPED",
           shippedAt: new Date(),
         },
@@ -564,9 +572,10 @@ export async function updateOrderStatus(orderId: string, status: string) {
 
   revalidatePath("/", "layout");
 
-  if (order.user?.email) {
+  const customerEmail = order.customerEmail ?? order.user?.email;
+  if (customerEmail) {
     await sendEmail({
-      to: order.user.email,
+      to: customerEmail,
       subject: orderStatusEmail("en").subject(order.orderNumber),
       html: orderStatusEmail("en").html({
         orderNumber: order.orderNumber,
@@ -578,6 +587,20 @@ export async function updateOrderStatus(orderId: string, status: string) {
       }),
     });
   }
+
+  // Every pipeline move is also reported to the admin email — the owner/team
+  // is notified from order confirmation all the way to delivery/cancellation.
+  const adminEmail = await getAdminNotificationEmail();
+  await sendEmail({
+    to: adminEmail,
+    subject: adminOrderStatusEmail("en").subject(order.orderNumber, next),
+    html: adminOrderStatusEmail("en").html({
+      orderNumber: order.orderNumber,
+      status: next,
+      totalQirsh: order.total,
+      customerName: order.user?.name ?? order.address?.fullName ?? null,
+    }),
+  }).catch(() => {});
 }
 
 // ============================================================
@@ -592,7 +615,11 @@ export async function updateShipment(
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { orderNumber: true, user: { select: { email: true } } },
+    select: {
+      orderNumber: true,
+      customerEmail: true,
+      user: { select: { email: true } },
+    },
   });
   if (!order) return;
 
@@ -611,9 +638,10 @@ export async function updateShipment(
 
   revalidatePath("/", "layout");
 
-  if (order.user?.email) {
+  const customerEmail = order.customerEmail ?? order.user?.email;
+  if (customerEmail) {
     await sendEmail({
-      to: order.user.email,
+      to: customerEmail,
       subject: shippingInfoEmail("en").subject(order.orderNumber),
       html: shippingInfoEmail("en").html({
         orderNumber: order.orderNumber,
@@ -622,6 +650,35 @@ export async function updateShipment(
       }),
     });
   }
+}
+
+// ============================================================
+// Stuck orders — manual "send alert now" from the dashboard
+// ============================================================
+
+export async function notifyStuckOrders(locale: string) {
+  await requirePermission("orders", locale);
+
+  const stuck = await findStuckOrders();
+  if (stuck.length === 0) return { ok: true, notified: 0 };
+
+  const adminEmail = await getAdminNotificationEmail();
+  const sent = await sendEmail({
+    to: adminEmail,
+    subject: stuckOrdersEmail("ar").subject(stuck.length),
+    html: stuckOrdersEmail("ar", `${siteConfig.url}/ar/admin/orders`).html(
+      stuck.map((o) => ({
+        orderNumber: o.orderNumber,
+        status: o.status,
+        stuckHours: o.stuckHours,
+        totalQirsh: o.total,
+        customerName: o.customerName,
+        phone: o.phone,
+      })),
+    ),
+  });
+
+  return { ok: sent, notified: sent ? stuck.length : 0 };
 }
 
 // ============================================================
@@ -1007,6 +1064,14 @@ export async function updateUserDetails(
 const manualOrderSchema = z.object({
   name: z.string().trim().min(2).max(100),
   phone: z.string().trim().min(8).max(20),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email()
+    .max(120)
+    .optional()
+    .or(z.literal("")),
   governorate: z.string().trim().min(1).max(60),
   address: z.string().trim().min(5).max(200),
   notes: z.string().trim().max(500).optional().default(""),
@@ -1134,6 +1199,37 @@ export async function updateAdminNotificationEmail(input: {
   }
 }
 
+// ============================================================
+// Outgoing email sender (Brevo verified) — changeable anytime.
+// Accepts a bare email or "Name <email>"; must be verified in Brevo.
+// ============================================================
+
+export async function updateEmailFrom(input: { from: string; locale: string }) {
+  await requirePermission("settings");
+
+  const value = input.from.trim();
+  const emailMatch = value.match(
+    /^\s*(?:(.+?)\s*<)?([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)\s*>?\s*$/,
+  );
+  if (!emailMatch) {
+    return { ok: false, error: "INVALID_EMAIL" };
+  }
+
+  try {
+    await prisma.storeSetting.upsert({
+      where: { key: "email_from" },
+      create: { key: "email_from", value },
+      update: { value },
+    });
+
+    clearConfigCache();
+    return { ok: true };
+  } catch (error) {
+    console.error("Failed to update email sender:", error);
+    return { ok: false, error: "UPDATE_FAILED" };
+  }
+}
+
 export async function createManualOrder(
   input: z.infer<typeof manualOrderSchema>,
 ): Promise<ManualOrderResult> {
@@ -1143,7 +1239,8 @@ export async function createManualOrder(
   if (!parsed.success) return { ok: false, error: "INVALID" };
 
   try {
-    const { lines, name, phone, governorate, address, notes } = parsed.data;
+    const { lines, name, phone, email, governorate, address, notes } =
+      parsed.data;
 
     const products = await prisma.product.findMany({
       where: {
@@ -1228,6 +1325,7 @@ export async function createManualOrder(
       return tx.order.create({
         data: {
           orderNumber,
+          customerEmail: email || null,
           status: "PENDING",
           paymentMethod: "CASH_ON_DELIVERY",
           subtotal,

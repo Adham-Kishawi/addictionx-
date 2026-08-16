@@ -19,6 +19,7 @@ import {
 import { OrderStatusSelect } from "@/components/admin/order-status-select";
 import { ShipmentForm } from "@/components/admin/shipment-form";
 import { CancelOrderButton } from "@/components/admin/cancel-order-button";
+import { MarkPaidButton } from "@/components/admin/mark-paid-button";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -110,7 +111,10 @@ export default async function AdminOrderDetailPage({
               {order.user?.name ?? order.address?.fullName ?? "—"}
             </span>
             <span dir="ltr" className="text-start">
-              {order.user?.email ?? order.address?.phone ?? "—"}
+              {order.customerEmail ??
+                order.user?.email ??
+                order.address?.phone ??
+                "—"}
             </span>
           </div>
 
@@ -137,21 +141,19 @@ export default async function AdminOrderDetailPage({
               {dict.admin.paymentMethod}:
             </span>
             <span className="font-medium">{paymentLabel}</span>
-            {order.paymentMethod !== "CASH_ON_DELIVERY" && (
-              <span
-                className={cn(
-                  "ms-auto rounded-full px-2.5 py-0.5 text-xs font-medium",
-                  order.paymentStatus === "PAID"
-                    ? "bg-emerald-500/10 text-emerald-600"
-                    : order.paymentStatus === "FAILED" ||
-                        order.paymentStatus === "REFUNDED"
-                      ? "bg-red-500/10 text-red-600"
-                      : "bg-yellow-500/10 text-yellow-600",
-                )}
-              >
-                {paymentStatusLabel(dict.admin, order.paymentStatus)}
-              </span>
-            )}
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                order.paymentStatus === "PAID"
+                  ? "bg-emerald-500/10 text-emerald-600"
+                  : order.paymentStatus === "FAILED" ||
+                      order.paymentStatus === "REFUNDED"
+                    ? "bg-red-500/10 text-red-600"
+                    : "bg-yellow-500/10 text-yellow-600",
+              )}
+            >
+              {paymentStatusLabel(dict.admin, order.paymentStatus)}
+            </span>
             {order.paidAt && (
               <span className="text-xs text-muted-foreground">
                 {new Date(order.paidAt).toLocaleString(
@@ -160,6 +162,15 @@ export default async function AdminOrderDetailPage({
                 )}
               </span>
             )}
+            {order.paymentMethod === "CASH_ON_DELIVERY" &&
+              order.paymentStatus !== "PAID" && (
+                <MarkPaidButton
+                  orderId={order.id}
+                  locale={locale}
+                  label={dict.admin.markPaid}
+                  confirmLabel={dict.admin.markPaidConfirm}
+                />
+              )}
           </div>
         </section>
 

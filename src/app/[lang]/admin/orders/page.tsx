@@ -9,6 +9,8 @@ import {
   statusLabel,
   statusStyles,
 } from "@/features/admin/status";
+import { findStuckOrders } from "@/features/admin/stuck-orders";
+import { StuckOrdersBanner } from "@/components/admin/stuck-orders-banner";
 import type { Locale } from "@/lib/i18n/dictionary";
 import type { OrderStatus as PrismaOrderStatus } from "@prisma/client";
 
@@ -37,7 +39,7 @@ export default async function AdminOrdersPage({
   const currentPage = Math.max(1, Number(page) || 1);
   const where = selectedStatus ? { status: selectedStatus } : undefined;
 
-  const [orders, totalOrders] = await Promise.all([
+  const [orders, totalOrders, stuck] = await Promise.all([
     prisma.order.findMany({
       where,
       include: { user: true, items: true, address: true },
@@ -46,6 +48,7 @@ export default async function AdminOrdersPage({
       take: PAGE_SIZE,
     }),
     prisma.order.count({ where }),
+    findStuckOrders(),
   ]);
   const totalPages = Math.max(1, Math.ceil(totalOrders / PAGE_SIZE));
 
@@ -61,6 +64,20 @@ export default async function AdminOrdersPage({
           {dict.admin.newOrder}
         </Link>
       </div>
+
+      {/* Stuck orders alert */}
+      {stuck.length > 0 && (
+        <StuckOrdersBanner
+          locale={locale}
+          stuck={stuck.map((o) => ({
+            id: o.id,
+            orderNumber: o.orderNumber,
+            status: o.status,
+            stuckHours: o.stuckHours,
+          }))}
+          dict={dict}
+        />
+      )}
 
       {/* Status filters */}
       <div className="mb-6 flex flex-wrap gap-2">

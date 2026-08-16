@@ -64,11 +64,13 @@ export async function verifyPaymentProof(
         where: { id: orderId },
         select: {
           orderNumber: true,
+          customerEmail: true,
           user: { select: { email: true } },
         },
       });
       orderNumber = orderRow?.orderNumber;
-      customerEmail = orderRow?.user?.email ?? undefined;
+      customerEmail =
+        orderRow?.customerEmail ?? orderRow?.user?.email ?? undefined;
 
       await tx.transaction.create({
         data: {
@@ -104,6 +106,84 @@ export async function verifyPaymentProof(
       return { ok: false, error: "ALREADY_PROCESSED" };
     }
     return { ok: false, error: "VERIFICATION_FAILED" };
+  }
+}
+
+/**
+ * Mark an order as PAID — used when cash is collected on delivery (COD).
+ * Only admins with "orders" permission can do this.
+ * Uses a conditional update so it can never be applied twice.
+ */
+export async function markOrderPaid(orderId: string, locale: Locale) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  await requirePermission("orders", locale);
+
+  try {
+    let customerEmail: string | undefined;
+    let orderNumber: string | undefined;
+
+    await prisma.$transaction(async (tx) => {
+      const order = await tx.order.updateMany({
+        where: { id: orderId, paymentStatus: { not: "PAID" } },
+        data: {
+          paymentStatus: "PAID",
+          paidAt: new Date(),
+        },
+      });
+      if (order.count === 0) {
+        throw new Error("ALREADY_PAID");
+      }
+
+      const orderRow = await tx.order.findUnique({
+        where: { id: orderId },
+        select: {
+          orderNumber: true,
+          total: true,
+          customerEmail: true,
+          user: { select: { email: true } },
+        },
+      });
+      orderNumber = orderRow?.orderNumber;
+      customerEmail =
+        orderRow?.customerEmail ?? orderRow?.user?.email ?? undefined;
+
+      await tx.transaction.create({
+        data: {
+          orderId,
+          provider: "COD",
+          amount: orderRow?.total ?? 0,
+          status: "VERIFIED",
+        },
+      });
+    });
+
+    // Customer notification — never fails the admin action
+    if (customerEmail && orderNumber) {
+      await sendEmail({
+        to: customerEmail,
+        subject: paymentStatusEmail(locale).subject(orderNumber),
+        html: paymentStatusEmail(locale).html({
+          orderNumber,
+          status: "PAID",
+        }),
+      }).catch(() => {});
+    }
+
+    revalidatePath(`/${locale}/admin/orders`);
+    revalidatePath(`/${locale}/admin/orders/${orderId}`);
+    revalidatePath(`/${locale}/account/orders/${orderId}`);
+
+    return { ok: true };
+  } catch (error) {
+    console.error("Failed to mark order as paid:", error);
+    if (error instanceof Error && error.message === "ALREADY_PAID") {
+      return { ok: false, error: "ALREADY_PAID" };
+    }
+    return { ok: false, error: "MARK_PAID_FAILED" };
   }
 }
 
@@ -148,12 +228,17 @@ export async function rejectPaymentProof(
         select: {
           orderId: true,
           order: {
-            select: { orderNumber: true, user: { select: { email: true } } },
+            select: {
+              orderNumber: true,
+              customerEmail: true,
+              user: { select: { email: true } },
+            },
           },
         },
       });
       orderNumber = row?.order?.orderNumber;
-      customerEmail = row?.order?.user?.email ?? undefined;
+      customerEmail =
+        row?.order?.customerEmail ?? row?.order?.user?.email ?? undefined;
 
       if (row?.orderId) {
         await tx.transaction.create({

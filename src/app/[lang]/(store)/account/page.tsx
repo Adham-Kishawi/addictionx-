@@ -37,10 +37,12 @@ export default async function AccountPage({
 
   const isAdmin = userRow?.role === "ADMIN";
 
-  const addresses = await prisma.address.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-  });
+  const addresses = isAdmin
+    ? []
+    : await prisma.address.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+      });
 
   const orderCards: AccountOrder[] = [];
   let wishlist: NonNullable<ReturnType<typeof productFromRow>>[] = [];

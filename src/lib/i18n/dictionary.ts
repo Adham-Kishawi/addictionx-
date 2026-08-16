@@ -198,6 +198,7 @@ export const dictionary = {
       validation: {
         name: "الاسم مطلوب",
         phone: "رقم هاتف صحيح مطلوب",
+        email: "بريد إلكتروني صحيح مطلوب",
         governorate: "اختر المحافظة",
         region: "اختر المنطقة / الحي",
         address: "العنوان مطلوب",
@@ -262,6 +263,7 @@ export const dictionary = {
         "كلمة المرور يجب ألا تقل عن 8 أحرف وتحتوي على حرف ورقم",
       fieldPasswordMismatch: "كلمتا المرور غير متطابقتين",
       tabOverview: "نظرة عامة",
+      totalSpent: "إجمالي الإنفاق",
       tabOrders: "طلباتي",
       tabAddresses: "عناويني",
       tabWishlist: "مفضلتي",
@@ -547,11 +549,23 @@ export const dictionary = {
       adminNotificationEmailHint:
         "البريد الذي يستقبل إشعارات الطلبات والمدفوعات (مثل Gmail الخاص بك)",
       adminNotificationEmailSaved: "تم حفظ بريد الإشعارات",
+      emailSender: "البريد المرسل (Sender)",
+      emailSenderHint:
+        "الإيميل الذي يظهر كمرسل للعملاء — يجب أن يكون مُفعلًا كمرسل معتمد في Brevo. الصيغة: ADDICTIONX <email@gmail.com>",
       paymentSettingsError: "فشل حفظ الإعدادات",
       cancelOrder: "إلغاء الطلب",
       cancelOrderConfirm:
         "متأكد من إلغاء هذا الطلب؟ سيتم إعادة الكمية إلى المخزون.",
       cancelOrderConfirmed: "تم إلغاء الطلب",
+      markPaid: "تأكيد استلام الدفع",
+      markPaidConfirm: "متأكد إن المبلغ وصل؟ سيتم اعتماد الطلب كمدفوع.",
+      markPaidDone: "تم اعتماد الدفع",
+      stuckOrdersTitle: "طلبات بحاجة إلى متابعة",
+      stuckOrdersHint:
+        "هذه الطلبات لم تتغير حالتها منذ ساعات — مرّ عليها وحدّث حالتها أو تواصل مع العميل.",
+      stuckOrdersNotify: "إرسال إشعار الآن",
+      stuckOrdersNotified: "تم إرسال الإشعار",
+      stuckOrderHours: "ساعة",
       shippingZones: "مناطق الشحن",
       shippingZonesDesc:
         "حدد رسوم التوصيل لكل محافظة ومنطقة — يتراجع المتجر للرسوم الافتراضية عند عدم التطابق.",
@@ -995,6 +1009,7 @@ export const dictionary = {
       validation: {
         name: "Name is required",
         phone: "A valid phone number is required",
+        email: "A valid email is required",
         governorate: "Select a governorate",
         region: "Select a region / area",
         address: "Address is required",
@@ -1059,6 +1074,7 @@ export const dictionary = {
         "Password must be at least 8 characters and include a letter and a number",
       fieldPasswordMismatch: "Passwords do not match",
       tabOverview: "Overview",
+      totalSpent: "Total spent",
       tabOrders: "My Orders",
       tabAddresses: "My Addresses",
       tabWishlist: "My Wishlist",
@@ -1348,11 +1364,24 @@ export const dictionary = {
       adminNotificationEmailHint:
         "Email that receives order & payment notifications (e.g. your Gmail)",
       adminNotificationEmailSaved: "Notification email saved",
+      emailSender: "Sender Email",
+      emailSenderHint:
+        "The email shown as the sender to customers — must be a sender verified in Brevo. Format: ADDICTIONX <email@gmail.com>",
       paymentSettingsError: "Failed to save settings",
       cancelOrder: "Cancel order",
       cancelOrderConfirm:
         "Are you sure you want to cancel this order? Stock will be restored.",
       cancelOrderConfirmed: "Order cancelled",
+      markPaid: "Confirm payment received",
+      markPaidConfirm:
+        "Confirm the payment was received? The order will be marked as paid.",
+      markPaidDone: "Payment confirmed",
+      stuckOrdersTitle: "Orders needing attention",
+      stuckOrdersHint:
+        "These orders have not changed status for hours — review them or reach out to the customer.",
+      stuckOrdersNotify: "Send alert now",
+      stuckOrdersNotified: "Alert sent",
+      stuckOrderHours: "h",
       shippingZones: "Shipping Zones",
       shippingZonesDesc:
         "Set a delivery fee for each governorate and region — the store falls back to the flat fee when there is no match.",

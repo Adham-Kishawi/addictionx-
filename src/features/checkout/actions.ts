@@ -49,6 +49,7 @@ const inputSchema = z.object({
     .max(50),
   name: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(10).refine(isValidEgyptianPhone, "PHONE"),
+  email: z.string().trim().toLowerCase().email("EMAIL"),
   governorateId: z.string().trim().min(1).max(60),
   regionId: z.string().trim().min(1).max(60),
   address: z.string().trim().min(5).max(300),
@@ -69,6 +70,7 @@ export type CreateOrderInput = {
   items: CartItem[];
   name: string;
   phone: string;
+  email: string;
   governorateId: string;
   regionId: string;
   address: string;
@@ -133,6 +135,7 @@ export async function createOrder(
     items,
     name,
     phone,
+    email,
     governorateId,
     regionId,
     address,
@@ -318,6 +321,7 @@ export async function createOrder(
           data: {
             orderNumber,
             userId,
+            customerEmail: email,
             status: "PENDING",
             paymentMethod,
             paymentStatus: "PENDING",
@@ -411,20 +415,17 @@ export async function createOrder(
         priceQirsh: l.unitPrice,
       })),
     };
-    // Notifications never fail the order — they are sent after successful creation
-    const user = userId
-      ? await prisma.user.findUnique({
-          where: { id: userId },
-          select: { email: true },
-        })
-      : null;
+    // Notifications never fail the order — they are sent after successful creation.
+    // The confirmation always goes to the customer's email (captured at checkout
+    // for guests too, not only to the account email of signed-in shoppers).
+    const customerEmail = email;
     const adminEmail = await getAdminNotificationEmail();
     const isManualPayment =
       paymentMethod === "INSTAPAY" || paymentMethod === "VODAFONE_CASH";
     await Promise.allSettled([
-      user?.email
+      customerEmail
         ? sendEmail({
-            to: user.email,
+            to: customerEmail,
             subject: orderConfirmationEmail(locale).subject(order.orderNumber),
             html: orderConfirmationEmail(locale).html(mailInfo),
           })
