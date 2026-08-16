@@ -1,22 +1,23 @@
-// Email notification layer via Resend.
-// Works without keys: if RESEND_API_KEY is missing (or the request fails) it only logs
-// and never breaks the order flow — the notification is optional.
+// Email notification layer via Brevo (free transactional email, no custom
+// domain required — a single sender email is verified by clicking a link).
+// Works without keys: if BREVO_API_KEY is missing (or the request fails) it
+// only logs and never breaks the order flow — the notification is optional.
 // Templates are bilingual: English by default, Arabic when the user's locale is ar.
-import { Resend } from "resend";
 import { escapeHtml } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/dictionary";
 
-const API_KEY = process.env.RESEND_API_KEY;
-// Fallback must be a Resend-authorized sender: onboarding@resend.dev only
-// delivers to the account owner until a domain we own is verified in Resend.
-// Never default to a domain we don't control (e.g. no-reply@addictionx.com).
-const FROM = process.env.EMAIL_FROM ?? "ADDICTIONX <onboarding@resend.dev>";
+const API_KEY = process.env.BREVO_API_KEY;
 const SITE_NAME = "ADDICTIONX";
+// EMAIL_FROM must be the Brevo-verified sender, e.g. "ADDICTIONX <me@myemail>".
+const EMAIL_FROM = process.env.EMAIL_FROM;
 
-let client: Resend | null = null;
-if (API_KEY) {
-  client = new Resend(API_KEY);
+function senderFrom(from: string | undefined): { name: string; email: string } {
+  const m = from?.match(/^\s*([^<]+)\s*<([^>]+)>\s*$/);
+  if (m) return { name: m[1].trim(), email: m[2].trim() };
+  return { name: SITE_NAME, email: from?.trim() ?? "" };
 }
+
+const sender = senderFrom(EMAIL_FROM);
 
 type MailPayload = {
   to: string | string[];
@@ -25,22 +26,31 @@ type MailPayload = {
 };
 
 export async function sendEmail(payload: MailPayload): Promise<boolean> {
-  if (!client || !payload.to) {
-    console.info("[email] skipped (no RESEND_API_KEY or no recipient)", {
+  if (!API_KEY || !sender.email || !payload.to) {
+    console.info("[email] skipped (no BREVO_API_KEY/sender or no recipient)", {
       to: payload.to,
       subject: payload.subject,
     });
     return false;
   }
+  const to = Array.isArray(payload.to) ? payload.to : [payload.to];
   try {
-    const { error } = await client.emails.send({
-      from: FROM,
-      to: payload.to,
-      subject: payload.subject,
-      html: payload.html,
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "api-key": API_KEY,
+      },
+      body: JSON.stringify({
+        sender,
+        to: to.map((email) => ({ email })),
+        subject: payload.subject,
+        htmlContent: payload.html,
+      }),
     });
-    if (error) {
-      console.error("[email] resend error", error);
+    if (!res.ok) {
+      console.error("[email] brevo error", res.status, await res.text());
       return false;
     }
     return true;

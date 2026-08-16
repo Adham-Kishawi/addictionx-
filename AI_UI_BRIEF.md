@@ -60,7 +60,7 @@
 ## 7) بعد العمق — خارطة الطريق الجاية (من ثغرات CLAUDE.md)
 
 - الكاروسيل: أكبر + خلفية هوية لكل مجموعة من `art.glow` + تدوير صور `product.images[]` الحقيقية في الـ showcase + شريط تفاصيل (طلب walid الأصلي لا يزال مفتوحًا).
-- من walid: `RESEND_API_KEY` · `AUTH_GOOGLE_ID/SECRET` · بيانات Cloudinary لاستبدال ProductArt بصور حقيقية.
+- من walid: `BREVO_API_KEY` + تأكيد مُرسِل Brevo (تحوّلنا من Resend لـ Brevo — بدون دومين مملوك) · `AUTH_GOOGLE_ID/SECRET` · بيانات Cloudinary لاستبدال ProductArt بصور حقيقية.
 - تقوية: OG/social meta صور · sitemap + robots · مواءمة `siteConfig.url` (addictionx.com) مع الحي (addictionx.vercel.app) · LCP: preload sprite الفيديو + lazy-mount سيناريوهات بوتلRush/Rotating بـ IntersectionObserver · تقليل الـ particles على الموبايل · مراجعة الـ admin dashboards على الموبايل.
 - أفكار أعمال (walid يقرر): رسائل هدايا في الـ checkout · كويز عطور · برنامج ولاء "Rush" · تتبع شحنة واتساب للسوق المصري.
 

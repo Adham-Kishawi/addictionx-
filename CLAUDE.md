@@ -400,15 +400,15 @@ walid's request: **the customer must be visually amazed** — every storefront s
 - **Wiring:** `rotating-showcase.tsx` imports it via **`dynamic(..., { ssr: false })`** so three.js stays **out of the initial home bundle** (loaded only when the LazyMount showcase mounts). The old `TurnView`/`TURN_360`/`turnPoints` machinery was deleted.
 - **Shader transparency trick:** frames are dark-studio shots; the black bg is removed by screen-blending the canvas, not by alpha keying — red stays red (no cyan flip, consistent with the mix-blend rule).
 
-### 19. Email notifications (Resend) — for every update
+### 19. Email notifications (Brevo) — for every update
 
-- `src/lib/email.ts`: `sendEmail` wrapper (Resend) ← works **without keys** (just logs, never breaks the flow). Inline-styled templates: `orderConfirmationEmail` (customer) + `adminNewOrderEmail` (admin) + `orderStatusEmail` (status change) + `orderCancelledEmail` + `shippingInfoEmail` + `lowStockEmail` + `paymentStatusEmail` + `adminManualPaymentEmail`.
-- **Admin recipient resolution** (`src/lib/store-config.ts` → `getAdminNotificationEmail`): `store_settings.admin_notification_email` (DB, editable from the dashboard) → `ADMIN_EMAIL` env → `siteConfig.adminEmail`. Currently set in DB to the Resend account owner (walid's inbox) so admin notifications deliver.
+- `src/lib/email.ts`: `sendEmail` wrapper via **Brevo REST API** (native `fetch`, no SDK — `resend` package removed) ← works **without keys** (just logs, never breaks the flow). Inline-styled templates: `orderConfirmationEmail` (customer) + `adminNewOrderEmail` (admin) + `orderStatusEmail` (status change) + `orderCancelledEmail` + `shippingInfoEmail` + `lowStockEmail` + `paymentStatusEmail` + `adminManualPaymentEmail`.
+- **Why Brevo:** sends to **any recipient** with just a verified single sender email (click a link — **no custom domain / no DNS needed**), free 300 emails/day. This removed the Resend `onboarding@resend.dev` restriction (owner-inbox-only).
+- **Admin recipient resolution** (`src/lib/store-config.ts` → `getAdminNotificationEmail`): `store_settings.admin_notification_email` (DB, editable from the dashboard) → `ADMIN_EMAIL` env → `siteConfig.adminEmail`.
 - **Integration points:** `createOrder` (after a successful transaction — confirmation email to customer + new-order email to admin) · `updateOrderStatus` (status-change notification to customer) · `updateShipment` (tracking data) · `cancelOrder` (cancellation notification to customer) · `notifyLowStock` (threshold ≤ 5) · payment proof verify/reject.
 - **Rule:** sending via `Promise.allSettled` — email failure **never fails** order creation/update.
-- `.env` needed: `RESEND_API_KEY` (configured locally + Vercel Production) + `EMAIL_FROM` (currently `ADDICTIONX <onboarding@resend.dev>` — the only Resend-authorized sender without a custom domain; **delivers ONLY to the account owner**) + optional `ADMIN_EMAIL`.
-- **⚠️ Domain ownership — do NOT touch `addictionx.com`:** the domain is **NOT owned/controlled by this project** (third-party registrar, registered 2015, nameservers `nsg1/nsg2.namebrightdns.com` under external control). **Never** switch its nameservers, never modify/delete its DNS records, never transfer or buy it. Adding it to the Vercel project config ≠ ownership. Any Resend DNS records for it must be created only in a DNS provider we actually control, and only with authorization.
-- **Consequence:** sending to **arbitrary customer addresses (order confirmations, etc.) is currently blocked** (Resend returns `403 validation_error` for non-owner recipients on `onboarding@resend.dev`). Admin-facing emails reach the owner's inbox today. To send to customers, a **domain we own** must be verified at resend.com/domains, then `EMAIL_FROM` updated accordingly.
+- `.env` needed: `BREVO_API_KEY` + `EMAIL_FROM` (must be the **Brevo-verified sender**, format `"ADDICTIONX <email>"`).
+- **⚠️ Domain ownership — do NOT touch `addictionx.com`:** the domain is **NOT owned/controlled by this project** (third-party registrar, registered 2015, nameservers `nsg1/nsg2.namebrightdns.com` under external control). **Never** switch its nameservers, never modify/delete its DNS records, never transfer or buy it. Adding it to the Vercel project config ≠ ownership.
 
 ### 20. Google sign-in (OAuth)
 
@@ -665,7 +665,7 @@ src/
 - Order cancellation (customer)
 - Low-stock alerts (admin, threshold: 5 units)
 - Payment verification confirmations
-- Admin notifications deliver to the **Resend account owner** via `onboarding@resend.dev` (DB setting `admin_notification_email` = owner inbox). Sending to arbitrary customers is **blocked** until a domain **we own** is verified in Resend — `addictionx.com` is **third-party, NOT ours**, never touch its DNS.
+- Sends to **any recipient** (customers + admin) via Brevo — free, no custom domain needed (verified single sender only). ⚠️ `addictionx.com` is **third-party, NOT ours** — never touch its DNS.
 
 **Visual Experience (Cinematic Dark Design):**
 
@@ -710,7 +710,7 @@ src/
 
 ### 🚧 Pending (Requires Walid's Input)
 
-1. **Customer-facing emails need a domain we OWN** — `RESEND_API_KEY` + `EMAIL_FROM` (owner inbox delivery working) are configured. Admin notifications deliver to the Resend account owner. To send order confirmations etc. to **customers**, a **domain actually owned/controlled by us** must be verified at resend.com/domains and `EMAIL_FROM` updated. ⚠️ `addictionx.com` is **third-party (not ours)** — **never** change its nameservers/DNS records. Resend DNS records must be added only in a DNS provider we control.
+1. **Brevo sender verification (final email step)** — code migrated from Resend to Brevo. Remaining: walid creates the free Brevo account, verifies a sender email, provides `BREVO_API_KEY` + updates `EMAIL_FROM` to the verified sender → deploy → test. No custom domain needed. ⚠️ `addictionx.com` is **third-party (not ours)** — **never** change its nameservers/DNS records.
 2. **Real product images** — currently seeded with placeholder; need per-product uploads
 3. **Payment gateway integration** — Card/Wallet methods are UI-only placeholders (no actual processing)
 
@@ -809,7 +809,7 @@ src/
 
 ### Still pending from walid (external data)
 
-- [x] `RESEND_API_KEY` provided by walid (configured). ⚠️ **`addictionx.com` is NOT owned by the project** (third-party registrar/control) — it was only attached to the Vercel project as a domain config; never change its nameservers/DNS. Admin emails deliver to the Resend account owner; customer emails need a domain we actually own verified in Resend.
+- [x] Email provider: migrated from Resend to **Brevo** (no custom domain needed). Pending: walid creates the Brevo account, verifies a sender, provides `BREVO_API_KEY` + `EMAIL_FROM`. ⚠️ **`addictionx.com` is NOT owned by the project** (third-party registrar/control) — it was only attached to the Vercel project as a domain config; never change its nameservers/DNS.
 - [x] `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` (Google OAuth client — resolved: client_id was 73 chars on Vercel, now the correct 72-char one; sign-in verified end-to-end).
 - Cloudinary (the 3rd) **canceled** — not important per walid. Images will be managed from the admin dashboard itself.
 
