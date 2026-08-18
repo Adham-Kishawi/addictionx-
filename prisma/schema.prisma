@@ -2,7 +2,11 @@
 // Rule of thumb: all amounts are Int in piasters (100 piasters = 1 EGP). Never Float.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+  // Cloudflare Workers cannot ship Prisma's native Rust query engine. Queries
+  // run through the JavaScript `pg` driver and Hyperdrive instead.
+  engineType      = "client"
 }
 
 datasource db {
@@ -198,6 +202,9 @@ model UploadedImage {
   // Private images (e.g. customer avatars) are only served to their owner.
   isPrivate Boolean  @default(false)
   ownerId   String?
+  // A SHA-256 digest of a one-time, high-entropy URL capability. It is used
+  // only for guest payment receipts, which have no authenticated owner.
+  guestAccessTokenHash String? @unique
   createdAt DateTime @default(now())
 
   @@map("uploaded_images")
@@ -300,6 +307,8 @@ enum OrderStatus {
 enum PaymentMethod {
   CASH_ON_DELIVERY
   CARD
+  /// Deprecated: retained solely to read historical records whose provider is unknown.
+  WALLET
   INSTAPAY
   VODAFONE_CASH
 }

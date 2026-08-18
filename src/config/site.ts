@@ -1,10 +1,10 @@
 export const siteConfig = {
   name: "ADDICTIONX",
   nameAr: "أديكشن إكس",
-  tagline: "Feel the Rush",
-  taglineAr: "عِش الإحساس",
+  tagline: "A Scent of Your Own",
+  taglineAr: "عطر يشبهك",
   description: "متجر عطور فاخرة — عطور تُشعل الحواس بتجربة تسوق سينمائية.",
-  url: "https://addictionx.com",
+  url: "https://addictionx.store",
   locale: "ar-EG",
   lang: "ar",
   dir: "rtl" as const,

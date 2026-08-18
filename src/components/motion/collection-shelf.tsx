@@ -183,7 +183,7 @@ export function CollectionShelf({
     >
       {/* L0 — bottle-tinted glow drifting behind the deck */}
       <motion.div
-        key={activeCard.key}
+        key={`glow-${activeCard.key}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -202,7 +202,7 @@ export function CollectionShelf({
           English in Playfair + Arabic in Alexandria, both tinted by the
           bottle's color, hidden behind the deck and peeking around it */}
       <motion.div
-        key={activeCard.key}
+        key={`label-${activeCard.key}`}
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6 }}

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
+import { createHash, randomBytes } from "node:crypto";
 import { getAdminNotificationEmail } from "@/lib/store-config";
 import {
   orderConfirmationEmail,
@@ -87,6 +88,7 @@ export type CreateOrderResult =
       orderId: string;
       orderNumber: string;
       discount: number;
+      paymentProofUrl?: string;
       duplicate?: boolean;
     }
   | {
@@ -264,6 +266,13 @@ export async function createOrder(
     const regName = nameFor(locale, regionNameAr, regionNameEn);
 
     let order: Awaited<ReturnType<typeof prisma.order.create>> | null = null;
+    // Guests cannot authenticate as an UploadedImage owner. Generate a
+    // capability before the transaction and retain only its digest in the DB.
+    const guestReceiptToken =
+      !userId && receiptData
+        ? Buffer.from(randomBytes(32)).toString("base64url")
+        : null;
+    let paymentProofUrl: string | undefined;
 
     try {
       order = await prisma.$transaction(async (tx) => {
@@ -360,14 +369,21 @@ export async function createOrder(
               mimeType,
               isPrivate: true,
               ownerId: userId,
+              guestAccessTokenHash: guestReceiptToken
+                ? createHash("sha256").update(guestReceiptToken).digest("hex")
+                : null,
             },
           });
+
+          paymentProofUrl = `/api/uploads/${uploadedImage.id}${
+            guestReceiptToken ? `?accessToken=${guestReceiptToken}` : ""
+          }`;
 
           // Create PaymentProof record
           await tx.paymentProof.create({
             data: {
               orderId: created.id,
-              receiptUrl: `/api/uploads/${uploadedImage.id}`,
+              receiptUrl: paymentProofUrl,
               transactionRef: transactionRef || null,
               paymentMethod,
               status: "PENDING",
@@ -414,6 +430,7 @@ export async function createOrder(
         qty: l.quantity,
         priceQirsh: l.unitPrice,
       })),
+      paymentProofUrl,
     };
     // Notifications never fail the order — they are sent after successful creation.
     // The confirmation always goes to the customer's email (captured at checkout
@@ -460,6 +477,7 @@ export async function createOrder(
       orderId: order.id,
       orderNumber: order.orderNumber,
       discount,
+      paymentProofUrl,
     };
   } catch (err) {
     if (err instanceof Error && err.message === "STOCK") {

@@ -21,7 +21,14 @@ export default async function StoreLayout({
 }) {
   const { lang } = await params;
   const locale: Locale = isLocale(lang) ? lang : defaultLocale;
-  const session = await auth();
+  // Authentication must not take down the public storefront if an optional
+  // identity provider is unavailable. Protected routes still enforce auth.
+  let session = null;
+  try {
+    session = await auth();
+  } catch (error) {
+    console.error("[auth] storefront session lookup failed", error);
+  }
 
   return (
     /* isolate = stacking context: the fixed DepthBackdrop (-z-10) stays

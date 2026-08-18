@@ -69,12 +69,12 @@ export function ImageUploader({
         body: fd,
         credentials: "same-origin",
       });
-      const data = await res.json();
-      if (!res.ok || !data?.url) {
+      const data = (await res.json()) as { url?: unknown };
+      if (!res.ok || typeof data.url !== "string") {
         setError(dict.admin.uploadError);
         return;
       }
-      onChange(data.url as string);
+      onChange(data.url);
     } catch {
       setError(dict.admin.uploadError);
     } finally {

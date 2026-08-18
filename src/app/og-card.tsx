@@ -1,42 +1,12 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-
 // Shared Open Graph card — brand identity in a 1200×630 frame (ADDICTIONX:
 // deep black + neon red + metallic + the Heartbeat line signature).
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 
-// Static WOFFs (satori-safe) — Alexandria wght 400/700 + Playfair Display wght 700.
-const playfair = await readFile(
-  join(process.cwd(), "assets/fonts/playfair-latin-700.woff"),
-);
-const alexandria400 = await readFile(
-  join(process.cwd(), "assets/fonts/alexandria-latin-400.woff"),
-);
-const alexandria700 = await readFile(
-  join(process.cwd(), "assets/fonts/alexandria-latin-700.woff"),
-);
-
-export const ogFonts = [
-  {
-    name: "Playfair",
-    data: playfair,
-    weight: 700 as const,
-    style: "normal" as const,
-  },
-  {
-    name: "Alexandria",
-    data: alexandria400,
-    weight: 400 as const,
-    style: "normal" as const,
-  },
-  {
-    name: "Alexandria",
-    data: alexandria700,
-    weight: 700 as const,
-    style: "normal" as const,
-  },
-];
+// Open Graph routes run inside the Worker. Runtime filesystem access is not
+// available there, so do not load local WOFF files with `node:fs`.
+// Satori falls back to its built-in fonts, keeping social cards functional.
+export const ogFonts = [];
 
 export function ogCard({
   eyebrow,

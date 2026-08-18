@@ -3,9 +3,9 @@
 // covers and the collections hub — anywhere a collection's "mood" is shown.
 
 export const COLLECTION_BACKDROPS: Record<string, string> = {
-  rush: "/collections/rush.jpg",
-  noir: "/collections/noir.jpg",
-  gold: "/collections/gold.jpg",
+  rush: "/collections/rush.webp",
+  noir: "/collections/noir.webp",
+  gold: "/collections/gold.webp",
 };
 
 export function collectionBackdrop(slug: string): string | undefined {
@@ -16,9 +16,9 @@ export function collectionBackdrop(slug: string): string | undefined {
 // black background keyed out to transparency). Object-contain inside the glass
 // cards; the reflection uses the same asset flipped.
 export const SHELF_BOTTLES: Record<string, string> = {
-  rush: "/shelf/rush.png",
-  noir: "/shelf/noir.png",
-  gold: "/shelf/gold.png",
+  rush: "/shelf/rush.webp",
+  noir: "/shelf/noir.webp",
+  gold: "/shelf/gold.webp",
 };
 
 // Dominant color sampled from each generated bottle — drives the shelf's

@@ -108,6 +108,15 @@
 }
 
 @layer base {
+  html,
+  body {
+    /* Full-bleed decorative layers (marquees and blurred ambient orbs) must
+       never create a horizontal scroll area. `clip` preserves vertical
+       scrolling while preventing transformed animation content from widening
+       the document. */
+    overflow-x: clip;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }

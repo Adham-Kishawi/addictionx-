@@ -1,12 +1,13 @@
-// Email notification layer via Brevo (free transactional email, no custom
-// domain required — a single sender email is verified by clicking a link).
-// Works without keys: if BREVO_API_KEY is missing (or the request fails) it
+// Email notification layer via Resend. The sender domain/address must be
+// verified in Resend before email can be delivered.
+// Works without keys: if RESEND_API_KEY is missing (or the request fails) it
 // only logs and never breaks the order flow — the notification is optional.
 // Templates are bilingual: English by default, Arabic when the user's locale is ar.
 import { escapeHtml } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/dictionary";
+import { siteConfig } from "@/config/site";
 
-const API_KEY = process.env.BREVO_API_KEY;
+const API_KEY = process.env.RESEND_API_KEY;
 const SITE_NAME = "ADDICTIONX";
 
 function senderFrom(from: string | undefined): { name: string; email: string } {
@@ -23,14 +24,14 @@ type MailPayload = {
 
 export async function sendEmail(payload: MailPayload): Promise<boolean> {
   if (!API_KEY || !payload.to) {
-    console.info("[email] skipped (no BREVO_API_KEY or no recipient)", {
+    console.info("[email] skipped (no RESEND_API_KEY or no recipient)", {
       to: payload.to,
       subject: payload.subject,
     });
     return false;
   }
   // The sender is a store setting (changeable from the dashboard) — resolve it
-  // per call so a switch applies without redeploying. Must be verified in Brevo.
+  // per call so a switch applies without redeploying. Must be verified in Resend.
   const { getEmailFrom } = await import("@/lib/store-config");
   const sender = senderFrom(await getEmailFrom());
   if (!sender.email) {
@@ -39,22 +40,21 @@ export async function sendEmail(payload: MailPayload): Promise<boolean> {
   }
   const to = Array.isArray(payload.to) ? payload.to : [payload.to];
   try {
-    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        accept: "application/json",
         "content-type": "application/json",
-        "api-key": API_KEY,
+        Authorization: `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        sender,
-        to: to.map((email) => ({ email })),
+        from: `${sender.name} <${sender.email}>`,
+        to,
         subject: payload.subject,
-        htmlContent: payload.html,
+        html: payload.html,
       }),
     });
     if (!res.ok) {
-      console.error("[email] brevo error", res.status, await res.text());
+      console.error("[email] resend error", res.status, await res.text());
       return false;
     }
     return true;
@@ -72,7 +72,7 @@ const t = {
   en: {
     dir: "ltr" as const,
     lang: "en",
-    tagline: "Feel the Rush",
+    tagline: "A Scent of Your Own",
     auto: "This is an automated message — you can ignore it if you didn't expect it.",
     product: "Product",
     total: "Total",
@@ -82,7 +82,7 @@ const t = {
   ar: {
     dir: "rtl" as const,
     lang: "ar",
-    tagline: "عِش الإحساس",
+    tagline: "عطر يشبهك",
     auto: "هذا البريد تلقائي — لو لم تطلب هذا الإشعار يمكنك تجاهله.",
     product: "المنتج",
     total: "الإجمالي",
@@ -135,6 +135,7 @@ type OrderMailInfo = {
   orderNumber: string;
   totalQirsh: number;
   items: { name: string; qty: number; priceQirsh: number }[];
+  paymentProofUrl?: string;
 };
 
 function itemsTable(
@@ -183,6 +184,7 @@ export function orderConfirmationEmail(locale: Locale) {
              : "We received your order and are preparing it now. Order number:"
          } <b style="color:#f5c518;">${info.orderNumber}</b></p>
          ${itemsTable(locale, info.items, info.totalQirsh)}
+         ${info.paymentProofUrl ? `<p><a href="${escapeHtml(new URL(info.paymentProofUrl, siteConfig.url).toString())}" style="color:#f5c518;">${isAr ? "عرض إيصال الدفع" : "View payment receipt"}</a></p>` : ""}
          <p style="font-size:12px;color:#8a8a8a;">${
            isAr
              ? "سنتواصل معك هاتفيًا لتأكيد الطلب وترتيب التوصيل."

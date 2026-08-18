@@ -42,6 +42,8 @@ export default async function AccountOrderDetailPage({
       ? dict.checkout.cashOnDelivery
       : order.paymentMethod === "CARD"
         ? dict.checkout.card
+        : order.paymentMethod === "WALLET"
+          ? "Legacy Wallet — provider unspecified"
         : order.paymentMethod;
 
   return (

@@ -128,9 +128,9 @@ export function ProductForm({
         body: fd,
         credentials: "same-origin",
       });
-      const data = await res.json();
-      if (!res.ok || !data?.url) return null;
-      return data.url as string;
+      const data = (await res.json()) as { url?: unknown };
+      if (!res.ok || typeof data.url !== "string") return null;
+      return data.url;
     } catch {
       return null;
     }

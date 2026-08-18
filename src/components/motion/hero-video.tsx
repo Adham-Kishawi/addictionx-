@@ -20,6 +20,9 @@ export function HeroVideo() {
       poster="/hero/frame-01.png"
       fadeOnScroll
       interactive
+      // The video layer is pointer-events-none, so the steering listens on
+      // the hero stage itself — local handlers, no global mousemove.
+      surfaceSelector="#hero-stage"
     />
   );
 }
