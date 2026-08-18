@@ -697,6 +697,25 @@ export const dictionary = {
       newsletterEmpty: "لا يوجد مشتركون بعد",
       newsletterActive: "نشط",
       newsletterInactive: "مغلق",
+      newsletterCampaign: "إرسال نشرة جماعية",
+      newsletterCampaignHint:
+        "ارسل رسالة بريد إلكتروني لجميع المشتركين النشطين ({count} مشترك).",
+      newsletterCampaignSubject: "موضوع الرسالة",
+      newsletterCampaignSubjectPlaceholder: "مثال: عروض نهاية الأسبوع 🔥",
+      newsletterCampaignBody: "نص الرسالة",
+      newsletterCampaignBodyPlaceholder:
+        "اكتب محتوى الرسالة هنا...\n\nيمكنك استخدام سطور متعددة.",
+      newsletterCampaignSend: "إرسال الآن",
+      newsletterCampaignRecipients: "سيصل إلى {count} مشترك",
+      newsletterCampaignConfirm:
+        "هل أنت متأكد من إرسال هذه الرسالة إلى {count} مشترك؟",
+      newsletterCampaignSuccess:
+        "تم الإرسال بنجاح! وصلت الرسالة إلى {sent}/{total} مشترك.",
+      newsletterCampaignErrorValidation:
+        "خطأ في البيانات — تأكد من الموضوع والنص.",
+      newsletterCampaignErrorRateLimit:
+        "تم حظر الإرسال مؤقتًا — حاول بعد قليل.",
+      newsletterCampaignErrorGeneric: "حدث خطأ أثناء الإرسال — حاول مرة أخرى.",
       permissions: "الصلاحيات",
       noAccess: "ليست لديك صلاحية الوصول لهذه الصفحة",
       backToDashboard: "العودة للوحة التحكم",
@@ -1517,6 +1536,26 @@ export const dictionary = {
       newsletterEmpty: "No subscribers yet",
       newsletterActive: "Active",
       newsletterInactive: "Inactive",
+      newsletterCampaign: "Send Newsletter Campaign",
+      newsletterCampaignHint:
+        "Send an email broadcast to all active subscribers ({count} subscribers).",
+      newsletterCampaignSubject: "Subject",
+      newsletterCampaignSubjectPlaceholder: "e.g. Weekend Deals 🔥",
+      newsletterCampaignBody: "Message body",
+      newsletterCampaignBodyPlaceholder:
+        "Write your message here...\n\nYou can use multiple lines.",
+      newsletterCampaignSend: "Send Now",
+      newsletterCampaignRecipients: "Will reach {count} subscribers",
+      newsletterCampaignConfirm:
+        "Are you sure you want to send this message to {count} subscribers?",
+      newsletterCampaignSuccess:
+        "Sent successfully! Delivered to {sent}/{total} subscribers.",
+      newsletterCampaignErrorValidation:
+        "Invalid input — check the subject and body.",
+      newsletterCampaignErrorRateLimit:
+        "Sending temporarily blocked — try again later.",
+      newsletterCampaignErrorGeneric:
+        "An error occurred while sending — please try again.",
       permissions: "Permissions",
       noAccess: "You don't have permission to access this page",
       backToDashboard: "Back to dashboard",

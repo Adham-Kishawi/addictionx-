@@ -387,24 +387,32 @@ export function CheckoutForm({
         }
       }
 
-      const result = await createOrder({
-        locale,
-        items,
-        name: data.name,
-        phone: data.phone,
-        email: data.email,
-        governorateId: data.governorateId,
-        regionId: data.regionId,
-        address: data.address,
-        paymentMethod,
-        idempotencyKey:
-          typeof crypto !== "undefined" && "randomUUID" in crypto
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        couponCode: coupon?.code,
-        receiptData: receiptDataUrl,
-        transactionRef: transactionRef || undefined,
-      });
+      let result: Awaited<ReturnType<typeof createOrder>>;
+      try {
+        result = await createOrder({
+          locale,
+          items,
+          name: data.name,
+          phone: data.phone,
+          email: data.email,
+          governorateId: data.governorateId,
+          regionId: data.regionId,
+          address: data.address,
+          paymentMethod,
+          idempotencyKey:
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+              ? crypto.randomUUID()
+              : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          couponCode: coupon?.code,
+          receiptData: receiptDataUrl,
+          transactionRef: transactionRef || undefined,
+        });
+      } catch {
+        // A transport-level failure (e.g. oversized payload) must never crash
+        // the whole checkout into the error page — show an inline message instead.
+        setError("GENERIC");
+        return;
+      }
       if (result.ok) {
         // Remember these details for the next checkout (guest autofill) —
         // saves on the device only; a signed-in profile always takes priority.

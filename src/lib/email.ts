@@ -91,7 +91,12 @@ const t = {
   },
 };
 
-function shell(locale: Locale, title: string, body: string): string {
+function shell(
+  locale: Locale,
+  title: string,
+  body: string,
+  extraFooter = "",
+): string {
   const tt = t[locale];
   return `<!doctype html>
 <html dir="${tt.dir}" lang="${tt.lang}">
@@ -109,6 +114,7 @@ function shell(locale: Locale, title: string, body: string): string {
           <tr>
             <td style="padding:28px 30px;color:#e8e8e8;font-size:15px;line-height:1.8;">${body}</td>
           </tr>
+          ${extraFooter}
           <tr>
             <td style="padding:20px 30px;border-top:1px solid #262626;font-size:11px;color:#666;">
               ADDICTIONX — ${tt.tagline}<br />
@@ -492,6 +498,34 @@ export function orderStatusEmail(locale: Locale) {
              ? "لمزيد من التفاصيل، تفضل بزيارة صفحة طلباتك في المتجر."
              : "For more details, visit your orders page."
          }</p>`,
+      );
+    },
+  };
+}
+
+// Newsletter campaign — admin-authored broadcast to all active subscribers.
+export function newsletterCampaignEmail(locale: Locale) {
+  const isAr = locale === "ar";
+  return {
+    subject(campaignSubject: string) {
+      return `${campaignSubject} — ${SITE_NAME}`;
+    },
+    html(body: string, unsubscribeUrl?: string) {
+      const footer = unsubscribeUrl
+        ? `<div style="padding:16px 30px;border-top:1px solid #262626;font-size:12px;color:#666;text-align:center;">
+            <a href="${unsubscribeUrl}" style="color:#8a8a8a;text-decoration:underline;">
+              ${isAr ? "إلغاء الاشتراك من النشرة البريدية" : "Unsubscribe from this newsletter"}
+            </a>
+          </div>`
+        : "";
+      return shell(
+        locale,
+        isAr ? "النشرة البريدية" : "Newsletter",
+        `        <div style="font-size:18px;font-weight:bold;color:#f5c518;margin-bottom:16px;">${
+          isAr ? "رسالة من ADDICTIONX" : "Message from ADDICTIONX"
+        }</div>
+         <div style="white-space:pre-wrap;line-height:1.8;">${body}</div>`,
+        footer,
       );
     },
   };
