@@ -15,19 +15,28 @@ const credentialsSchema = z.object({
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Cloudflare serves the app on both the custom domain and its Workers
+  // preview domain. Auth.js otherwise rejects the host before a session can
+  // be read, including on public storefront routes.
+  trustHost: true,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
   },
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID ?? "",
-      clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
-      // Deliberately NOT enabling allowDangerousEmailAccountLinking: without
-      // email verification it would let an attacker link a Google account to a
-      // victim's existing credentials account (account takeover).
-    }),
+    // Google is optional for production. Initializing its provider without
+    // credentials makes Auth.js reject every request, including public pages.
+    ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
+      ? [
+          Google({
+            clientId: process.env.AUTH_GOOGLE_ID,
+            clientSecret: process.env.AUTH_GOOGLE_SECRET,
+            // Deliberately NOT enabling allowDangerousEmailAccountLinking:
+            // without email verification it could permit account takeover.
+          }),
+        ]
+      : []),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },

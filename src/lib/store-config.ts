@@ -173,7 +173,7 @@ export async function getAdminNotificationEmail(): Promise<string> {
 
 // ============================================================
 // Outgoing email sender — changeable from the dashboard. Must be a
-// sender verified on the Brevo account (or Brevo rejects the mail).
+// sender verified in Resend (or Resend rejects the mail).
 // Falls back to the EMAIL_FROM env var, then the site contact email.
 // ============================================================
 

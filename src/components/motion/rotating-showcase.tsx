@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
@@ -49,7 +49,7 @@ export function RotatingShowcase({
   collectionNames?: Record<string, { nameAr: string; nameEn: string }>;
 }) {
   const ref = useRef<HTMLElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [videoFailed, setVideoFailed] = useState(false);
   const reduce = useReducedMotion();
   const dict = getDictionary(locale);
   const isAr = locale === "ar";
@@ -62,71 +62,6 @@ export function RotatingShowcase({
     target: ref as React.RefObject<HTMLElement>,
     offset: ["start end", "end end"],
   });
-
-  // GSAP ScrollTrigger — scrub the VIDEO's currentTime with the wheel.
-  useEffect(() => {
-    const section = ref.current;
-    const video = videoRef.current;
-    if (!section || !video) return;
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    let killed = false;
-    let st: { kill: () => void } | undefined;
-
-    const seekTo = (time: number) => {
-      // Guard against setting currentTime mid-seek (throws in some
-      // browsers); the browser presents the decoded frame for real.
-      if (video.readyState >= 1 && !video.seeking) {
-        video.currentTime = time;
-      }
-    };
-
-    // Reduced motion → park on the final (fully assembled) frame.
-    if (reduceMotion) {
-      video.addEventListener(
-        "loadedmetadata",
-        () => seekTo(video.duration - 0.02),
-        { once: true },
-      );
-      return;
-    }
-
-    (async () => {
-      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-        import("gsap"),
-        import("gsap/ScrollTrigger"),
-      ]);
-      if (killed) return;
-      gsap.registerPlugin(ScrollTrigger);
-
-      st = ScrollTrigger.create({
-        trigger: section,
-        start: "top bottom",
-        // The assembly COMPLETES the moment the section is fully in view
-        // (its bottom hits the viewport bottom) — then the assembled
-        // product rides up out of view (wave 31j — walid: «مع انتهاء
-        // السكشن يكون كل الانيميشن خلص»).
-        end: "bottom bottom",
-        // Catch-up glide after the wheel is released (wave 31k).
-        scrub: 1.25,
-        onUpdate: (self) => {
-          // easeInOut reshapes the scroll → the video starts gently,
-          // flows mid-flight and settles softly at the assembled frame.
-          const t = easeInOut(self.progress);
-          if (video.readyState >= 1 && !video.seeking) {
-            video.currentTime = t * video.duration;
-          }
-        },
-      });
-    })();
-
-    return () => {
-      killed = true;
-      st?.kill();
-    };
-  }, []);
 
   // SHOP NOW fades in as the product completes — driven by the SAME
   // eased progress as the video so they stay in sync.
@@ -146,18 +81,31 @@ export function RotatingShowcase({
       className="relative h-[95vh] w-full overflow-hidden bg-background"
       aria-label={name}
     >
-      {/* REAL video element scrubbed by GSAP — full width (object-cover),
-          no frame-swapping (wave 31l). muted + playsInline for safe
-          programmatic seeking on mobile */}
+      {/* Native playback is more reliable than scroll-seeking a large video,
+          especially on mobile, and avoids loading GSAP for this section. */}
       <video
-        ref={videoRef}
         src={VIDEO_SRC}
         muted
         playsInline
-        preload="auto"
+        autoPlay
+        loop
+        // This component is lazy-mounted below the hero. Loading the entire
+        // 7 MB scrub clip immediately delays the storefront unnecessarily.
+        preload="metadata"
+        poster={product.image}
+        onError={() => setVideoFailed(true)}
         aria-label={name}
-        className="absolute inset-0 h-full w-full select-none object-cover"
+        className={`absolute inset-0 h-full w-full select-none object-cover ${
+          videoFailed ? "hidden" : ""
+        }`}
       />
+      {videoFailed ? (
+        <img
+          src={product.image}
+          alt={name}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : null}
 
       {/* Soft 3-stop edge veils — solid page-bg at the border → translucent
           mid → transparent: the video melts cleanly out of the section (no

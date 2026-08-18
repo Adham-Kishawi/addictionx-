@@ -18,7 +18,19 @@ import Lenis from "lenis";
 //   · framer-motion useScroll — reads real scroll, so it
 //     follows lenis automatically
 // Skipped entirely under prefers-reduced-motion.
+//
+// Wave 42 — the rAF is DEMAND-DRIVEN. It used to tick 60×/s for
+// the whole session, competing for the same frames as the hero's
+// video scrubbing even when the page was not moving at all. Now
+// the loop runs while the scroll is actually animating, parks
+// itself `IDLE_STOP_MS` after it settles, and is woken by any
+// input that can start a scroll (wheel / touch / key / pointer /
+// native scroll / resize). A hidden tab never ticks.
+// Scrolling behaviour itself is untouched: Lenis still owns the
+// easing and still writes the native scroll position.
 // ============================================================
+
+const IDLE_STOP_MS = 300;
 
 export function SmoothScroll() {
   useEffect(() => {
@@ -46,24 +58,64 @@ export function SmoothScroll() {
       stRef = ScrollTrigger;
     };
 
-    const onLenisScroll = () => {
-      stRef?.update();
-    };
-
-    lenis.on("scroll", onLenisScroll);
-
-    // rAF loop is lenis's own engine
     let raf = 0;
+    let lastActiveAt = 0;
+
     const tick = (time: number) => {
       lenis.raf(time);
+      if (lenis.isScrolling) lastActiveAt = time;
+      if (document.hidden || time - lastActiveAt > IDLE_STOP_MS) {
+        raf = 0; // settled — release the frame budget
+        return;
+      }
       raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
 
+    const wake = () => {
+      lastActiveAt = performance.now();
+      if (raf || document.hidden) return;
+      raf = requestAnimationFrame(tick);
+    };
+
+    const onLenisScroll = () => {
+      stRef?.update();
+      wake();
+    };
+    lenis.on("scroll", onLenisScroll);
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (raf) cancelAnimationFrame(raf);
+        raf = 0;
+      } else {
+        wake();
+      }
+    };
+
+    // Anything that can start (or continue) a scroll re-arms the loop.
+    const wakeEvents: Array<[EventTarget, string]> = [
+      [window, "wheel"],
+      [window, "touchstart"],
+      [window, "touchmove"],
+      [window, "keydown"],
+      [window, "pointerdown"],
+      [window, "scroll"],
+      [window, "resize"],
+    ];
+    for (const [target, type] of wakeEvents) {
+      target.addEventListener(type, wake, { passive: true });
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+
+    wake();
     void syncGsap();
 
     return () => {
-      cancelAnimationFrame(raf);
+      if (raf) cancelAnimationFrame(raf);
+      for (const [target, type] of wakeEvents) {
+        target.removeEventListener(type, wake);
+      }
+      document.removeEventListener("visibilitychange", onVisibility);
       lenis.destroy();
     };
   }, []);

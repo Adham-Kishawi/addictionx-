@@ -18,7 +18,7 @@ export default async function Image({
   const product = await getProductBySlug(slug);
   if (!product) {
     return new ImageResponse(
-      ogCard({ eyebrow: "ADDICTIONX", title: "Feel the Rush" }),
+      ogCard({ eyebrow: "ADDICTIONX", title: "A Scent of Your Own" }),
       { ...size, fonts: ogFonts },
     );
   }

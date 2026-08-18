@@ -25,27 +25,31 @@ export type PaymentSettings = {
 
 // Only active governorates and their active regions, sorted for display.
 export async function getShippingZones(): Promise<GovernorateDto[]> {
-  const rows = await prisma.governorate.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
-    include: {
-      regions: {
-        where: { isActive: true },
-        orderBy: { sortOrder: "asc" },
+  try {
+    const rows = await prisma.governorate.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        regions: {
+          where: { isActive: true },
+          orderBy: { sortOrder: "asc" },
+        },
       },
-    },
-  });
-  return rows.map((g) => ({
-    id: g.id,
-    nameAr: g.nameAr,
-    nameEn: g.nameEn,
-    regions: g.regions.map((r) => ({
-      id: r.id,
-      nameAr: r.nameAr,
-      nameEn: r.nameEn,
-      shippingFee: r.shippingFee,
-    })),
-  }));
+    });
+    return rows.map((g) => ({
+      id: g.id,
+      nameAr: g.nameAr,
+      nameEn: g.nameEn,
+      regions: g.regions.map((r) => ({
+        id: r.id,
+        nameAr: r.nameAr,
+        nameEn: r.nameEn,
+        shippingFee: r.shippingFee,
+      })),
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export type GovernorateAdminDto = {

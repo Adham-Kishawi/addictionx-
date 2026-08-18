@@ -34,7 +34,9 @@ export function CartDrawer({ locale }: { locale: Locale }) {
 
   useEffect(() => {
     fetch("/api/shipping-config")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) =>
+        r.ok ? (r.json() as Promise<ShippingConfig>) : Promise.resolve(null),
+      )
       .then((data: ShippingConfig | null) => {
         if (data) setShippingConfig(data);
       })

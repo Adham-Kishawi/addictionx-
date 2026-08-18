@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { defaultLocale, isLocale } from "@/lib/i18n/dictionary";
 
-export function proxy(request: NextRequest) {
+// Keep the legacy middleware convention because Next.js 16 `proxy.ts` always
+// uses the Node.js runtime, which Cloudflare Workers cannot execute.
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Ignore static files (images + video) and the API

@@ -5,7 +5,7 @@ export const defaultLocale: Locale = "en";
 export const dictionary = {
   ar: {
     meta: {
-      title: "ADDICTIONX | Feel the Rush",
+      title: "ADDICTIONX | A Scent of Your Own",
       description:
         "متجر عطور فاخرة — عطور تُشعل الحواس بتجربة تسوق سينمائية تخاطب كل حواسك.",
     },
@@ -28,7 +28,7 @@ export const dictionary = {
       admin: "لوحة التحكم",
     },
     hero: {
-      badge: "Feel the Rush",
+      badge: "A Scent of Your Own",
       title: "ADDICTIONX",
       subtitle: "عطور تُشعل الحواس — تجربة تسوق سينمائية تخاطب كل حواسك.",
       ctaPrimary: "تسوّق الآن",
@@ -62,7 +62,7 @@ export const dictionary = {
         "لأن العطر ليس مجرد رائحة — إنه الحالة التي تخلقها. في ADDICTIONX نختار كل عطر ليروي قصة ويترك أثرًا.",
       signatureEyebrow: "التوقيع",
       signatureCta: "اكتشف التوقيع",
-      ctaTitle: "جاهز تشعر بالإحساس؟",
+      ctaTitle: "جاهز لعطر يشبهك؟",
       ctaText: "انضم لآلاف الذين اختاروا أن يعيشوا اللحظة.",
       ctaButton: "ابدأ التسوق",
       viewAll: "عرض الكل",
@@ -71,7 +71,7 @@ export const dictionary = {
       statsRating: "أعلى تقييم",
       ticker: [
         "ADDICTIONX",
-        "Feel the Rush",
+        "A Scent of Your Own",
         "صنع في مصر",
         "عبير يدوم طوال اليوم",
         "توقيعك الخاص",
@@ -551,7 +551,7 @@ export const dictionary = {
       adminNotificationEmailSaved: "تم حفظ بريد الإشعارات",
       emailSender: "البريد المرسل (Sender)",
       emailSenderHint:
-        "الإيميل الذي يظهر كمرسل للعملاء — يجب أن يكون مُفعلًا كمرسل معتمد في Brevo. الصيغة: ADDICTIONX <email@gmail.com>",
+        "الإيميل الذي يظهر كمرسل للعملاء — يجب أن يكون نطاقه أو عنوانه موثّقًا في Resend. الصيغة: ADDICTIONX <hello@addictionx.store>",
       paymentSettingsError: "فشل حفظ الإعدادات",
       cancelOrder: "إلغاء الطلب",
       cancelOrderConfirm:
@@ -832,7 +832,7 @@ export const dictionary = {
   },
   en: {
     meta: {
-      title: "ADDICTIONX | Feel the Rush",
+      title: "ADDICTIONX | A Scent of Your Own",
       description:
         "Premium fragrance store — scents that ignite your senses with a cinematic shopping experience.",
     },
@@ -855,7 +855,7 @@ export const dictionary = {
       admin: "Dashboard",
     },
     hero: {
-      badge: "Feel the Rush",
+      badge: "A Scent of Your Own",
       title: "ADDICTIONX",
       subtitle:
         "Scents that ignite your senses — a cinematic shopping experience like no other.",
@@ -890,7 +890,7 @@ export const dictionary = {
         "Because a fragrance is more than a scent — it's the state it creates. At ADDICTIONX we choose every scent to tell a story and leave a mark.",
       signatureEyebrow: "The Signature",
       signatureCta: "Discover the Signature",
-      ctaTitle: "Ready to Feel the Rush?",
+      ctaTitle: "Ready for a Scent of Your Own?",
       ctaText: "Join thousands who chose to live the moment.",
       ctaButton: "Start Shopping",
       viewAll: "View All",
@@ -899,7 +899,7 @@ export const dictionary = {
       statsRating: "Top rating",
       ticker: [
         "ADDICTIONX",
-        "Feel the Rush",
+        "A Scent of Your Own",
         "Made in Egypt",
         "Scent that lasts all day",
         "Your own signature",
@@ -1385,7 +1385,7 @@ export const dictionary = {
       adminNotificationEmailSaved: "Notification email saved",
       emailSender: "Sender Email",
       emailSenderHint:
-        "The email shown as the sender to customers — must be a sender verified in Brevo. Format: ADDICTIONX <email@gmail.com>",
+        "The email shown as the sender to customers — its domain or address must be verified in Resend. Format: ADDICTIONX <hello@addictionx.store>",
       paymentSettingsError: "Failed to save settings",
       cancelOrder: "Cancel order",
       cancelOrderConfirm:

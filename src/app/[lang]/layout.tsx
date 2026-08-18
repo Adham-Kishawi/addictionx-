@@ -13,35 +13,23 @@ import {
   defaultLocale,
   type Locale,
 } from "@/lib/i18n/dictionary";
-import { siteUrl } from "@/lib/site-url";
 import "../globals.css";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ lang: string }>;
-}): Promise<Metadata> {
-  const { lang } = await params;
-  const locale: Locale = isLocale(lang) ? lang : defaultLocale;
-  const dict = getDictionary(locale);
-
-  return {
-    metadataBase: new URL(siteUrl),
-    title: {
-      default: dict.meta.title,
-      template: `%s | ${dict.meta.title}`,
-    },
-    description: dict.meta.description,
-    openGraph: {
-      title: dict.meta.title,
-      description: dict.meta.description,
-      siteName: "ADDICTIONX",
-      locale: locale === "ar" ? "ar_EG" : "en_US",
-      type: "website",
-    },
-    robots: { index: true, follow: true },
-  };
-}
+// Keep metadata static at the Worker edge. In this Next/OpenNext combination
+// an async locale metadata function can reject after the route has rendered,
+// causing the storefront error boundary to replace an otherwise valid page.
+export const metadata: Metadata = {
+  title: {
+    default: "ADDICTIONX",
+    template: "%s | ADDICTIONX",
+  },
+  description: "Egyptian youth fragrance brand.",
+  openGraph: {
+    siteName: "ADDICTIONX",
+    type: "website",
+  },
+  robots: { index: true, follow: true },
+};
 
 export const viewport: Viewport = {
   themeColor: "#0a0a0a",

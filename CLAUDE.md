@@ -1139,3 +1139,27 @@ A full site audit was conducted covering UX, security, performance, accessibilit
 **CURRENT STATE:** Site is **production-ready for COD orders only** after addressing the 4 security/scaling items above. Full launch requires payment integration.
 
 ---
+
+## Performance overhaul on Cloudflare (2026-08-18)
+
+After the Vercel→Cloudflare (OpenNext) migration the site was slow: audit measured ~25-30 MB per full homepage visit, almost none of it cacheable. Root causes + fixes (all deployed + verified with DevTools traces):
+
+- **`/_next/image` is a broken pass-through on Cloudflare** — it served original multi-MB files with cache TTL 0 (measured: `w=640&q=75` returned the full 1.7 MB PNG). Cloudflare Image Transformations is NOT enabled on the zone (`/cdn-cgi/image/` → 404, dashboard toggle needed). **Decision:** `images.unoptimized: true` in `next.config.ts` + pre-optimized WebP assets served directly. If transformations get enabled later, switch to a custom loader instead.
+- **Pre-sized WebP assets** — `public/{slider,shelf,collections}/*.webp` generated with ffmpeg (libwebp q80-82; shelf scaled to 768w, collections capped at 1920w). ~15 MB → ~1 MB total. References updated in `(store)/page.tsx` (carouselImages) and `collection-assets.ts`. **Old .png/.jpg originals kept on disk** — DB `HomeSlide.image` rows may still point at them.
+- **`public/_headers` (Workers Assets native)** — `/_next/static/*` = `max-age=31536000, immutable` (was `max-age=0, must-revalidate`: render-blocking CSS revalidated every visit, est. 2.3 s penalty); media folders (`/hero /slider /shelf /collections /uploads /360`) = 30 days + SWR.
+- **Prisma client was created per QUERY** — the Proxy in `src/lib/prisma.ts` called `createPrismaClient()` on every property access → new pg pool + connection each query. Now cached per request in a `WeakMap` keyed on the Cloudflare `ctx`. (Workers forbid cross-request socket reuse, so per-request is the correct granularity.)
+- **`assembly-scrub.mp4` 6.9 MB → 3.16 MB** — re-encoded 960×540 CRF 24, still all-intra (`-g 1`, scrub requirement per wave 31m). Duration/fps unchanged.
+- **Deploy quirk:** `opennextjs-cloudflare deploy` needs `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` set to any syntactically valid Postgres URL (placeholder ok — only used by wrangler's local proxy setup, not production).
+- **Local testing without DB credentials:** `npx wrangler dev --remote --port 8787` runs the worker on Cloudflare's preview infra with the real Hyperdrive binding (`remote = true` on hyperdrive bindings is NOT supported by wrangler 4.123).
+- **Results:** wasted image bytes 12.9 MB → 389 kB; uncacheable assets ~25 MB → ~0; warm TTFB ~424 → ~230-390 ms; render-blocking insight gone. Functional sweep passed (17 routes, add-to-cart, AR/RTL, search, admin auth gate, 404).
+- **Remaining (known, not done):** enable zone Image Transformations (dashboard); `/uploads/prodact.png` still 2 MB and referenced by production DB rows; storefront still `force-dynamic` SSR per request (ISR needs the per-user wishlist bits refactored); ~650 ms forced-reflow during scroll from the motion stack; CLS 0.11 during deep scroll (LazyMount placeholder swap suspected).
+
+### Mobile lightening pass (2026-08-18, same session)
+
+Phone experience was the remaining pain («الصفحة الرئيسية ثقيلة بصريًا على الهاتف»). Measured with 4x CPU + Fast 4G emulation on the live site:
+
+- **Root cause of slow mobile LCP:** the whole `TurntableVideo` root sat at `opacity: 0` until hydration + video start → nothing painted for ~5s on a throttled phone. **Fix:** the poster now renders as a plain server-HTML `<img fetchPriority="high">` UNDER the ready-gated video layer — paints before any JS. Poster converted to `/hero/frame-01.webp` (169 KB → 10 KB). **Result: mobile LCP 5.28 s → 2.02 s** (good, <2.5 s); desktop unchanged (video fades in over the poster).
+- **Touch devices defer the footage:** poster instantly, `play()` after 2.5 s (`pointer: coarse`); Save-Data / 2G never autoplays (poster only). Desktop keeps the 250 ms start.
+- **Blur veil (wave 33) is now `hidden lg:block`** — a full-screen backdrop-filter over playing video was the most expensive GPU layer on phones.
+- **`HeroMelt` returns null ≤1023px** (scroll-driven backdrop-blur over the hero stage).
+- **`.depth-orb` + `.noise-overlay` are `display:none` ≤767px** (globals.css) — continuous full-screen compositing; the static aurora glow stays.

@@ -1200,8 +1200,8 @@ export async function updateAdminNotificationEmail(input: {
 }
 
 // ============================================================
-// Outgoing email sender (Brevo verified) — changeable anytime.
-// Accepts a bare email or "Name <email>"; must be verified in Brevo.
+// Outgoing email sender (Resend verified) — changeable anytime.
+// Accepts a bare email or "Name <email>"; must be verified in Resend.
 // ============================================================
 
 export async function updateEmailFrom(input: { from: string; locale: string }) {

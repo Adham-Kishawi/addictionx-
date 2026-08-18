@@ -213,7 +213,7 @@ export function ProductCarousel({
     : `transform ${ANIM_MS}ms ${EASE}, filter ${ANIM_MS}ms ${EASE}, opacity ${ANIM_MS}ms ${EASE}, left ${ANIM_MS}ms ${EASE}`;
 
   return (
-    <section className="relative overflow-hidden border-y border-border bg-card/40 py-6">
+    <section className="relative overflow-hidden border-y border-border bg-card/40 py-6 [content-visibility:auto] [contain-intrinsic-size:auto_650px]">
       {/* ===== Per-collection identity background (wave 8) =====
             One layer per product, each carrying the collection's glow tint +
             ambient backdrop. Active index crossfades via CSS opacity — the
@@ -277,7 +277,7 @@ export function ProductCarousel({
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          eyebrow="Feel the Rush"
+          eyebrow="A Scent of Your Own"
           title={dict.home.carouselTitle}
           subtitle={dict.home.carouselSubtitle}
         />

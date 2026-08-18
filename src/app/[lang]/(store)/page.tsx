@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedTitle } from "@/components/motion/animated-title";
 import { ParticleField } from "@/components/motion/particle-field";
@@ -74,9 +74,9 @@ export default async function Home({
   // then the old fixed /slider/* icons, then the product image), with captions
   // from the collection's descriptionAr/En.
   const carouselImages: Record<string, string> = {
-    rush: "/slider/rush.png",
-    noir: "/slider/noir.png",
-    gold: "/slider/gold.png",
+    rush: "/slider/rush.webp",
+    noir: "/slider/noir.webp",
+    gold: "/slider/gold.webp",
   };
   const slideMeta = Object.fromEntries(
     collections.map((c) => [
@@ -196,13 +196,6 @@ export default async function Home({
               <div className="flex flex-col items-center gap-6 px-6 pt-20 text-center">
                 {/* Wave 33 — prmpt staggered entrance: 0 / 0.15 / 0.3 / 0.45 / 0.6,
                   each fading up with a soft settle (eye-comfort rhythm) */}
-                <FadeIn delay={0}>
-                  <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-1.5 text-xs tracking-[0.25em] text-red-400 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_4px_24px_rgba(0,0,0,0.45)]">
-                    <Sparkles className="size-3.5" />
-                    {dict.hero.badge}
-                  </span>
-                </FadeIn>
-
                 <AnimatedTitle text={dict.hero.title} />
 
                 <FadeIn delay={0.3}>
@@ -405,7 +398,7 @@ export default async function Home({
             <div className="mb-6 text-center">
               <SectionHeading
                 eyebrow={
-                  homeSections.collectionsEyebrow[locale] || "Feel the Rush"
+                  homeSections.collectionsEyebrow[locale] || "A Scent of Your Own"
                 }
                 title={
                   homeSections.collectionsTitle[locale] ||

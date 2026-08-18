@@ -123,7 +123,14 @@ export function CheckoutForm({
 
   useEffect(() => {
     fetch("/api/checkout-config")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) =>
+        r.ok
+          ? (r.json() as Promise<{
+              zones: Zone[];
+              payment: PaymentSettings;
+            }>)
+          : Promise.resolve(null),
+      )
       .then(
         (
           data: {
@@ -138,7 +145,11 @@ export function CheckoutForm({
       )
       .catch(() => {});
     fetch("/api/shipping-config")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) =>
+        r.ok
+          ? (r.json() as Promise<{ freeShippingThreshold?: number }>)
+          : Promise.resolve(null),
+      )
       .then((data: { freeShippingThreshold?: number } | null) => {
         if (data && typeof data.freeShippingThreshold === "number") {
           setFreeThreshold(data.freeShippingThreshold);
@@ -146,7 +157,11 @@ export function CheckoutForm({
       })
       .catch(() => {});
     fetch("/api/payment-accounts")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) =>
+        r.ok
+          ? (r.json() as Promise<PaymentAccountsConfig>)
+          : Promise.resolve(null),
+      )
       .then((data: PaymentAccountsConfig | null) => {
         if (data) {
           setPaymentAccounts(data);
@@ -161,6 +176,7 @@ export function CheckoutForm({
   const [placed, setPlaced] = useState<{
     orderId: string;
     orderNumber: string;
+    paymentProofUrl?: string;
   } | null>(null);
   const [error, setError] = useState<
     | "GENERIC"
@@ -302,6 +318,16 @@ export function CheckoutForm({
         <p className="max-w-md text-muted-foreground">
           {dict.checkout.successText}
         </p>
+        {placed.paymentProofUrl && (
+          <a
+            href={placed.paymentProofUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-primary underline underline-offset-4"
+          >
+            {locale === "ar" ? "عرض إيصال الدفع" : "View payment receipt"}
+          </a>
+        )}
         <div className="flex flex-wrap items-center justify-center gap-3">
           {isLoggedIn && (
             <Button
@@ -445,6 +471,7 @@ export function CheckoutForm({
         setPlaced({
           orderId: result.orderId,
           orderNumber: result.orderNumber,
+          paymentProofUrl: result.paymentProofUrl,
         });
       } else {
         setError(result.error);
@@ -906,7 +933,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 text-sm">
+    <label className="flex flex-col gap-1.5 text-sm">
       <span className="text-muted-foreground">
         {label}
         {required && <span className="text-destructive"> *</span>}
@@ -921,7 +948,7 @@ function Field({
           <span>{error}</span>
         </span>
       )}
-    </div>
+    </label>
   );
 }
 

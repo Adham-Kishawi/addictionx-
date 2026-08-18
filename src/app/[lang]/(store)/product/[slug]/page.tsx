@@ -71,18 +71,27 @@ export default async function ProductPage({
 
   const [collections, session] = await Promise.all([getCollections(), auth()]);
 
-  const approvedReviews = await prisma.review.findMany({
-    where: { productId: product.id, isApproved: true, isHidden: false },
-    orderBy: { createdAt: "desc" },
-    include: { user: { select: { name: true } } },
-  });
+  // Reviews are supplementary storefront content. A temporary database
+  // outage must not turn an otherwise available product page into a 500.
+  const approvedReviews = await prisma.review
+    .findMany({
+      where: { productId: product.id, isApproved: true, isHidden: false },
+      orderBy: { createdAt: "desc" },
+      include: { user: { select: { name: true } } },
+    })
+    .catch(() => []);
   const myReview = session?.user
-    ? await prisma.review.findUnique({
-        where: {
-          productId_userId: { productId: product.id, userId: session.user.id },
-        },
-        select: { rating: true, title: true, content: true },
-      })
+    ? await prisma.review
+        .findUnique({
+          where: {
+            productId_userId: {
+              productId: product.id,
+              userId: session.user.id,
+            },
+          },
+          select: { rating: true, title: true, content: true },
+        })
+        .catch(() => null)
     : null;
   const existingReview = myReview
     ? {
