@@ -1153,3 +1153,13 @@ After the Vercel→Cloudflare (OpenNext) migration the site was slow: audit meas
 - **Local testing without DB credentials:** `npx wrangler dev --remote --port 8787` runs the worker on Cloudflare's preview infra with the real Hyperdrive binding (`remote = true` on hyperdrive bindings is NOT supported by wrangler 4.123).
 - **Results:** wasted image bytes 12.9 MB → 389 kB; uncacheable assets ~25 MB → ~0; warm TTFB ~424 → ~230-390 ms; render-blocking insight gone. Functional sweep passed (17 routes, add-to-cart, AR/RTL, search, admin auth gate, 404).
 - **Remaining (known, not done):** enable zone Image Transformations (dashboard); `/uploads/prodact.png` still 2 MB and referenced by production DB rows; storefront still `force-dynamic` SSR per request (ISR needs the per-user wishlist bits refactored); ~650 ms forced-reflow during scroll from the motion stack; CLS 0.11 during deep scroll (LazyMount placeholder swap suspected).
+
+### Mobile lightening pass (2026-08-18, same session)
+
+Phone experience was the remaining pain («الصفحة الرئيسية ثقيلة بصريًا على الهاتف»). Measured with 4x CPU + Fast 4G emulation on the live site:
+
+- **Root cause of slow mobile LCP:** the whole `TurntableVideo` root sat at `opacity: 0` until hydration + video start → nothing painted for ~5s on a throttled phone. **Fix:** the poster now renders as a plain server-HTML `<img fetchPriority="high">` UNDER the ready-gated video layer — paints before any JS. Poster converted to `/hero/frame-01.webp` (169 KB → 10 KB). **Result: mobile LCP 5.28 s → 2.02 s** (good, <2.5 s); desktop unchanged (video fades in over the poster).
+- **Touch devices defer the footage:** poster instantly, `play()` after 2.5 s (`pointer: coarse`); Save-Data / 2G never autoplays (poster only). Desktop keeps the 250 ms start.
+- **Blur veil (wave 33) is now `hidden lg:block`** — a full-screen backdrop-filter over playing video was the most expensive GPU layer on phones.
+- **`HeroMelt` returns null ≤1023px** (scroll-driven backdrop-blur over the hero stage).
+- **`.depth-orb` + `.noise-overlay` are `display:none` ≤767px** (globals.css) — continuous full-screen compositing; the static aurora glow stays.

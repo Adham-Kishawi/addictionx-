@@ -312,6 +312,16 @@
   opacity: 0.055;
 }
 
+/* Mobile weight pass: the blurred drifting orbs and the full-screen film
+   grain are continuous compositing work on every scrolled frame — phones
+   keep the static aurora glow and skip these two layers. */
+@media (max-width: 767px) {
+  .depth-orb,
+  .noise-overlay {
+    display: none;
+  }
+}
+
 /* Giant rotated brand watermark behind a section — bombon-style display type depth */
 .text-watermark {
   pointer-events: none;

@@ -499,10 +499,34 @@ export function TurntableVideo({
     }
 
     setActive(r);
-    const t = window.setTimeout(() => {
-      if (runningRef.current) void r.play().catch(() => {});
-      markReady();
-    }, 250);
+
+    // Mobile-first paint: touch devices show the POSTER instantly and the
+    // footage starts a moment later, so the first seconds of the visit
+    // render copy + poster instead of competing with a video download.
+    // Data-saver / 2G connections stay on the poster entirely.
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    const conn = (
+      navigator as { connection?: { saveData?: boolean; effectiveType?: string } }
+    ).connection;
+    const slowNet =
+      Boolean(conn?.saveData) || /(^|-)2g$/.test(conn?.effectiveType ?? "");
+
+    let t: number | undefined;
+    let tReveal: number | undefined;
+    if (slowNet) {
+      // Poster only — the turntable is decoration, not content.
+      tReveal = window.setTimeout(markReady, 0);
+    } else {
+      // Reveal the poster before the video arrives on touch devices.
+      if (coarse) tReveal = window.setTimeout(markReady, 0);
+      t = window.setTimeout(
+        () => {
+          if (runningRef.current) void r.play().catch(() => {});
+          markReady();
+        },
+        coarse ? 2500 : 250,
+      );
+    }
 
     // The reverse copy is not needed for the first impression — it is
     // upgraded to a full preload once the hero has settled (or earlier,
@@ -557,7 +581,8 @@ export function TurntableVideo({
     }
 
     return () => {
-      window.clearTimeout(t);
+      if (t !== undefined) window.clearTimeout(t);
+      if (tReveal !== undefined) window.clearTimeout(tReveal);
       window.clearTimeout(upgradeLeft);
       r.removeEventListener("loadeddata", markReady);
       r.removeEventListener("playing", markReady);
@@ -717,11 +742,28 @@ export function TurntableVideo({
       ref={rootRef}
       aria-hidden
       className={`pointer-events-none relative overflow-hidden ${className}`}
-      style={{
-        opacity: ready ? 1 : 0,
-        transition: "opacity 0.8s ease 0.15s",
-      }}
     >
+      {/* The poster paints straight from the server HTML — before any
+          JavaScript loads. Without it the whole hero sat at opacity 0
+          until hydration + video start (measured: LCP ~5s on a throttled
+          phone). The video layer fades in ABOVE it when actually ready. */}
+      {poster ? (
+        <img
+          src={poster}
+          alt=""
+          fetchPriority="high"
+          className={`absolute inset-0 h-full w-full ${
+            fit === "cover" ? "object-cover" : "object-contain"
+          }`}
+        />
+      ) : null}
+      <div
+        className="absolute inset-0"
+        style={{
+          opacity: ready ? 1 : 0,
+          transition: "opacity 0.8s ease 0.15s",
+        }}
+      >
       <video
         ref={videoRightRef}
         src="/hero/right-scrub.mp4"
@@ -752,16 +794,20 @@ export function TurntableVideo({
           being scrubbed (blurring a moving 720p layer every frame is the
           most expensive thing on the hero) and returns the moment the
           hand rests. */}
+      {/* Phones skip the veil entirely (hidden lg:block): a full-screen
+          backdrop-filter over playing video is the most expensive layer
+          on the page and reads barely differently on a small screen. */}
       <div
         ref={veilRef}
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-[3]"
+        className="pointer-events-none absolute inset-0 z-[3] hidden lg:block"
         style={{
           backdropFilter: REST_BLUR,
           WebkitBackdropFilter: REST_BLUR,
           transition: "backdrop-filter 240ms ease, -webkit-backdrop-filter 240ms ease",
         }}
       />
+      </div>
     </div>
   );
 }

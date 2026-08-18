@@ -17,7 +17,7 @@ export function HeroVideo() {
     <TurntableVideo
       className="absolute inset-0 h-full w-full bg-[#0a0a0a]"
       fit="cover"
-      poster="/hero/frame-01.png"
+      poster="/hero/frame-01.webp"
       fadeOnScroll
       interactive
       // The video layer is pointer-events-none, so the steering listens on

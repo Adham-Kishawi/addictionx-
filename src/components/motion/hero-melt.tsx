@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import {
   motion,
   useReducedMotion,
@@ -29,6 +29,18 @@ import {
 export function HeroMelt() {
   const ref = useRef<HTMLDivElement | null>(null);
   const reduce = useReducedMotion();
+  // Mobile weight pass: a scroll-driven backdrop-blur over the whole hero
+  // stage re-samples the playing video every frame — phones skip the
+  // effect (same pattern as ParticleField's mobile check).
+  const isMobile = useSyncExternalStore(
+    (onChange) => {
+      const mql = window.matchMedia("(max-width: 1023px)");
+      mql.addEventListener("change", onChange);
+      return () => mql.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia("(max-width: 1023px)").matches,
+    () => false,
+  );
 
   const { scrollYProgress } = useScroll({
     target: ref as React.RefObject<HTMLDivElement>,
@@ -39,7 +51,7 @@ export function HeroMelt() {
   const veilOpacity = useTransform(scrollYProgress, [0.9, 1], [0, 1]);
   const backdropFilter = useMotionTemplate`blur(${blur}px)`;
 
-  if (reduce) return null;
+  if (reduce || isMobile) return null;
 
   return (
     <motion.div
