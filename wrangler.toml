@@ -13,7 +13,6 @@ enabled = true
 [vars]
 NEXT_PUBLIC_SITE_URL = "https://addictionx.store"
 EMAIL_FROM = "ADDICTIONX <hello@addictionx.store>"
-AUTH_SECRET = "ohN5ZE9uqwRv3uS0KtMw7jVUDbG7hbqnOf/2y9tG+pU="
 AUTH_TRUST_HOST = "true"
 
 [[hyperdrive]]

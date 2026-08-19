@@ -1,6 +1,5 @@
 "use server";
 
-import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -14,7 +13,9 @@ import { sendEmail, newsletterCampaignEmail } from "@/lib/email";
 const newsletterSchema = z.string().trim().email();
 
 function generateToken(): string {
-  return randomBytes(32).toString("hex");
+  const buf = new Uint8Array(32);
+  crypto.getRandomValues(buf);
+  return Array.from(buf, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 export type NewsletterState = {
