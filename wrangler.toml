@@ -15,9 +15,5 @@ NEXT_PUBLIC_SITE_URL = "https://addictionx.store"
 EMAIL_FROM = "ADDICTIONX <hello@addictionx.store>"
 AUTH_TRUST_HOST = "true"
 
-[[hyperdrive]]
-binding = "HYPERDRIVE"
-id = "327f164408f54c6e9641d066806e21d8"
-
 [triggers]
 crons = ["0 0 * * *"]
