@@ -1,44 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import { useEffect, useRef, useCallback } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { Magnetic } from "@/components/motion/magnetic";
 import { type Product } from "@/features/catalog/data/products";
 import { getDictionary, type Locale } from "@/lib/i18n/dictionary";
 
-// ============================================================
-// ASSEMBLY SHOWCASE — full-bleed, VIDEO-scrubbed by GSAP.
-//
-// The walid-made assembly film is played as a REAL `<video>` element
-// (h264) and GSAP ScrollTrigger scrubs its `currentTime` with the
-// wheel — so the eye sees actual 24fps motion, NOT images swapping
-// (wave 31l — walid: «محتاج أحس إني بتفرج على فيديو مش صورة بتتغير
-// مع كل سكرول»). The clip is re-encoded ALL-INTRА — every frame is
-// a keyframe I-frame (`-g 1 -bf 0`, ~6.9MB) so seeking presents the
-// EXACT frame instantly with no inter-frame decode chains and no
-// visible frame-stepping (wave 31m — walid: «لسه صور مفيش إحساس
-// الفيديو والتنقل بين الفريمات»).
-//
-// Section = 95vh, shorter than the hero; the trigger spans
-// "top bottom → bottom bottom": the assembly COMPLETES exactly when
-// the section is fully in view (wave 31j), then the assembled
-// product + SHOP NOW ride up out of view. The scrub is eased
-// (easeInOutCubic, wave 31k) so it starts soft, flows mid-flight
-// and settles gently. Full width + soft 3-stop veils (waves 31i).
-// SHOP NOW → general catalog (wave 31f). Reduced motion → the last
-// frame (fully assembled), static.
-// ============================================================
-
 const VIDEO_SRC = "/uploads/explode/assembly-scrub.mp4";
-
-// easeInOutCubic — soft start / flow / gentle settle (wave 31k).
-const easeInOut = (t: number) =>
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 export function RotatingShowcase({
   product,
@@ -48,96 +18,235 @@ export function RotatingShowcase({
   locale: Locale;
   collectionNames?: Record<string, { nameAr: string; nameEn: string }>;
 }) {
-  const ref = useRef<HTMLElement | null>(null);
-  const [videoFailed, setVideoFailed] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const isVisibleRef = useRef(false);
+  const targetTimeRef = useRef(0);
+  const durRef = useRef(0);
+  const rafRef = useRef<number>(0);
   const reduce = useReducedMotion();
   const dict = getDictionary(locale);
   const isAr = locale === "ar";
-  const name = isAr ? product.nameAr : product.nameEn;
-  // SHOP NOW goes to the GENERAL catalog — not a specific product
-  // (wave 31f — walid: «توسعق الان تاخدني على الـ SHOP بشكل عام مش منتج معين»).
+  const name = isAr ? product?.nameAr || "" : product?.nameEn || "";
   const href = `/${locale}/catalog`;
 
+  // Video completes smoothly as section exits viewport - faster and eye-comfortable
   const { scrollYProgress } = useScroll({
-    target: ref as React.RefObject<HTMLElement>,
-    offset: ["start end", "end end"],
+    target: containerRef,
+    offset: ["start end", "end start"],
   });
 
-  // SHOP NOW fades in as the product completes — driven by the SAME
-  // eased progress as the video so they stay in sync.
-  const easedProgress = useTransform(scrollYProgress, (v) => easeInOut(v));
-  const shopOpacity = useTransform(easedProgress, [0.72, 0.88], [0, 1]);
-  const shopY = useTransform(easedProgress, [0.72, 0.9], [26, 0]);
+  // Smooth easing for natural motion
+  const easeProgress = useTransform(scrollYProgress, [0, 1], [0, 1], {
+    ease: (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, // easeInOutQuad
+  });
+
+  const shopOpacity = useTransform(easeProgress, [0.7, 0.95], [0, 1]);
+  const shopY = useTransform(easeProgress, [0.7, 0.95], [20, 0]);
+  const progressBarWidth = useTransform(easeProgress, [0, 1], ["0%", "100%"]);
+
+  // Smooth playback rate control - NO SEEKING!
+  const tick = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !isVisibleRef.current) {
+      rafRef.current = 0;
+      return;
+    }
+
+    const dur = durRef.current || video.duration || 3;
+    if (dur > 0) {
+      const target = Math.max(0, Math.min(dur - 0.01, targetTimeRef.current));
+      const current = video.currentTime || 0;
+      const diff = target - current;
+
+      // Use playbackRate instead of seeking for buttery smooth motion
+      if (Math.abs(diff) > 0.05) {
+        // Far from target: speed up/slow down proportionally
+        const speed = 1 + Math.min(Math.abs(diff) * 2, 4); // 1x to 5x speed
+        video.playbackRate = diff > 0 ? speed : -speed;
+
+        if (video.paused) {
+          try {
+            video.play().catch(() => {});
+          } catch {}
+        }
+      } else if (Math.abs(diff) > 0.01) {
+        // Close to target: gentle adjustment
+        video.playbackRate = diff > 0 ? 0.5 : -0.5;
+      } else {
+        // At target: pause
+        video.playbackRate = 0;
+        try {
+          video.pause();
+        } catch {}
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  // Start/stop the smooth loop based on visibility
+  useEffect(() => {
+    if (reduce) return;
+
+    const startLoop = () => {
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    const stopLoop = () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisibleRef.current = !!entry?.isIntersecting;
+        if (entry?.isIntersecting) {
+          startLoop();
+        } else {
+          stopLoop();
+        }
+      },
+      { rootMargin: "200px 0px" }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+      stopLoop();
+    };
+  }, [reduce, tick]);
+
+  // Initialize video metadata
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Start from beginning
+    try {
+      video.currentTime = 0;
+      video.playbackRate = 0;
+      video.pause();
+    } catch {}
+
+    const onMeta = () => {
+      if (video.duration && Number.isFinite(video.duration)) {
+        durRef.current = video.duration;
+      }
+    };
+
+    if (video.readyState >= 1 && video.duration) {
+      onMeta();
+    } else {
+      video.addEventListener("loadedmetadata", onMeta);
+    }
+
+    return () => {
+      video.removeEventListener("loadedmetadata", onMeta);
+    };
+  }, []);
+
+  // Update target time from scroll progress
+  useEffect(() => {
+    if (reduce) return;
+
+    const unsubscribe = easeProgress.on("change", (latest) => {
+      const dur = durRef.current || videoRef.current?.duration || 3;
+      if (dur <= 0) return;
+
+      const p = Math.min(1, Math.max(0, latest));
+      targetTimeRef.current = p * dur;
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [easeProgress, reduce]);
 
   return (
-    // 95vh stage — a bit bigger (wave 31j: walid «كبر السكشن أكبر
-    // شوية بيه ميكونش كبير أوي»), still under the hero (100dvh). No
-    // sticky pin: the block scrolls WITH the page and the GSAP trigger
-    // spans "top bottom → bottom bottom" — the assembly finishes
-    // EXACTLY when the section is fully in view (wave 31j), then the
-    // assembled product + SHOP NOW ride up out of view.
     <section
-      ref={ref}
-      className="relative h-[95vh] w-full overflow-hidden bg-background"
+      ref={containerRef}
+      className="relative h-[75vh] sm:h-[85vh] w-full overflow-hidden bg-black py-12 flex items-center justify-center"
       aria-label={name}
     >
-      {/* Native playback is more reliable than scroll-seeking a large video,
-          especially on mobile, and avoids loading GSAP for this section. */}
+      {/* Full-bleed video background */}
       <video
+        ref={videoRef}
         src={VIDEO_SRC}
         muted
         playsInline
-        autoPlay
-        loop
-        // This component is lazy-mounted below the hero. Loading the entire
-        // 7 MB scrub clip immediately delays the storefront unnecessarily.
-        preload="metadata"
-        poster={product.image}
-        onError={() => setVideoFailed(true)}
-        aria-label={name}
-        className={`absolute inset-0 h-full w-full select-none object-cover ${
-          videoFailed ? "hidden" : ""
-        }`}
+        preload="auto"
+        aria-hidden
+        className="absolute inset-0 size-full select-none object-cover opacity-95 pointer-events-none"
       />
-      {videoFailed ? (
-        <img
-          src={product.image}
-          alt={name}
-          className="absolute inset-0 h-full w-full object-cover"
+
+      {/* Atmospheric ambient glows & cinematic vignettes */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/70" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
+      <div className="pointer-events-none absolute -top-24 left-1/2 size-96 -translate-x-1/2 rounded-full bg-primary/20 blur-[140px]" />
+      <div className="pointer-events-none absolute -bottom-24 right-1/4 size-80 rounded-full bg-amber-500/15 blur-[120px]" />
+
+      {/* Soft edge blending veils */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-24 bg-gradient-to-b from-background via-background/40 to-transparent"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-28 bg-gradient-to-t from-background via-background/40 to-transparent"
+      />
+
+      {/* Bottom scroll progress scrubber bar */}
+      <div className="absolute bottom-0 inset-x-0 z-20 h-1 bg-white/10">
+        <motion.div
+          style={{ width: progressBarWidth }}
+          className="h-full bg-gradient-to-r from-primary via-amber-400 to-primary"
         />
-      ) : null}
+      </div>
 
-      {/* Soft 3-stop edge veils — solid page-bg at the border → translucent
-          mid → transparent: the video melts cleanly out of the section (no
-          hard cut), with lower opacity than the old band (wave 31i) */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[14vh]"
-        style={{
-          background:
-            "linear-gradient(to bottom, var(--hero-veil-4) 0%, color-mix(in oklab, var(--background) 30%, transparent) 60%, transparent 100%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[16vh]"
-        style={{
-          background:
-            "linear-gradient(to top, var(--hero-veil-4) 0%, color-mix(in oklab, var(--background) 30%, transparent) 60%, transparent 100%)",
-        }}
-      />
-
-      {/* The only other element — SHOP NOW */}
+      {/* Floating Magnetic Buttons */}
       <motion.div
-        className="absolute inset-x-0 bottom-[10vh] flex justify-center"
         style={reduce ? undefined : { opacity: shopOpacity, y: shopY }}
+        className="relative z-10 mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-center gap-6 mt-auto pb-12"
       >
-        <Link
-          href={href}
-          className="flex h-14 items-center gap-2 rounded-full bg-primary px-10 text-lg font-bold uppercase tracking-[0.18em] text-primary-foreground shadow-[0_0_40px_-6px_theme(colors.red.600)] backdrop-blur-sm transition-transform hover:scale-105"
-        >
-          {dict.common.shopNow}
-        </Link>
+        <Magnetic strength={0.35}>
+          <motion.div
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative"
+          >
+            <Link
+              href={href}
+              className="group relative inline-flex h-13 items-center gap-2.5 overflow-hidden rounded-full bg-primary px-9 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-[0_0_35px_-5px_theme(colors.red.600)] transition-all duration-300 hover:shadow-[0_0_50px_2px_theme(colors.red.500)]"
+            >
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+              <span className="relative z-10">{dict.common.shopNow}</span>
+              <ArrowRight className="relative z-10 size-4 transition-transform duration-300 group-hover:translate-x-1.5 rtl:rotate-180 rtl:group-hover:-translate-x-1.5" />
+            </Link>
+          </motion.div>
+        </Magnetic>
+
+        <Magnetic strength={0.35}>
+          <motion.div
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative"
+          >
+            <Link
+              href={`/${locale}/collections`}
+              className="group relative inline-flex h-13 items-center overflow-hidden rounded-full border border-white/30 bg-black/60 px-8 text-sm font-semibold text-white backdrop-blur-xl transition-all duration-300 hover:border-primary/80 hover:bg-white/10 hover:shadow-[0_0_35px_-5px_rgba(255,255,255,0.35)]"
+            >
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+              <span className="relative z-10">{dict.nav.collection}</span>
+            </Link>
+          </motion.div>
+        </Magnetic>
       </motion.div>
     </section>
   );

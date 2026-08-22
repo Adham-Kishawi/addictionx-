@@ -3,24 +3,17 @@
 import { useSyncExternalStore } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
-// Rising particle field — used in the hero and the rest of the page.
-// All options default to the original behavior, and in the cinematic hero
-// we pass a reduced version (smaller count + screen blend + lighter opacityScale)
-// to read as "dust in a light beam" rather than "noise" over the video.
-// blend: screen adds light without flipping colors (red stays red).
-
 export function ParticleField({
-  count = 24,
-  blend = "normal",
-  opacityScale = 1,
+  count = 16,
+  blend = "screen",
+  opacityScale = 0.5,
 }: {
   count?: number;
   blend?: "screen" | "exclusion" | "normal";
   opacityScale?: number;
 }) {
   const reduce = useReducedMotion();
-  // Wave 9 (weight): phones render half the particles — same look, half the
-  // compositing budget. useSyncExternalStore keeps SSR/hydration clean.
+
   const isMobile = useSyncExternalStore(
     (onChange) => {
       const mql = window.matchMedia("(max-width: 768px)");
@@ -30,15 +23,16 @@ export function ParticleField({
     () => window.matchMedia("(max-width: 768px)").matches,
     () => false,
   );
-  const particleCount = isMobile ? Math.max(6, Math.ceil(count / 2)) : count;
+
+  const particleCount = isMobile ? Math.max(4, Math.ceil(count / 2)) : count;
 
   const particles = Array.from({ length: particleCount }, (_, i) => ({
     id: i,
     left: `${(i * 41) % 100}%`,
-    size: 2 + ((i * 7) % 4),
-    duration: 6 + ((i * 13) % 8),
-    delay: (i * 17) % 6,
-    opacity: 0.25 + ((i * 11) % 5) / 10,
+    size: 2 + ((i * 5) % 3),
+    duration: 8 + ((i * 11) % 7),
+    delay: (i * 13) % 5,
+    opacity: 0.15 + ((i * 7) % 4) / 15,
   }));
 
   return (
@@ -50,21 +44,21 @@ export function ParticleField({
       {particles.map((p) => (
         <motion.span
           key={p.id}
-          className="absolute rounded-full bg-primary"
+          className="absolute rounded-full bg-rose-400/80"
           style={{
             left: p.left,
             bottom: "-5%",
             width: p.size,
             height: p.size,
             opacity: p.opacity * opacityScale,
-            boxShadow: "0 0 12px 2px oklch(0.6 0.22 22 / 0.5)",
+            boxShadow: "0 0 8px 1px rgba(244, 63, 94, 0.35)",
           }}
           animate={
             reduce
               ? undefined
               : {
                   y: [0, "-110vh"],
-                  x: [0, p.id % 2 === 0 ? 40 : -40, 0],
+                  x: [0, p.id % 2 === 0 ? 25 : -25, 0],
                 }
           }
           transition={{

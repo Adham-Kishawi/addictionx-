@@ -2,6 +2,7 @@ name = "addictionx"
 main = ".open-next/worker.js"
 compatibility_date = "2026-08-17"
 compatibility_flags = ["nodejs_compat"]
+account_id = "cf8249741f97d302521732d8b5b5faad"
 
 [assets]
 directory = ".open-next/assets"
@@ -14,6 +15,13 @@ enabled = true
 NEXT_PUBLIC_SITE_URL = "https://addictionx.store"
 EMAIL_FROM = "ADDICTIONX <hello@addictionx.store>"
 AUTH_TRUST_HOST = "true"
+DATABASE_URL = "postgresql://neondb_owner:npg_8eDpf7zFQtIL@ep-wild-violet-ayuhz2yi-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require"
+AUTH_SECRET = "ohN5ZE9uqwRv3uS0KtMw7jVUDbG7hbqnOf/2y9tG+pU="
+
+[[rules]]
+type = "CompiledWasm"
+globs = ["**/*.wasm"]
+fallthrough = false
 
 [triggers]
 crons = ["0 0 * * *"]
