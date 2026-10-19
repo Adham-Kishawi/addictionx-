@@ -1322,7 +1322,9 @@ export async function createManualOrder(
           .filter(Boolean)
           .join("\n") || null;
 
-      return tx.order.create({
+      // Create the order first — nested `items: { create }` silently fails
+      // on Cloudflare Workers with PrismaPg. Create order, then items separately.
+      const order = await tx.order.create({
         data: {
           orderNumber,
           customerEmail: email || null,
@@ -1333,9 +1335,26 @@ export async function createManualOrder(
           discount: 0,
           total,
           notes: notesText,
-          items: { create: orderLines },
         },
       });
+
+      // Create order items separately
+      for (const line of orderLines) {
+        await tx.orderItem.create({
+          data: {
+            orderId: order.id,
+            productId: line.productId,
+            variantId: line.variantId,
+            productName: line.productName,
+            sizeMl: line.sizeMl,
+            unitPrice: line.unitPrice,
+            quantity: line.quantity,
+            lineTotal: line.lineTotal,
+          },
+        });
+      }
+
+      return order;
     });
 
     // Notify the admin about a new manual order (same new-order template)

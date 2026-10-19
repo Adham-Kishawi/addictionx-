@@ -170,7 +170,7 @@ export default async function Home({
             (wave 33: #hero-stage wraps the scene — the prmpt-style custom cursor ring takes
             over there (system cursor hidden `[cursor:none]`), and the content enters with the
             staggered rhythm 0 / 0.15 / 0.3 / 0.45 for a calmer first impression) ====== */}
-      <div id="hero-stage" className="relative [cursor:none]">
+      <div id="hero-stage" className="relative">
         <HeroParallax
           backdrop={<HeroVideo />}
           mid={
@@ -199,7 +199,7 @@ export default async function Home({
                 <AnimatedTitle text={dict.hero.title} />
 
                 <FadeIn delay={0.3}>
-                  <HeartbeatLine className="h-10 w-56 text-red-500 [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))_drop-shadow(0_4px_24px_rgba(0,0,0,0.45))]" />
+                  <HeartbeatLine className="h-9 w-52 text-rose-500 [filter:drop-shadow(0_0_12px_rgba(244,63,94,0.4))]" />
                 </FadeIn>
 
                 <TypewriterLine
@@ -269,13 +269,11 @@ export default async function Home({
             (wave 9: LazyMount keeps the 95vh scene + its scroll listeners out of
             the DOM until the user actually reaches it — the hero stays fast) ====== */}
       {heroProduct ? (
-        <LazyMount fallbackHeight="95vh">
-          <RotatingShowcase
+        <RotatingShowcase
             product={heroProduct}
             locale={locale}
             collectionNames={collectionNames}
           />
-        </LazyMount>
       ) : null}
 
       {/* ====== Moving words strip — pinned under the header while the next sections
@@ -377,7 +375,7 @@ export default async function Home({
             perk-card strip and moves up to follow the scents) ====== */}
       <SignatureScene
         image={heroProduct?.image}
-        glow={heroProduct?.art.glow ?? "#ef4444"}
+        glow={heroProduct?.art?.glow ?? "#ef4444"}
         eyebrow={dict.home.signatureEyebrow}
         title={dict.home.experienceTitle}
         text={dict.home.experienceText}
@@ -452,7 +450,7 @@ export default async function Home({
             glow (z-1) → drifting orbs (z-2) → sparks (z-5) → glass card
             (z-10) → bottom fade (z-20). "Join thousands who chose to
             live the moment." lives on the glass layer ====== */}
-      <CtaScene glow={heroProduct?.art.glow ?? "#ef4444"}>
+      <CtaScene glow={heroProduct?.art?.glow ?? "#ef4444"}>
         <FadeIn y={20}>
           <WordReveal
             as="h2"

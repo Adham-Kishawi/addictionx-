@@ -326,6 +326,10 @@ export async function createOrder(
           },
         });
 
+        // Create the order first without nested relations — nested
+        // `items: { create }` silently fails on Cloudflare Workers with
+        // PrismaPg. We create the order, then items, then transactions
+        // as separate statements.
         const created = await tx.order.create({
           data: {
             orderNumber,
@@ -341,16 +345,33 @@ export async function createOrder(
             total,
             couponCode: appliedCouponCode,
             addressId: addressRow.id,
-            items: { create: lines },
-            // Every order gets an immutable audit row — the payment lifecycle is tracked here.
-            transactions: {
-              create: {
-                provider:
-                  paymentMethod === "CASH_ON_DELIVERY" ? "COD" : paymentMethod,
-                status: "PENDING",
-                amount: total,
-              },
+          },
+        });
+
+        // Create order items separately
+        for (const line of lines) {
+          await tx.orderItem.create({
+            data: {
+              orderId: created.id,
+              productId: line.productId,
+              variantId: line.variantId,
+              productName: line.productName,
+              sizeMl: line.sizeMl,
+              unitPrice: line.unitPrice,
+              quantity: line.quantity,
+              lineTotal: line.lineTotal,
             },
+          });
+        }
+
+        // Create the payment audit transaction row
+        await tx.transaction.create({
+          data: {
+            orderId: created.id,
+            provider:
+              paymentMethod === "CASH_ON_DELIVERY" ? "COD" : paymentMethod,
+            status: "PENDING",
+            amount: total,
           },
         });
 

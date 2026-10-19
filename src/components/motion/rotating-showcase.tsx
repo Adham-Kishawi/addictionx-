@@ -46,7 +46,9 @@ export function RotatingShowcase({
   const progressBarWidth = useTransform(easeProgress, [0, 1], ["0%", "100%"]);
 
   // Smooth playback rate control - NO SEEKING!
-  const tick = useCallback(() => {
+  const tickRef = useRef<(() => void) | undefined>(undefined);
+
+  tickRef.current = useCallback(() => {
     const video = videoRef.current;
     if (!video || !isVisibleRef.current) {
       rafRef.current = 0;
@@ -82,7 +84,7 @@ export function RotatingShowcase({
       }
     }
 
-    rafRef.current = requestAnimationFrame(tick);
+    rafRef.current = requestAnimationFrame(() => tickRef.current?.());
   }, []);
 
   // Start/stop the smooth loop based on visibility
@@ -91,7 +93,7 @@ export function RotatingShowcase({
 
     const startLoop = () => {
       if (rafRef.current) return;
-      rafRef.current = requestAnimationFrame(tick);
+      rafRef.current = requestAnimationFrame(() => tickRef.current?.());
     };
 
     const stopLoop = () => {
@@ -121,7 +123,7 @@ export function RotatingShowcase({
       observer.disconnect();
       stopLoop();
     };
-  }, [reduce, tick]);
+  }, [reduce]);
 
   // Initialize video metadata
   useEffect(() => {

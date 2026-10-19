@@ -36,8 +36,8 @@ export function ProductArt({
       aria-hidden
       className={className}
       style={{
-        background: `radial-gradient(120% 90% at 50% 0%, ${product.art.glow}33 0%, transparent 60%),
-          linear-gradient(160deg, ${product.art.from} 0%, ${product.art.to} 100%)`,
+        background: `radial-gradient(120% 90% at 50% 0%, ${product.art?.glow || "#6366f1"}33 0%, transparent 60%),
+          linear-gradient(160deg, ${product.art?.from || "#1e1b4b"} 0%, ${product.art?.to || "#020617"} 100%)`,
       }}
     >
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center">
@@ -46,7 +46,7 @@ export function ProductArt({
           viewBox="0 0 48 96"
           className="w-12 shrink-0 opacity-90"
           style={{
-            filter: `drop-shadow(0 0 18px ${product.art.glow}aa)`,
+            filter: `drop-shadow(0 0 18px ${product.art?.glow || "#6366f1"}aa)`,
           }}
           fill="none"
         >

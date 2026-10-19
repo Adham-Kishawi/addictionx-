@@ -3,8 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useInView, useReducedMotion, animate } from "framer-motion";
 
-// Counter that counts up when the section reaches the screen — only the final value is passed.
-
 export function CountUp({
   to,
   duration = 1.4,
@@ -21,7 +19,10 @@ export function CountUp({
 
   useEffect(() => {
     if (!inView) return;
-    if (reduce) return;
+    if (reduce) {
+      setValue(to);
+      return;
+    }
     const controls = animate(0, to, {
       duration,
       ease: [0.22, 1, 0.36, 1],
@@ -32,7 +33,7 @@ export function CountUp({
 
   return (
     <span ref={ref} className={className}>
-      {(reduce ? to : value).toLocaleString("en-US")}
+      {value.toLocaleString("en-US")}
     </span>
   );
 }

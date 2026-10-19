@@ -21,7 +21,7 @@ AUTH_SECRET = "ohN5ZE9uqwRv3uS0KtMw7jVUDbG7hbqnOf/2y9tG+pU="
 [[rules]]
 type = "CompiledWasm"
 globs = ["**/*.wasm"]
-fallthrough = false
+fallthrough = true
 
 [triggers]
 crons = ["0 0 * * *"]

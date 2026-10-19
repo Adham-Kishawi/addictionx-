@@ -6,52 +6,55 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// One client per request. Workers forbid sharing sockets across requests, so
-// the client cannot be a module global — but it must not be rebuilt on every
-// query either: each PrismaClient opens its own pg pool, so N queries per
-// page would mean N database connections. The request's ExecutionContext is
-// the per-request key.
+// One client per request in Cloudflare Workers to prevent socket leaks
 const workerClients = new WeakMap<object, PrismaClient>();
 
-function createPrismaClient() {
+function getDatabaseUrl(): string {
+  let dbUrl = process.env.DATABASE_URL;
+  try {
+    const cf = getCloudflareContext();
+    if (cf?.env && (cf.env as any).DATABASE_URL) {
+      dbUrl = (cf.env as any).DATABASE_URL as string;
+    }
+  } catch {}
+  return dbUrl || "";
+}
+
+function createPrismaClient(): PrismaClient {
   const log: Prisma.PrismaClientOptions["log"] =
     process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"];
 
-  // OpenNext makes Worker bindings available only while a request is being
-  // handled. Do not cache this client globally: module initialization happens
-  // before that context exists and would silently fall back to the native
-  // Prisma engine, which is unavailable in a Worker.
-  try {
-    const { env, ctx } = getCloudflareContext();
-    const hyperdrive = env.HYPERDRIVE;
+  const databaseUrl = getDatabaseUrl();
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is not set — cannot create PrismaClient");
+  }
 
-    if (hyperdrive) {
-      const key: object = ctx ?? env;
+  // In Cloudflare Workers environment, scope PrismaClient to the active request context
+  try {
+    const cf = getCloudflareContext();
+    if (cf) {
+      const key = (cf.ctx || cf.env || globalThis) as object;
       let client = workerClients.get(key);
       if (!client) {
-        client = new PrismaClient({
-          adapter: new PrismaPg({
-            connectionString: hyperdrive.connectionString,
-          }),
-          log,
-        });
+        const adapter = new PrismaPg({ connectionString: databaseUrl });
+        client = new PrismaClient({ adapter, log });
         workerClients.set(key, client);
       }
       return client;
     }
-  } catch {
-    // This is expected outside of the Cloudflare Workers runtime.
-  }
+  } catch {}
 
-  // CLI commands and local Node development still use DATABASE_URL. Reuse
-  // only this Node client; Worker clients are cached per request above.
-  return (globalForPrisma.prisma ??= new PrismaClient({ log }));
+  // Outside of Cloudflare Workers (e.g. Next build, migrations, local Node)
+  if (!globalForPrisma.prisma) {
+    const adapter = new PrismaPg({ connectionString: databaseUrl });
+    globalForPrisma.prisma = new PrismaClient({ adapter, log });
+  }
+  return globalForPrisma.prisma;
 }
 
-// Keep the existing `prisma.model.method()` call sites, but create the client
-// lazily so `getCloudflareContext()` is read inside the active request.
 export const prisma = new Proxy({} as PrismaClient, {
   get(_target, property, receiver) {
-    return Reflect.get(createPrismaClient(), property, receiver);
+    const client = createPrismaClient();
+    return Reflect.get(client, property, receiver);
   },
 });
