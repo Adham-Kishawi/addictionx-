@@ -235,7 +235,7 @@ export function ProductCarousel({
             <div
               className="absolute inset-0"
               style={{
-                background: `radial-gradient(60% 50% at 50% 55%, ${product.art.glow}2e, transparent 70%)`,
+                background: `radial-gradient(60% 50% at 50% 55%, ${product.art?.glow || "#6366f1"}2e, transparent 70%)`,
               }}
             />
             {/* The collection's ambient backdrop (wave 10) — masked so it
@@ -344,7 +344,7 @@ export function ProductCarousel({
                           className="font-display text-[clamp(1.25rem,5vw,2.75rem)] font-bold leading-none"
                           style={{
                             color: "transparent",
-                            WebkitTextStroke: `1px ${product.art.glow}40`,
+                            WebkitTextStroke: `1px ${product.art?.glow || "#6366f1"}40`,
                           }}
                         >
                           {wordmark}
@@ -414,8 +414,8 @@ export function ProductCarousel({
                     <span
                       className="size-2 rounded-full"
                       style={{
-                        background: activeProduct.art.glow,
-                        boxShadow: `0 0 10px ${activeProduct.art.glow}`,
+                        background: activeProduct.art?.glow || "#6366f1",
+                        boxShadow: `0 0 10px ${activeProduct.art?.glow || "#6366f1"}`,
                       }}
                     />
                     {isRtl ? cn.nameAr : cn.nameEn}

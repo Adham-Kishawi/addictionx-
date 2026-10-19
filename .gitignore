@@ -48,3 +48,6 @@ next-env.d.ts
 # misc
 devlog.txt
 test-db.js
+test-users.js
+test-videos/
+scripts/

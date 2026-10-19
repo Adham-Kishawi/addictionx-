@@ -271,7 +271,10 @@ export function TurntableVideo({
         dir = d >= 0 ? "right" : "left";
       }
       const target = dir === "right" ? r : l;
-      target.currentTime = timeForN(dir, n, target);
+      const targetTimeVal = timeForN(dir, n, target);
+      if (Number.isFinite(targetTimeVal) && targetTimeVal >= 0) {
+        try { target.currentTime = targetTimeVal; } catch {}
+      }
       if (target !== active) setActive(target); // the hand-off (seek above)
       scrubNRef.current = n;
       mirrorSyncedRef.current = false;

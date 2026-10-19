@@ -65,6 +65,7 @@ export function HeroParallax({
         style={reduce ? undefined : { y: midY }}
       >
         {mid}
+        <div aria-hidden className="hero-ambient-vignette pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.3)_0%,rgba(0,0,0,0.55)_55%,rgba(0,0,0,0.85)_100%)]" />
       </motion.div>
 
       <motion.div

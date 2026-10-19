@@ -71,13 +71,22 @@ export default async function AccountPage({
     ]);
 
     for (const order of orderRows) {
+      const items = Array.isArray(order.items) ? order.items : [];
+      const createdAt = order.createdAt
+        ? typeof order.createdAt === "string"
+          ? order.createdAt
+          : (order.createdAt as Date).toISOString
+            ? (order.createdAt as Date).toISOString()
+            : new Date(order.createdAt).toISOString()
+        : new Date().toISOString();
+
       orderCards.push({
         id: order.id,
         orderNumber: order.orderNumber,
         status: order.status,
         total: order.total,
-        itemCount: order.items.reduce((sum, i) => sum + i.quantity, 0),
-        createdAt: order.createdAt.toISOString(),
+        itemCount: items.reduce((sum, i) => sum + (i.quantity ?? 1), 0),
+        createdAt,
       });
     }
 

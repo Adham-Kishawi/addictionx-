@@ -125,6 +125,7 @@ type DbProduct = NonNullable<
 };
 
 export function productFromRow(db: DbProduct): Product {
+  if (!db) return staticProducts[0];
   const notes = (db.notes ?? {
     top: [],
     heart: [],
@@ -136,9 +137,19 @@ export function productFromRow(db: DbProduct): Product {
     glow: "#6366f1",
   }) as Product["art"];
 
-  const price = db.variants[0]?.price ?? db.basePrice;
-  const hasVariants = db.variants.length > 0;
-  const stockTotal = db.variants.reduce((sum, v) => sum + v.stock, 0);
+  const variants = Array.isArray(db.variants) ? db.variants : [];
+  const images = Array.isArray(db.images) ? db.images : [];
+  const price = variants[0]?.price ?? db.basePrice ?? 0;
+  const hasVariants = variants.length > 0;
+  const stockTotal = variants.reduce((sum, v) => sum + (v.stock ?? 0), 0);
+
+  const createdAt = db.createdAt
+    ? typeof db.createdAt === "string"
+      ? db.createdAt
+      : (db.createdAt as Date).toISOString
+        ? (db.createdAt as Date).toISOString()
+        : new Date(db.createdAt).toISOString()
+    : new Date().toISOString();
 
   return {
     id: db.id,
@@ -149,26 +160,26 @@ export function productFromRow(db: DbProduct): Product {
     descriptionEn: db.descriptionEn ?? db.description ?? "",
     price,
     compareAtPrice: db.compareAtPrice ?? undefined,
-    sizeMl: db.variants[0]?.sizeMl,
-    sizes: db.variants.map((v) => ({
+    sizeMl: variants[0]?.sizeMl,
+    sizes: variants.map((v) => ({
       sizeMl: v.sizeMl,
       price: v.price,
-      stock: v.stock,
+      stock: v.stock ?? 0,
     })),
-    stock: db.stock,
-    gender: (db.gender as string).toLowerCase() as Product["gender"],
+    stock: db.stock ?? 0,
+    gender: (((db.gender as string) || "UNISEX").toLowerCase()) as Product["gender"],
     collection: db.collection ?? "",
     notes,
-    rating: db.rating,
-    reviewsCount: db.reviewsCount,
-    isNew: db.isNew,
-    isBestseller: db.isBestSeller,
-    bestsellerOrder: db.bestsellerOrder,
-    isSoldOut: hasVariants ? stockTotal === 0 : db.stock === 0,
-    createdAt: db.createdAt.toISOString(),
+    rating: db.rating ?? 0,
+    reviewsCount: db.reviewsCount ?? 0,
+    isNew: !!db.isNew,
+    isBestseller: !!db.isBestSeller,
+    bestsellerOrder: db.bestsellerOrder ?? 0,
+    isSoldOut: hasVariants ? stockTotal === 0 : (db.stock ?? 0) === 0,
+    createdAt,
     art,
-    image: db.images?.[0]?.url ?? undefined,
-    images: db.images?.map((img) => img.url) ?? undefined,
+    image: images[0]?.url ?? undefined,
+    images: images.map((img) => img.url).filter(Boolean),
   };
 }
 

@@ -138,9 +138,14 @@ export function CollectionShelf({
   const [active, setActive] = useState(0);
   const reduce = useReducedMotion();
   const stageRef = useRef<HTMLDivElement | null>(null);
-  const count = cards.length;
 
-  const go = (dir: number) => setActive((a) => (a + dir + count) % count);
+  const count = cards ? cards.length : 0;
+  const safeActive = count > 0 ? Math.min(Math.max(0, active), count - 1) : 0;
+  const activeCard = cards && cards[safeActive] ? cards[safeActive] : null;
+
+  const go = (dir: number) => {
+    if (count > 0) setActive((a) => (a + dir + count) % count);
+  };
 
   // Mouse tilt — pointer position across the stage drives yaw/pitch
   // springs; only the active card receives them.
@@ -168,7 +173,7 @@ export function CollectionShelf({
     my.set(0);
   }
 
-  const activeCard = cards[active];
+  if (!cards || cards.length === 0 || !activeCard) return null;
 
   return (
     <motion.section
