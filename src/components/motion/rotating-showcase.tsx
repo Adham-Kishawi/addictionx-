@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Magnetic } from "@/components/motion/magnetic";
@@ -38,7 +43,7 @@ export function RotatingShowcase({
 
   // Smooth easing for natural motion
   const easeProgress = useTransform(scrollYProgress, [0, 1], [0, 1], {
-    ease: (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, // easeInOutQuad
+    ease: (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2), // easeInOutQuad
   });
 
   const shopOpacity = useTransform(easeProgress, [0.7, 0.95], [0, 1]);
@@ -48,7 +53,7 @@ export function RotatingShowcase({
   // Smooth playback rate control - NO SEEKING!
   const tickRef = useRef<(() => void) | undefined>(undefined);
 
-  tickRef.current = useCallback(() => {
+  const tick = useCallback(() => {
     const video = videoRef.current;
     if (!video || !isVisibleRef.current) {
       rafRef.current = 0;
@@ -87,6 +92,10 @@ export function RotatingShowcase({
     rafRef.current = requestAnimationFrame(() => tickRef.current?.());
   }, []);
 
+  useEffect(() => {
+    tickRef.current = tick;
+  }, [tick]);
+
   // Start/stop the smooth loop based on visibility
   useEffect(() => {
     if (reduce) return;
@@ -112,7 +121,7 @@ export function RotatingShowcase({
           stopLoop();
         }
       },
-      { rootMargin: "200px 0px" }
+      { rootMargin: "200px 0px" },
     );
 
     if (containerRef.current) {

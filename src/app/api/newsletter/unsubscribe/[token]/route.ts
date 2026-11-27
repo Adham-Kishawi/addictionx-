@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { escapeHtml } from "@/lib/utils";
 
 export async function GET(
   _request: Request,
@@ -41,7 +42,7 @@ function unsubscribedPage(email: string) {
       <div style="font-size:48px;margin-bottom:16px;">&#10003;</div>
       <h1 style="color:#f5c518;font-size:22px;margin:0 0 12px;">You've been unsubscribed</h1>
       <p style="color:#e8e8e8;font-size:15px;line-height:1.6;">
-        <b>${email}</b> has been removed from the ADDICTIONX newsletter.
+        <b>${escapeHtml(email)}</b> has been removed from the ADDICTIONX newsletter.
       </p>
       <p style="color:#666;font-size:12px;margin-top:24px;">
         Changed your mind? You can always resubscribe on our website.

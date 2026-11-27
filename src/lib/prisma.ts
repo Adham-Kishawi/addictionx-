@@ -13,8 +13,10 @@ function getDatabaseUrl(): string {
   let dbUrl = process.env.DATABASE_URL;
   try {
     const cf = getCloudflareContext();
-    if (cf?.env && (cf.env as any).DATABASE_URL) {
-      dbUrl = (cf.env as any).DATABASE_URL as string;
+    const cfDbUrl = (cf?.env as { DATABASE_URL?: string } | undefined)
+      ?.DATABASE_URL;
+    if (cfDbUrl) {
+      dbUrl = cfDbUrl;
     }
   } catch {}
   return dbUrl || "";

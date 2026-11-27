@@ -12,9 +12,10 @@ export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   const url = new URL(request.url);
   const authorized =
-    request.headers.get("authorization") === `Bearer ${secret}` ||
-    (!!secret && url.searchParams.get("secret") === secret);
-  if (secret && !authorized) {
+    !!secret &&
+    (request.headers.get("authorization") === `Bearer ${secret}` ||
+      url.searchParams.get("secret") === secret);
+  if (!authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

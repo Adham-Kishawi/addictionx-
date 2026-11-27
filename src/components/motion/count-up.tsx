@@ -19,10 +19,7 @@ export function CountUp({
 
   useEffect(() => {
     if (!inView) return;
-    if (reduce) {
-      setValue(to);
-      return;
-    }
+    if (reduce) return;
     const controls = animate(0, to, {
       duration,
       ease: [0.22, 1, 0.36, 1],
@@ -33,7 +30,7 @@ export function CountUp({
 
   return (
     <span ref={ref} className={className}>
-      {value.toLocaleString("en-US")}
+      {(reduce ? to : value).toLocaleString("en-US")}
     </span>
   );
 }

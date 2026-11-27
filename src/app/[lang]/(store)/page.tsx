@@ -159,7 +159,7 @@ export default async function Home({
               target: `${siteUrl}/${locale}/catalog?q={search_term_string}`,
               "query-input": "required name=search_term_string",
             },
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
       {/* ====== HERO — cinematic scene: the video stays dark in BOTH themes (black product footage
@@ -270,10 +270,10 @@ export default async function Home({
             the DOM until the user actually reaches it — the hero stays fast) ====== */}
       {heroProduct ? (
         <RotatingShowcase
-            product={heroProduct}
-            locale={locale}
-            collectionNames={collectionNames}
-          />
+          product={heroProduct}
+          locale={locale}
+          collectionNames={collectionNames}
+        />
       ) : null}
 
       {/* ====== Moving words strip — pinned under the header while the next sections
@@ -396,7 +396,8 @@ export default async function Home({
             <div className="mb-6 text-center">
               <SectionHeading
                 eyebrow={
-                  homeSections.collectionsEyebrow[locale] || "A Scent of Your Own"
+                  homeSections.collectionsEyebrow[locale] ||
+                  "A Scent of Your Own"
                 }
                 title={
                   homeSections.collectionsTitle[locale] ||
